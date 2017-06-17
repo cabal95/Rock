@@ -1,7 +1,7 @@
-/bin/*/*.dll
-/bin/*.dll
-/bin/*.pdb
-/bin/*.xml
+/Bin/*/*.dll
+/Bin/*.dll
+/Bin/*.pdb
+/Bin/*.xml
 
 /*.suo
 /*.user
