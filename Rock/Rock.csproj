@@ -1348,6 +1348,7 @@
     <Compile Include="Utility\ExtensionMethods\QuartzExtensions.cs" />
     <Compile Include="Utility\FileUtilities.cs" />
     <Compile Include="Utility\IRockOwinStartup.cs" />
+    <Compile Include="Utility\Mono.cs" />
     <Compile Include="Web\UI\Controls\Communication\PushNotification.cs" />
     <Compile Include="Web\Cache\WorkflowActionFormAttributeCache.cs" />
     <Compile Include="Web\Cache\WorkflowActivityTypeCache.cs" />
@@ -1383,7 +1384,6 @@
     <Compile Include="Search\SearchContainer.cs" />
     <Compile Include="Security\AuthenticationComponent.cs" />
     <Compile Include="Security\AuthenticationContainer.cs" />
-    <Compile Include="Security\Authentication\ActiveDirectory.cs" />
     <Compile Include="Security\Authentication\Database.cs" />
     <Compile Include="Security\Authentication\Google.cs" />
     <Compile Include="Security\Authentication\PINAuthentication.cs" />
