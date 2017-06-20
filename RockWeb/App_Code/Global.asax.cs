@@ -131,7 +131,7 @@ namespace RockWeb
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 LogMessage( APP_LOG_FILENAME, "Application Starting..." ); 
                 
-                if ( System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment )
+                if ( IsDevelopmentEnvironment() )
                 {
                     System.Diagnostics.Debug.WriteLine( string.Format( "Application_Start: {0}", RockDateTime.Now.ToString( "hh:mm:ss.FFF" ) ) );
                 }
@@ -149,7 +149,7 @@ namespace RockWeb
                 // Get a db context
                 using ( var rockContext = new RockContext() )
                 {
-                    if ( System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment && !fileInfo.Exists )
+                    if ( IsDevelopmentEnvironment() && !fileInfo.Exists )
                     {
                         try
                         {
@@ -169,7 +169,7 @@ namespace RockWeb
                     // Run any plugin migrations
                     stopwatch.Restart();
                     MigratePlugins( rockContext );
-                    if ( System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment )
+                    if ( IsDevelopmentEnvironment() )
                     {
                         System.Diagnostics.Debug.WriteLine( string.Format( "MigratePlugins - {0} ms", stopwatch.Elapsed.TotalMilliseconds ) );
                     }
@@ -177,7 +177,7 @@ namespace RockWeb
                     // Preload the commonly used objects
                     stopwatch.Restart();
                     LoadCacheObjects( rockContext );
-                    if ( System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment )
+                    if ( IsDevelopmentEnvironment() )
                     {
                         System.Diagnostics.Debug.WriteLine( string.Format( "LoadCacheObjects - {0} ms", stopwatch.Elapsed.TotalMilliseconds ) );
                     }
@@ -185,7 +185,7 @@ namespace RockWeb
                     // Register Routes
                     stopwatch.Restart();
                     RegisterRoutes( rockContext, RouteTable.Routes );
-                    if ( System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment )
+                    if ( IsDevelopmentEnvironment() )
                     {
                         System.Diagnostics.Debug.WriteLine( string.Format( "RegisterRoutes - {0} ms", stopwatch.Elapsed.TotalMilliseconds ) );
                     }
@@ -193,7 +193,7 @@ namespace RockWeb
                     // Configure Rock Rest API
                     stopwatch.Restart();
                     GlobalConfiguration.Configure( Rock.Rest.WebApiConfig.Register );
-                    if ( System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment )
+                    if ( IsDevelopmentEnvironment() )
                     {
                         System.Diagnostics.Debug.WriteLine( string.Format( "Configure WebApiConfig - {0} ms", stopwatch.Elapsed.TotalMilliseconds ) );
                         stopwatch.Restart();
@@ -290,7 +290,7 @@ namespace RockWeb
                 SqlServerTypes.Utilities.LoadNativeAssemblies( Server.MapPath( "~" ) );
 
                 LogMessage( APP_LOG_FILENAME, "Application Started Successfully" );
-                if ( System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment )
+                if ( IsDevelopmentEnvironment() )
                 {
                     System.Diagnostics.Debug.WriteLine( string.Format( "Application_Started_Successfully: {0}", RockDateTime.Now.ToString( "hh:mm:ss.FFF" ) ) );
                 }
@@ -1194,5 +1194,13 @@ namespace RockWeb
 
         #endregion
 
+        private bool IsDevelopmentEnvironment()
+        {
+#if __MonoCS__
+            return false;
+#else
+            return System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment;
+#endif
+        }
     }
 }
