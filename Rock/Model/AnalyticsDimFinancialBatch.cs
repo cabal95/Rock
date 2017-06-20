@@ -60,7 +60,6 @@ namespace Rock.Model
         /// A <see cref="System.DateTime"/> representing the posting start date for the batch.
         /// </value>
         [DataMember]
-        [Column( TypeName = "DateTime" )]
         public DateTime? BatchStartDateTime { get; set; }
 
         /// <summary>
@@ -71,7 +70,6 @@ namespace Rock.Model
         /// A <see cref="System.DateTime"/> representing the posting end date for the batch.
         /// </value>
         [DataMember]
-        [Column( TypeName = "DateTime" )]
         public DateTime? BatchEndDateTime { get; set; }
 
         /// <summary>
