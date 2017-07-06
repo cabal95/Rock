@@ -2,16 +2,13 @@
 
 <asp:UpdatePanel ID="upnlContent" runat="server">
     <ContentTemplate>
-        <asp:Panel ID="pnlList" CssClass="panel panel-block" runat="server">
-
-            <div class="panel-heading">
-                <h1 class="panel-title pull-left"><i class="fa  fa-file-text-o"></i> Person History</h1>
+        <Rock:CollapsiblePanel ID="pnlList" runat="server" CssClass="panel panel-block" Title="Person History" TitleIcon="fa fa-file-text-o">
+            <Buttons>
                 <div class="panel-labels">
                     <Rock:HighlightLabel ID="hlDateAdded" runat="server" LabelType="Info" />
                 </div>
-            </div>
-            <div class="panel-body">
-
+            </Buttons>
+            <Body>
                 <div class="grid grid-panel">
                     <Rock:GridFilter ID="gfSettings" runat="server">
                         <Rock:CategoryPicker ID="cpCategory" runat="server" Label="Category" Required="false" EntityTypeName="Rock.Model.History" />
@@ -33,10 +30,8 @@
                         </Columns>
                     </Rock:Grid>
                 </div>
-
-            </div>
-
-        </asp:Panel>
+            </Body>
+        </Rock:CollapsiblePanel>
 
         <Rock:NotificationBox ID="nbMessage" runat="server" Title="Error" NotificationBoxType="Danger" Visible="false" />
 
