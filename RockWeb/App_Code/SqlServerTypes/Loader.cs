@@ -37,6 +37,7 @@ namespace SqlServerTypes
         /// </param>
         public static void LoadNativeAssemblies(string rootApplicationPath)
         {
+return;
             var nativeBinaryPath = IntPtr.Size > 4
                 ? Path.Combine(rootApplicationPath, @"SqlServerTypes\x64\")
                 : Path.Combine(rootApplicationPath, @"SqlServerTypes\x86\");
