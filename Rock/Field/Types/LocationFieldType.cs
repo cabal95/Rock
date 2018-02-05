@@ -45,19 +45,20 @@ namespace Rock.Field.Types
 
             if ( !string.IsNullOrWhiteSpace( value ) )
             {
+                Guid? locGuid = value.AsGuidOrNull();
+                if ( locGuid.HasValue )
+                {
+                    // Check to see if this is the org address first (to avoid db read)
+                    var globalAttributesCache = Web.Cache.GlobalAttributesCache.Read();
+                    var orgLocGuid = globalAttributesCache.GetValue( "OrganizationAddress" ).AsGuidOrNull();
+                    if ( orgLocGuid.HasValue && orgLocGuid.Value == locGuid.Value )
+                    {
+                        return globalAttributesCache.OrganizationLocationFormatted;
+                    }
+                }
+
                 using ( var rockContext = new RockContext() )
                 {
-                    Guid? locGuid = value.AsGuidOrNull();
-                    if ( locGuid.HasValue )
-                    {
-                        // Check to see if this is the org address first (to avoid db read)
-                        var globalAttributesCache = Web.Cache.GlobalAttributesCache.Read( rockContext );
-                        var orgLocGuid = globalAttributesCache.GetValue( "OrganizationAddress" ).AsGuidOrNull();
-                        if ( orgLocGuid.HasValue && orgLocGuid.Value == locGuid.Value )
-                        {
-                            return globalAttributesCache.OrganizationLocationFormatted;
-                        }
-                    }
                     var service = new LocationService( rockContext );
                     var location = service.Get( new Guid( value ) );
                     if ( location != null )
@@ -132,6 +133,7 @@ namespace Rock.Field.Types
                     Guid guid;
                     Guid.TryParse( value, out guid );
                     var location = new LocationService( new RockContext() ).Get( guid );
+                    picker.SetBestPickerModeForLocation( location );
                     picker.Location = location;
                 }
             }

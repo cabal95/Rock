@@ -86,7 +86,7 @@ namespace Rock.Transactions
         public string UserAgent { get; set; }
 
         /// <summary>
-        /// Gets or sets the session id.
+        /// Gets or sets the Rock SessionId Guid ( RockSessionId )
         /// </summary>
         /// <value>
         /// Session Id.
@@ -105,16 +105,16 @@ namespace Rock.Transactions
         {
             if ( PageShortLinkId.HasValue )
             { 
-            using ( var rockContext = new RockContext() )
-            {
-                var userAgent = (this.UserAgent ?? string.Empty).Trim();
-                if ( userAgent.Length > 450 )
+                using ( var rockContext = new RockContext() )
                 {
-                    userAgent = userAgent.Substring( 0, 450 ); // trim super long useragents to fit in pageViewUserAgent.UserAgent
-                }
+                    var userAgent = (this.UserAgent ?? string.Empty).Trim();
+                    if ( userAgent.Length > 450 )
+                    {
+                        userAgent = userAgent.Substring( 0, 450 ); // trim super long useragents to fit in pageViewUserAgent.UserAgent
+                    }
 
-                // get user agent info
-                var clientType = InteractionDeviceType.GetClientType( userAgent );
+                    // get user agent info
+                    var clientType = InteractionDeviceType.GetClientType( userAgent );
 
                     // don't log visits from crawlers
                     if ( clientType != "Crawler" )
@@ -137,6 +137,21 @@ namespace Rock.Transactions
 
                         // check that the page exists as a component
                         var interactionComponent = new InteractionComponentService( rockContext ).GetComponentByEntityId( interactionChannel.Id, PageShortLinkId.Value, Token );
+                        if ( Url.IsNotNullOrWhitespace() )
+                        {
+                            
+                            if ( interactionComponent.ComponentSummary != Url )
+                            {
+                                interactionComponent.ComponentSummary = Url;
+                            }
+
+                            var urlDataJson = new { Url = Url }.ToJson();
+                            if ( interactionComponent.ComponentData != urlDataJson )
+                            {
+                                interactionComponent.ComponentData = urlDataJson;
+                            }
+                        }
+                        
                         rockContext.SaveChanges();
 
                         // Add the interaction
@@ -154,7 +169,7 @@ namespace Rock.Transactions
                             var clientBrowser = client.UserAgent.ToString();
 
                             new InteractionService( rockContext ).AddInteraction( interactionComponent.Id, null, "View", Url, personAliasId, DateViewed,
-                                clientBrowser, clientOs, clientType, userAgent, IPAddress );
+                                clientBrowser, clientOs, clientType, userAgent, IPAddress, this.SessionId?.AsGuidOrNull() );
                             rockContext.SaveChanges();
                         }
                     }

@@ -104,9 +104,11 @@ namespace Rock.Model
             target.IncomeLevel = source.IncomeLevel;
             target.IncomeRank = source.IncomeRank;
             target.LifeStage = source.LifeStage;
+            target.LifeStageLevel = source.LifeStageLevel;
             target.LifestyleClusterCode = source.LifestyleClusterCode;
             target.LifestyleClusterName = source.LifestyleClusterName;
             target.MaritalStatus = source.MaritalStatus;
+            target.MeanAge = source.MeanAge;
             target.MetaPersonicxLifestyleGroupId = source.MetaPersonicxLifestyleGroupId;
             target.NetWorth = source.NetWorth;
             target.NetWorthLevel = source.NetWorthLevel;

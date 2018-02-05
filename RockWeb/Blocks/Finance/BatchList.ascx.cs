@@ -28,6 +28,7 @@ using Rock.Attribute;
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
+using Rock.Web.UI;
 using Rock.Web.UI.Controls;
 
 namespace RockWeb.Blocks.Finance
@@ -38,7 +39,7 @@ namespace RockWeb.Blocks.Finance
     [LinkedPage( "Detail Page", order: 0 )]
     [BooleanField( "Show Accounting Code", "Should the accounting code column be displayed.", false, "", 1 )]
     [BooleanField( "Show Accounts Column", "Should the accounts column be displayed.", true, "", 2 )]
-    public partial class BatchList : Rock.Web.UI.RockBlock, IPostBackEventHandler
+    public partial class BatchList : RockBlock, IPostBackEventHandler, ICustomGridColumns
     {
         #region Fields
 
@@ -345,7 +346,7 @@ namespace RockWeb.Blocks.Finance
             var batch = batchService.Get( e.RowKeyId );
             if ( batch != null )
             {
-                if ( UserCanEdit || batch.IsAuthorized( Rock.Security.Authorization.EDIT, CurrentPerson ) )
+                if ( batch.IsAuthorized( Rock.Security.Authorization.DELETE, CurrentPerson ) )
                 {
                     string errorMessage;
                     if ( !batchService.CanDelete( batch, out errorMessage ) )
@@ -372,6 +373,10 @@ namespace RockWeb.Blocks.Finance
 
                         rockContext.SaveChanges();
                     } );
+                }
+                else
+                {
+                    mdGridWarning.Show( "You are not authorized to delete the selected batch.", ModalAlertType.Warning);
                 }
             }
 
@@ -475,6 +480,13 @@ namespace RockWeb.Blocks.Finance
                             maWarningDialog.Show( errorMessage, ModalAlertType.Warning );
                             return;
                         }
+
+                        if ( batch.IsAutomated && batch.Status == BatchStatus.Pending && newStatus != BatchStatus.Pending )
+                        {
+                            errorMessage = string.Format( "{0} is an automated batch and the status can not be modified when the status is pending. The system will automatically set this batch to OPEN when all transactions have been downloaded.", batch.Name );
+                            maWarningDialog.Show( errorMessage, ModalAlertType.Warning );
+                            return;
+                        } 
 
                         batch.Status = newStatus;
 
@@ -728,7 +740,7 @@ namespace RockWeb.Blocks.Finance
             string title = gfBatchFilter.GetUserPreference( "Title" );
             if ( !string.IsNullOrEmpty( title ) )
             {
-                qry = qry.Where( batch => batch.Name.StartsWith( title ) );
+                qry = qry.Where( batch => batch.Name.Contains( title ) );
             }
 
             // filter by accounting code
@@ -737,7 +749,7 @@ namespace RockWeb.Blocks.Finance
                 string accountingCode = gfBatchFilter.GetUserPreference( "Accounting Code" );
                 if ( !string.IsNullOrEmpty( accountingCode ) )
                 {
-                    qry = qry.Where( batch => batch.AccountingSystemCode.StartsWith( accountingCode ) );
+                    qry = qry.Where( batch => batch.AccountingSystemCode.Contains( accountingCode ) );
                 }
             }
 
@@ -976,7 +988,7 @@ namespace RockWeb.Blocks.Finance
         #region Attributes
 
         /// <summary>
-        /// Binds the attributes.
+        /// Binds the attributes
         /// </summary>
         private void BindAttributes()
         {

@@ -496,6 +496,7 @@ namespace RockWeb.Blocks.Groups
             groupType.ShowInNavigation = cbShowInNavigation.Checked;
             groupType.ShowConnectionStatus = cbShowConnectionStatus.Checked;
             groupType.ShowMaritalStatus = cbShowMaritalStatus.Checked;
+            groupType.GroupViewLavaTemplate = ceGroupLavaTemplate.Text;
             groupType.IconCssClass = tbIconCssClass.Text;
             groupType.TakesAttendance = cbTakesAttendance.Checked;
             groupType.GroupsRequireCampus = cbGroupsRequireCampus.Checked;
@@ -514,7 +515,10 @@ namespace RockWeb.Blocks.Groups
             groupType.IgnorePersonInactivated = cbDontInactivateMembers.Checked;
             groupType.IsIndexEnabled = cbEnableIndexing.Checked;
             groupType.EnableLocationSchedules = cbEnableLocationSchedules.Checked;
-
+            groupType.AllowSpecificGroupMemberAttributes = cbAllowSpecificGroupMemberAttributes.Checked;
+            groupType.AllowGroupSync = cbAllowGroupSync.Checked;
+            groupType.EnableSpecificGroupRequirements = cbEnableSpecificGroupReq.Checked;
+            groupType.AllowSpecificGroupMemberWorkflows = cbAllowSpecificGrpMemWorkFlows.Checked;
             groupType.ChildGroupTypes = new List<GroupType>();
             groupType.ChildGroupTypes.Clear();
             foreach ( var item in ChildGroupTypesList )
@@ -563,7 +567,8 @@ namespace RockWeb.Blocks.Groups
 
             if ( !groupType.IsValid )
             {
-                // Controls will render the error messages                    
+                cvGroupType.IsValid = groupType.IsValid;
+                cvGroupType.ErrorMessage = groupType.ValidationResults.Select( a => a.ErrorMessage ).ToList().AsDelimited( "<br />" );
                 return;
             }
 
@@ -661,8 +666,6 @@ namespace RockWeb.Blocks.Groups
         /// <param name="groupTypeId">The group type identifier.</param>
         public void ShowDetail( int groupTypeId )
         {
-            pnlDetails.Visible = false;
-
             // determine if indexing is enabled
             var groupEntityType = EntityTypeCache.Read( Rock.SystemGuid.EntityType.GROUP.AsGuid() );
             cbEnableIndexing.Visible = (IndexContainer.IndexingEnabled && groupEntityType.IsIndexingEnabled);
@@ -696,7 +699,6 @@ namespace RockWeb.Blocks.Groups
 
             DefaultRoleGuid = groupType.DefaultGroupRole != null ? groupType.DefaultGroupRole.Guid : Guid.Empty;
 
-            pnlDetails.Visible = true;
             hfGroupTypeId.Value = groupType.Id.ToString();
 
             bool readOnly = false;
@@ -782,6 +784,14 @@ namespace RockWeb.Blocks.Groups
             cbShowInNavigation.Checked = groupType.ShowInNavigation;
             cbShowConnectionStatus.Checked = groupType.ShowConnectionStatus;
             cbShowMaritalStatus.Checked = groupType.ShowMaritalStatus;
+            if ( !string.IsNullOrEmpty( groupType.GroupViewLavaTemplate ) )
+            {
+                ceGroupLavaTemplate.Text = groupType.GroupViewLavaTemplate;
+            }
+            else
+            {
+                ceGroupLavaTemplate.Text = SystemSettings.GetValue( "core_templates_GroupViewTemplate" );
+            }
             tbIconCssClass.Text = groupType.IconCssClass;
 
             // Locations
@@ -829,6 +839,11 @@ namespace RockWeb.Blocks.Groups
 
             cbDontInactivateMembers.Checked = groupType.IgnorePersonInactivated;
             cbEnableIndexing.Checked = groupType.IsIndexEnabled;
+
+            cbAllowSpecificGroupMemberAttributes.Checked = groupType.AllowSpecificGroupMemberAttributes;
+            cbAllowGroupSync.Checked = groupType.AllowGroupSync;
+            cbEnableSpecificGroupReq.Checked = groupType.EnableSpecificGroupRequirements;
+            cbAllowSpecificGrpMemWorkFlows.Checked = groupType.AllowSpecificGroupMemberWorkflows;
 
             GroupTypeRolesState = new List<GroupTypeRole>();
             foreach ( var role in groupType.Roles )
@@ -1927,6 +1942,12 @@ namespace RockWeb.Blocks.Groups
             {
                 attribute = new Attribute();
                 attribute.FieldTypeId = FieldTypeCache.Read( Rock.SystemGuid.FieldType.TEXT ).Id;
+                if (hfGroupTypeId.Value.AsInteger() > 0)
+                {
+                    attribute.EntityTypeQualifierColumn = "GroupTypeId";
+                    attribute.EntityTypeQualifierValue = hfGroupTypeId.Value;
+                }
+
                 edtGroupAttributes.ActionTitle = ActionTitle.Add( "attribute for groups of group type " + tbName.Text );
             }
             else

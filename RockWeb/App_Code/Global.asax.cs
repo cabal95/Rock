@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.Entity;
+using System.Data.Entity.Migrations.Infrastructure;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
@@ -39,6 +40,7 @@ using Quartz.Impl.Matchers;
 
 using Rock;
 using Rock.Communication;
+using Rock.Configuration;
 using Rock.Data;
 using Rock.Jobs;
 using Rock.Model;
@@ -161,21 +163,40 @@ namespace RockWeb
                             // Intentionally Blank
                         }
                     }
-                    
+
                     //// Run any needed Rock and/or plugin migrations
                     //// NOTE: MigrateDatabase must be the first thing that touches the database to help prevent EF from creating empty tables for a new database
-                    MigrateDatabase( rockContext );
-
+                    bool anyMigrations = MigrateDatabase( rockContext );
+                    
                     // Run any plugin migrations
                     stopwatch.Restart();
-                    MigratePlugins( rockContext );
+                    bool anyPluginMigrations = MigratePlugins( rockContext );
                     if ( System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment )
                     {
                         System.Diagnostics.Debug.WriteLine( string.Format( "MigratePlugins - {0} ms", stopwatch.Elapsed.TotalMilliseconds ) );
                     }
+                    
+                    if ( anyMigrations || anyPluginMigrations )
+                    {
+                        // If any migrations ran (version was likely updated)
+                        try
+                        {
+                            Rock.Utility.SparkLinkHelper.SendToSpark( rockContext );
+                        }
+                        catch ( Exception ex )
+                        {
+                            // Just catch any exceptions, log it, and keep moving... 
+                            try
+                            {
+                                ExceptionLogService.LogException( ex, null );
+                            }
+                            catch { }
+                        }
+                    }
 
                     // Preload the commonly used objects
                     stopwatch.Restart();
+                    LoadComponenetData( rockContext );
                     LoadCacheObjects( rockContext );
                     if ( System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment )
                     {
@@ -539,9 +560,14 @@ namespace RockWeb
                     LogMessage( APP_LOG_FILENAME, "Migrating Database..." );
                     
                     var lastMigration = pendingMigrations.Last();
-                    
+
+                    // create a logger, but don't enable any of the logs
+                    var migrationLogger = new Rock.Migrations.RockMigrationsLogger() { LogVerbose = false, LogInfo = false, LogWarning = false };
+
+                    var migratorLoggingDecorator = new MigratorLoggingDecorator( migrator, migrationLogger );
+
                     // NOTE: we need to specify the last migration vs null so it won't detect/complain about pending changes
-                    migrator.Update( lastMigration );
+                    migratorLoggingDecorator.Update( lastMigration );
                     result = true;
                 }
 
@@ -716,6 +742,54 @@ namespace RockWeb
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Loads the Component Data from Web.config.
+        /// </summary>
+        private void LoadComponenetData( RockContext rockContext )
+        {
+            var rockConfig = RockConfig.Config;
+            if ( rockConfig.AttributeValues.Count > 0 )
+            {
+                foreach ( AttributeValueConfig attributeValueConfig in rockConfig.AttributeValues )
+                {
+                    AttributeService attributeService = new AttributeService( rockContext );
+                    AttributeValueService attributeValueService = new AttributeValueService( rockContext );
+                    var attribute = attributeService.Get( attributeValueConfig.EntityTypeId.AsInteger(),
+                                           attributeValueConfig.EntityTypeQualifierColumm,
+                                           attributeValueConfig.EntityTypeQualifierValue,
+                                           attributeValueConfig.AttributeKey );
+                    if ( attribute == null )
+                    {
+                        attribute = new Rock.Model.Attribute();
+                        attribute.FieldTypeId = FieldTypeCache.Read( new Guid( Rock.SystemGuid.FieldType.TEXT ) ).Id;
+                        attribute.EntityTypeQualifierColumn = attributeValueConfig.EntityTypeQualifierColumm;
+                        attribute.EntityTypeQualifierValue = attributeValueConfig.EntityTypeQualifierValue;
+                        attribute.Key = attributeValueConfig.AttributeKey;
+                        attribute.Name = attributeValueConfig.AttributeKey.SplitCase();
+                        attributeService.Add( attribute );
+                        rockContext.SaveChanges();
+                    }
+
+
+                    var attributeValue = attributeValueService.GetByAttributeIdAndEntityId( attribute.Id, attributeValueConfig.EntityId.AsInteger() );
+                    if ( attributeValue == null && !string.IsNullOrWhiteSpace( attributeValueConfig.Value ) )
+                    {
+
+                        attributeValue = new Rock.Model.AttributeValue();
+                        attributeValue.AttributeId = attribute.Id;
+                        attributeValue.EntityId = attributeValueConfig.EntityId.AsInteger();
+                        attributeValueService.Add( attributeValue );
+                    }
+                    if ( attributeValue.Value != attributeValueConfig.Value )
+                    {
+                        attributeValue.Value = attributeValueConfig.Value;
+                        rockContext.SaveChanges();
+                    }
+
+                }
+            }
         }
 
         /// <summary>
@@ -998,7 +1072,9 @@ namespace RockWeb
 
                             if ( recipients.Any() )
                             {
-                                Email.Send( Rock.SystemGuid.SystemEmail.CONFIG_EXCEPTION_NOTIFICATION.AsGuid(), recipients, string.Empty, string.Empty, false );
+                                var message = new RockEmailMessage( Rock.SystemGuid.SystemEmail.CONFIG_EXCEPTION_NOTIFICATION.AsGuid() );
+                                message.SetRecipients( recipients );
+                                message.Send();
                             }
                         }
                     }

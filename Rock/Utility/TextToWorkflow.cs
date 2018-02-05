@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-
+using System.Web;
 using Rock;
 using Rock.Model;
 using Rock.Web.Cache;
@@ -46,14 +46,28 @@ namespace Rock.Utility
             var definedType = DefinedTypeCache.Read( Rock.SystemGuid.DefinedType.TEXT_TO_WORKFLOW.AsGuid() );
             if ( definedType != null && definedType.DefinedValues != null && definedType.DefinedValues.Any() )
             {
-                var smsWorkflows = definedType.DefinedValues.Where( v => v.Value.RemoveSpaces() == toPhone.RemoveSpaces() ).OrderBy( v => v.Order ).ToList();
+                var smsWorkflows = definedType.DefinedValues.Where( v => v.Value.AsNumeric() == toPhone.AsNumeric() ).OrderBy( v => v.Order ).ToList();
 
                 // iterate through workflows looking for a keyword match
                 foreach ( DefinedValueCache dvWorkflow in smsWorkflows )
                 {
                     string keywordExpression = dvWorkflow.GetAttributeValue( "KeywordExpression" );
-                    string workflowAttributes = dvWorkflow.GetAttributeValue( "WorkflowAttributes" );
+                    //string workflowAttributes = dvWorkflow.GetAttributeValue( "WorkflowAttributes" );
                     string nameTemplate = dvWorkflow.GetAttributeValue( "WorkflowNameTemplate" );
+                    List<KeyValuePair<string, object>> workflowAttributesSettings = new List<KeyValuePair<string, object>>();
+
+                    var workflowAttributes = dvWorkflow.Attributes["WorkflowAttributes"];
+                    if ( workflowAttributes != null )
+                    {
+                        var field = workflowAttributes.FieldType.Field;
+                        if ( field is Rock.Field.Types.KeyValueListFieldType )
+                        {
+                            var keyValueField = ( Rock.Field.Types.KeyValueListFieldType ) field;
+
+                            workflowAttributesSettings = keyValueField.GetValuesFromString( null, dvWorkflow.GetAttributeValue( "WorkflowAttributes" ), workflowAttributes.QualifierValues, false );
+                        }
+                    }
+
 
                     // if not keyword expression add wildcard expression
                     if ( string.IsNullOrWhiteSpace( keywordExpression ) )
@@ -84,127 +98,125 @@ namespace Rock.Utility
                             if ( workflowTypeGuid.HasValue )
                             {
                                 // launch workflow
-                                var rockContext = new Data.RockContext();
-                                var personService = new PersonService( rockContext );
-                                var groupMemberService = new GroupMemberService( rockContext );
-
-                                var workflowType = WorkflowTypeCache.Read( workflowTypeGuid.Value );
-                                if ( workflowType != null )
+                                using ( var rockContext = new Data.RockContext() )
                                 {
-                                    // Activate a new workflow
-                                    var workflow = Rock.Model.Workflow.Activate( workflowType, "Request from " + ( fromPhone ?? "??" ) );
+                                    var personService = new PersonService( rockContext );
+                                    var groupMemberService = new GroupMemberService( rockContext );
 
-                                    // give preference to people with the phone in the mobile phone type
-                                    // first look for a person with the phone number as a mobile phone order by family role then age
-                                    var mobilePhoneType = DefinedValueCache.Read( Rock.SystemGuid.DefinedValue.PERSON_PHONE_TYPE_MOBILE );
-                                    var familyGroupType = GroupTypeCache.Read( Rock.SystemGuid.GroupType.GROUPTYPE_FAMILY );
-
-                                    // Get all people phone number
-                                    var peopleWithMobileNumber = personService.Queryable()
-                                        .Where( p => 
-                                            p.PhoneNumbers.Any( n =>
-                                                ( n.CountryCode + n.Number ) == fromPhone.Replace( "+", "" ) && 
-                                                n.NumberTypeValueId == mobilePhoneType.Id ) 
-                                            )
-                                        .Select( p => p.Id );
-
-                                    // Find first person ordered by role (adult first), then by birthdate (oldest first)
-                                    var fromPerson = groupMemberService.Queryable()
-                                        .Where( m =>
-                                            m.Group.GroupTypeId == familyGroupType.Id && 
-                                            peopleWithMobileNumber.Contains( m.PersonId ) )
-                                        .OrderBy( m => m.GroupRole.Order )
-                                        .ThenBy( m => m.Person.BirthDate ?? DateTime.MinValue )
-                                        .Select( m => m.Person )
-                                        .FirstOrDefault();
-
-                                    // if no match then look for the phone in any phone type ordered by family role then age
-                                    if ( fromPerson == null )
+                                    var workflowType = WorkflowTypeCache.Read( workflowTypeGuid.Value );
+                                    if ( workflowType != null )
                                     {
-                                        var peopleWithAnyNumber = personService.Queryable()
-                                            .Where( p => 
+                                        // Activate a new workflow
+                                        var workflow = Rock.Model.Workflow.Activate( workflowType, "Request from " + ( fromPhone ?? "??" ), rockContext );
+
+                                        // give preference to people with the phone in the mobile phone type
+                                        // first look for a person with the phone number as a mobile phone order by family role then age
+                                        var mobilePhoneType = DefinedValueCache.Read( Rock.SystemGuid.DefinedValue.PERSON_PHONE_TYPE_MOBILE );
+                                        var familyGroupType = GroupTypeCache.Read( Rock.SystemGuid.GroupType.GROUPTYPE_FAMILY );
+
+                                        // Get all people phone number
+                                        var peopleWithMobileNumber = personService.Queryable()
+                                            .Where( p =>
                                                 p.PhoneNumbers.Any( n =>
-                                                    ( n.CountryCode + n.Number ) == fromPhone.Replace( "+", "" ) && 
-                                                    n.NumberTypeValueId == mobilePhoneType.Id ) 
+                                                    ( n.CountryCode + n.Number ) == fromPhone.Replace( "+", "" ) &&
+                                                    n.NumberTypeValueId == mobilePhoneType.Id )
                                                 )
                                             .Select( p => p.Id );
 
-                                        fromPerson = groupMemberService.Queryable()
+                                        // Find first person ordered by role (adult first), then by birthdate (oldest first)
+                                        var fromPerson = groupMemberService.Queryable()
                                             .Where( m =>
-                                                m.Group.GroupTypeId == familyGroupType.Id && 
+                                                m.Group.GroupTypeId == familyGroupType.Id &&
                                                 peopleWithMobileNumber.Contains( m.PersonId ) )
                                             .OrderBy( m => m.GroupRole.Order )
                                             .ThenBy( m => m.Person.BirthDate ?? DateTime.MinValue )
-                                            .Select( m => m.Person ).FirstOrDefault();
-                                    }
+                                            .Select( m => m.Person )
+                                            .FirstOrDefault();
 
-                                    // Set initiator
-                                    if ( fromPerson != null )
-                                    {
-                                        workflow.InitiatorPersonAliasId = fromPerson.PrimaryAliasId;
-                                    }
-
-                                    // create merge object
-                                    var formattedPhoneNumber = PhoneNumber.CleanNumber( PhoneNumber.FormattedNumber( PhoneNumber.DefaultCountryCode(), fromPhone ) );
-
-                                    List<string> matchGroups = new List<string>();
-                                    foreach ( var matchItem in match.Groups )
-                                    {
-                                        matchGroups.Add( matchItem.ToString() );
-                                    }
-
-                                    Dictionary<string, object> mergeValues = new Dictionary<string, object>();
-                                    mergeValues.Add( "FromPhone", formattedPhoneNumber );
-                                    mergeValues.Add( "ToPhone", toPhone );
-                                    mergeValues.Add( "MessageBody", message );
-                                    mergeValues.Add( "MatchedGroups", matchGroups );
-                                    mergeValues.Add( "ReceivedTime", RockDateTime.Now.ToString( "HH:mm:ss" ) );
-                                    mergeValues.Add( "ReceivedDate", RockDateTime.Now.ToShortDateString() );
-                                    mergeValues.Add( "ReceivedDateTime", RockDateTime.Now.ToString( "o" ) );
-                                    mergeValues.Add( "FromPerson", fromPerson );
-
-                                    // add phone number attribute
-                                    workflow.SetAttributeValue( "FromPhone", fromPhone );
-
-                                    // set workflow attributes
-                                    string[] attributes = workflowAttributes.Split( '|' );
-                                    foreach ( string attribute in attributes )
-                                    {
-                                        if ( attribute.Contains( '^' ) )
+                                        // if no match then look for the phone in any phone type ordered by family role then age
+                                        if ( fromPerson == null )
                                         {
-                                            string[] settings = attribute.Split( '^' );
-                                            workflow.SetAttributeValue( settings[0], settings[1].ResolveMergeFields( mergeValues ) );
+                                            var peopleWithAnyNumber = personService.Queryable()
+                                                .Where( p =>
+                                                    p.PhoneNumbers.Any( n =>
+                                                        ( n.CountryCode + n.Number ) == fromPhone.Replace( "+", "" ) &&
+                                                        n.NumberTypeValueId == mobilePhoneType.Id )
+                                                    )
+                                                .Select( p => p.Id );
+
+                                            fromPerson = groupMemberService.Queryable()
+                                                .Where( m =>
+                                                    m.Group.GroupTypeId == familyGroupType.Id &&
+                                                    peopleWithMobileNumber.Contains( m.PersonId ) )
+                                                .OrderBy( m => m.GroupRole.Order )
+                                                .ThenBy( m => m.Person.BirthDate ?? DateTime.MinValue )
+                                                .Select( m => m.Person ).FirstOrDefault();
                                         }
-                                    }
 
-                                    // set workflow name
-                                    string name = nameTemplate.ResolveMergeFields( mergeValues );
-                                    if ( name.IsNotNullOrWhitespace() )
+                                        // Set initiator
+                                        if ( fromPerson != null )
+                                        {
+                                            workflow.InitiatorPersonAliasId = fromPerson.PrimaryAliasId;
+                                        }
+
+                                        // create merge object
+                                        var formattedPhoneNumber = PhoneNumber.CleanNumber( PhoneNumber.FormattedNumber( PhoneNumber.DefaultCountryCode(), fromPhone ) );
+
+                                        List<string> matchGroups = new List<string>();
+                                        foreach ( var matchItem in match.Groups )
+                                        {
+                                            matchGroups.Add( matchItem.ToString() );
+                                        }
+
+                                        Dictionary<string, object> mergeValues = new Dictionary<string, object>();
+                                        mergeValues.Add( "FromPhone", formattedPhoneNumber );
+                                        mergeValues.Add( "ToPhone", toPhone );
+                                        mergeValues.Add( "MessageBody", message );
+                                        mergeValues.Add( "MatchedGroups", matchGroups );
+                                        mergeValues.Add( "ReceivedTime", RockDateTime.Now.ToString( "HH:mm:ss" ) );
+                                        mergeValues.Add( "ReceivedDate", RockDateTime.Now.ToShortDateString() );
+                                        mergeValues.Add( "ReceivedDateTime", RockDateTime.Now.ToString( "o" ) );
+                                        mergeValues.Add( "FromPerson", fromPerson );
+
+                                        // add phone number attribute
+                                        workflow.SetAttributeValue( "FromPhone", fromPhone );
+
+                                        // set workflow attributes
+                                        foreach( var attribute in workflowAttributesSettings )
+                                        {
+                                            workflow.SetAttributeValue( attribute.Key, attribute.Value.ToString().ResolveMergeFields( mergeValues ) );
+                                        }
+                                        
+                                        // set workflow name
+                                        string name = nameTemplate.ResolveMergeFields( mergeValues );
+                                        if ( name.IsNotNullOrWhitespace() )
+                                        {
+                                            workflow.Name = name;
+                                        }
+
+                                        // process the workflow
+                                        List<string> workflowErrors;
+                                        new Rock.Model.WorkflowService( rockContext ).Process( workflow, out workflowErrors );
+
+                                        // check to see if there is a response to return
+                                        string responseAttribute = workflow.GetAttributeValue( "SMSResponse" );
+                                        if ( responseAttribute != null && !string.IsNullOrWhiteSpace( responseAttribute ) )
+                                        {
+                                            response = responseAttribute;
+                                        }
+
+                                    }
+                                    else
                                     {
-                                        workflow.Name = name;
+                                        response = "This keyword is no longer valid.";
                                     }
-
-                                    // process the workflow
-                                    List<string> workflowErrors;
-                                    new Rock.Model.WorkflowService( rockContext ).Process( workflow, out workflowErrors );
-
-                                    // check to see if there is a response to return
-                                    string responseAttribute = workflow.GetAttributeValue( "SMSResponse" );
-                                    if ( responseAttribute != null && !string.IsNullOrWhiteSpace( responseAttribute ) )
-                                    {
-                                        response = responseAttribute;
-                                    }
-
-                                }
-                                else
-                                {
-                                    response = "This keyword is no longer valid.";
                                 }
                             }
                             else
                             {
                                 response = "No response could be provided for this keyword.";
                             }
+
 
                             // once we find one match stop processing
                             break;

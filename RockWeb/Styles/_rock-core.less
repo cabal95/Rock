@@ -15,10 +15,14 @@
 //--------------------------------
 @import "./FontAwesome/mixins.less";
 @import "./FontAwesome/variables.less";
+@import "./FontAwesome/_rock-upgrade-map-variables.less";
+@import "./FontAwesome/_rock-fa-mixins.less";
 @import "./JCrop/jcrop.less";
 @import "./chosen/bootstrap-chosen-variables.less";
 @import "./chosen/bootstrap-chosen.less";
 
+.fa-font-face( @fa-theme-weight-name, @fa-edition );
+.fa-font-face( 'brands' );
 
 // import as less files so they are concatenated properly
 @import (less) "./summernote/summernote.css";
@@ -47,8 +51,9 @@
 @import "_page-specific.less";
 
 @import "_scroll.less";
-@import "_global-variables.less";
 @import "_helpers.less";
+
+@import "_devices.less";
 
 @import "./Bootstrap/mixins.less";
 
@@ -429,7 +434,6 @@ th[align=center] {
 .panel-persondetails {
   border-top-color: @panel-top-border-color;
   // panel extensions    ->      .panel-variant(@border; @heading-text-color; @heading-bg-color; @heading-border;) {}
-
   .panel-variant(@panel-border; @panel-heading-text-color; @panel-heading-bg; @panel-heading-border;);
 
   .panel-heading {
@@ -445,7 +449,6 @@ th[align=center] {
 
     .form-group.static-control {
       margin-bottom: 2px;
-
       .clearfix();
 
       label {
@@ -462,6 +465,15 @@ th[align=center] {
         overflow: hidden;
         text-overflow: ellipsis;
       }
+    }
+    // styles for matrix attributes
+    .form-group.static-control.matrix-attribute label {
+      width: 100%;
+      text-align: left;
+    }
+
+    .form-group.static-control.matrix-attribute .form-control-static {
+      display: none;
     }
 
     i.fa.fa-bars {
@@ -610,7 +622,6 @@ th[align=center] {
 
 .btn-authentication {
   width: 100%;
-
   .button-variant(@btn-default-color; @btn-default-bg; @btn-default-border);
 
   &:hover {
@@ -619,19 +630,22 @@ th[align=center] {
 
   &.facebook:before {
     margin-right: 12px;
-    font-family: 'FontAwesome';
+    font-family: '@{fa-font-face} Brands';
+    font-weight: 400;
     content: @fa-var-facebook;
   }
 
   &.google:before {
     margin-right: 12px;
-    font-family: 'FontAwesome';
+    font-family: '@{fa-font-face} Brands';
+    font-weight: 400;
     content: @fa-var-google;
   }
 
   &.twitter:before {
     margin-right: 12px;
-    font-family: 'FontAwesome';
+    font-family: '@{fa-font-face} Brands';
+    font-weight: 400;
     content: @fa-var-twitter;
   }
 }

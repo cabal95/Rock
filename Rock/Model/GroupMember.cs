@@ -20,6 +20,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Configuration;
+using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -103,6 +104,7 @@ namespace Rock.Model
             get { return _groupMemberStatus; }
             set { _groupMemberStatus = value; }
         }
+
         private GroupMemberStatus _groupMemberStatus = GroupMemberStatus.Active;
 
         /// <summary>
@@ -123,7 +125,6 @@ namespace Rock.Model
         /// </value>
         [DataMember]
         public DateTime? DateTimeAdded { get; set; }
-
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance is notified.
@@ -213,7 +214,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
-        public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
         {
             var transaction = new Rock.Transactions.GroupMemberChangeTransaction( entry );
             Rock.Transactions.RockQueue.TransactionQueue.Enqueue( transaction );
@@ -226,7 +227,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
-        public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.EntityState state )
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.EntityState state )
         {
             try
             {
@@ -265,10 +266,12 @@ namespace Rock.Model
                             {
                                 group = this.Group;
                             }
+
                             if ( group == null )
                             {
                                 group = new GroupService( rockContext ).Get( this.GroupId );
                             }
+
                             if ( group != null )
                             {
                                 var groupType = GroupTypeCache.Read( group.GroupTypeId );
@@ -276,9 +279,10 @@ namespace Rock.Model
                                 {
                                     var origRole = groupType.Roles.FirstOrDefault( r => r.Id == origGroupRoleId );
                                     var newRole = groupType.Roles.FirstOrDefault( r => r.Id == this.GroupRoleId );
-                                    action = string.Format( "Group role changed from {0} to {1}",
-                                        ( origRole != null ? origRole.Name : "??" ),
-                                        ( newRole != null ? newRole.Name : "??" ) );
+                                    action = string.Format(
+                                        "Group role changed from {0} to {1}",
+                                        origRole != null ? origRole.Name : "??",
+                                        newRole != null ? newRole.Name : "??" );
                                 }
                             }
                         }
@@ -295,10 +299,12 @@ namespace Rock.Model
                 {
                     group = this.Group;
                 }
+
                 if ( group == null )
                 {
                     group = new GroupService( rockContext ).Get( this.GroupId );
                 }
+
                 if ( group != null )
                 {
                     var groupType = GroupTypeCache.Read( group.GroupTypeId );
@@ -321,10 +327,12 @@ namespace Rock.Model
                     {
                         group = this.Group;
                     }
+
                     if ( group == null )
                     {
                         group = new GroupService( rockContext ).Get( this.GroupId );
                     }
+
                     if ( group != null )
                     {
                         var personEntityTypeId = EntityTypeCache.Read( "Rock.Model.Person" ).Id;
@@ -345,7 +353,9 @@ namespace Rock.Model
                     }
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
             base.PreSaveChanges( dbContext, state );
         }
@@ -388,7 +398,6 @@ namespace Rock.Model
                     ValidationResults.Add( new ValidationResult( errorMessage ) );
                     result = false;
                 }
-                
             }
 
             return result;
@@ -543,7 +552,7 @@ namespace Rock.Model
                 }
 
                 // existing groupmember record, but person or role was changed
-                var hasChanged = ( ( this.GroupMemberStatus != databaseGroupMemberRecord.GroupMemberStatus ) || ( this.GroupRoleId != databaseGroupMemberRecord.GroupRoleId ) );
+                var hasChanged = this.GroupMemberStatus != databaseGroupMemberRecord.GroupMemberStatus || this.GroupRoleId != databaseGroupMemberRecord.GroupRoleId;
 
                 if ( !hasChanged )
                 {
@@ -576,7 +585,7 @@ namespace Rock.Model
                 var databaseGroupMemberRecord = groupMemberService.Get( this.Id );
 
                 // existing groupmember record, but person or role was changed
-                var hasChanged = ( ( this.PersonId != databaseGroupMemberRecord.PersonId ) || ( this.GroupRoleId != databaseGroupMemberRecord.GroupRoleId ) );
+                var hasChanged = this.PersonId != databaseGroupMemberRecord.PersonId || this.GroupRoleId != databaseGroupMemberRecord.GroupRoleId;
 
                 if ( !hasChanged )
                 {
@@ -681,6 +690,41 @@ namespace Rock.Model
                 this.GroupId == other.GroupId &&
                 this.PersonId == other.PersonId &&
                 this.GroupRoleId == other.GroupRoleId;
+        }
+
+        /// <summary>
+        /// Get a list of all inherited Attributes that should be applied to this entity.
+        /// </summary>
+        /// <returns>A list of all inherited AttributeCache objects.</returns>
+        public override List<AttributeCache> GetInheritedAttributes( Rock.Data.RockContext rockContext )
+        {
+            var group = this.Group;
+            if ( group == null && this.GroupId > 0 )
+            {
+                group = new GroupService( rockContext )
+                    .Queryable().AsNoTracking()
+                    .FirstOrDefault( g => g.Id == this.GroupId );
+            }
+
+            if ( group != null )
+            {
+                var groupType = group.GroupType;
+                if ( groupType == null && group.GroupTypeId > 0 )
+                {
+                    // Can't use GroupTypeCache here since it loads attributes and would
+                    // result in a recursive stack overflow situation.
+                    groupType = new GroupTypeService( rockContext )
+                        .Queryable().AsNoTracking()
+                        .FirstOrDefault( t => t.Id == group.GroupTypeId );
+                }
+
+                if ( groupType != null )
+                {
+                    return groupType.GetInheritedAttributesForQualifier( rockContext, TypeId, "GroupTypeId" );
+                }
+            }
+
+            return null;
         }
 
         #endregion

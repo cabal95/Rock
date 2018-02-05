@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 //
+using System.Data.Common;
 using System.Data.Entity.Infrastructure.Interception;
 using System.Diagnostics;
 using System.Linq;
@@ -49,7 +50,51 @@ namespace Rock
             /// <value>
             /// The rock context.
             /// </value>
-            internal RockContext RockContext { get; set; }
+            internal System.Data.Entity.DbContext DbContext { get; set; }
+
+            /// <summary>
+            /// </summary>
+            /// <param name="command"></param>
+            /// <param name="interceptionContext"></param>
+            /// <inheritdoc />
+            public override void NonQueryExecuting( DbCommand command, DbCommandInterceptionContext<int> interceptionContext )
+            {
+                object userState;
+                this.CommandExecuting( command, interceptionContext, out userState );
+                interceptionContext.UserState = userState;
+            }
+
+            /// <summary>
+            /// </summary>
+            /// <param name="command"></param>
+            /// <param name="interceptionContext"></param>
+            /// <inheritdoc />
+            public override void NonQueryExecuted( DbCommand command, DbCommandInterceptionContext<int> interceptionContext )
+            {
+                this.CommandExecuted( command, interceptionContext, interceptionContext.UserState );
+            }
+
+            /// <summary>
+            /// </summary>
+            /// <param name="command"></param>
+            /// <param name="interceptionContext"></param>
+            /// <inheritdoc />
+            public override void ScalarExecuting( DbCommand command, DbCommandInterceptionContext<object> interceptionContext )
+            {
+                object userState;
+                this.CommandExecuting( command, interceptionContext, out userState );
+                interceptionContext.UserState = userState;
+            }
+
+            /// <summary>
+            /// </summary>
+            /// <param name="command"></param>
+            /// <param name="interceptionContext"></param>
+            /// <inheritdoc />
+            public override void ScalarExecuted( DbCommand command, DbCommandInterceptionContext<object> interceptionContext )
+            {
+                this.CommandExecuted( command, interceptionContext, interceptionContext.UserState );
+            }
 
             /// <summary>
             /// </summary>
@@ -58,7 +103,32 @@ namespace Rock
             /// <inheritdoc />
             public override void ReaderExecuting( System.Data.Common.DbCommand command, DbCommandInterceptionContext<System.Data.Common.DbDataReader> interceptionContext )
             {
-                if ( RockContext != null && !interceptionContext.DbContexts.Any( a => a == RockContext ) )
+                object userState;
+                this.CommandExecuting( command, interceptionContext, out userState );
+                interceptionContext.UserState = userState;
+            }
+
+            /// <summary>
+            /// </summary>
+            /// <param name="command"></param>
+            /// <param name="interceptionContext"></param>
+            /// <inheritdoc />
+            public override void ReaderExecuted( DbCommand command, DbCommandInterceptionContext<DbDataReader> interceptionContext )
+            {
+                this.CommandExecuted( command, interceptionContext, interceptionContext.UserState );
+            }
+
+            /// <summary>
+            /// Commands the executing.
+            /// </summary>
+            /// <param name="command">The command.</param>
+            /// <param name="interceptionContext">The interception context.</param>
+            /// <param name="userState">State of the user.</param>
+            /// <inheritdoc />
+            private void CommandExecuting( DbCommand command, DbCommandInterceptionContext interceptionContext, out object userState )
+            {
+                userState = null;
+                if ( this.DbContext != null && !interceptionContext.DbContexts.Any( a => a == this.DbContext ) )
                 {
                     return;
                 }
@@ -108,9 +178,9 @@ namespace Rock
 
                 sbDebug.AppendLine( "\nEND\nGO\n\n" );
 
-                if ( interceptionContext.UserState == null )
+                if ( userState == null )
                 {
-                    interceptionContext.UserState = new DebugHelperUserState { CallNumber = DebugHelper._callCounts, Stopwatch = Stopwatch.StartNew() };
+                    userState = new DebugHelperUserState { CallNumber = DebugHelper._callCounts, Stopwatch = Stopwatch.StartNew() };
                 }
 
                 System.Diagnostics.Debug.Write( sbDebug.ToString() );
@@ -121,9 +191,10 @@ namespace Rock
             /// </summary>
             /// <param name="command">The command.</param>
             /// <param name="interceptionContext">The interception context.</param>
-            public override void ReaderExecuted( System.Data.Common.DbCommand command, DbCommandInterceptionContext<System.Data.Common.DbDataReader> interceptionContext )
+            /// <param name="userState">State of the user.</param>
+            public void CommandExecuted( System.Data.Common.DbCommand command, DbCommandInterceptionContext interceptionContext, object userState )
             {
-                var debugHelperUserState = interceptionContext.UserState as DebugHelperUserState;
+                var debugHelperUserState = userState as DebugHelperUserState;
                 if ( debugHelperUserState != null )
                 {
                     debugHelperUserState.Stopwatch.Stop();
@@ -138,14 +209,31 @@ namespace Rock
         private static DebugLoggingDbCommandInterceptor _debugLoggingDbCommandInterceptor = new DebugLoggingDbCommandInterceptor();
 
         /// <summary>
+        /// SQLs the logging start.
+        /// </summary>
+        public static void SQLLoggingStart()
+        {
+            SQLLoggingStart( null );
+        }
+
+        /// <summary>
         /// Starts logging all EF SQL Calls to the Debug Output Window as T-SQL Blocks
         /// </summary>
-        /// <param name="rockContext">The rock context to limit the output to.  Leave blank to show output for all rockContexts.</param>
-        public static void SQLLoggingStart( RockContext rockContext = null )
+        /// <param name="rockContext">The rock context.</param>
+        public static void SQLLoggingStart( RockContext rockContext )
+        {
+            SQLLoggingStart( (DbContext)rockContext );
+        }
+
+        /// <summary>
+        /// Starts logging all EF SQL Calls to the Debug Output Window as T-SQL Blocks
+        /// </summary>
+        /// <param name="dbContext">The database context.</param>
+        public static void SQLLoggingStart( System.Data.Entity.DbContext dbContext )
         {
             _callCounts = 0;
             SQLLoggingStop();
-            _debugLoggingDbCommandInterceptor.RockContext = rockContext;
+            _debugLoggingDbCommandInterceptor.DbContext = dbContext;
             DbInterception.Add( _debugLoggingDbCommandInterceptor );
         }
 
@@ -155,6 +243,14 @@ namespace Rock
         public static void SQLLoggingStop()
         {
             DbInterception.Remove( _debugLoggingDbCommandInterceptor );
+        }
+
+        /// <summary>
+        /// Stops logging all EF SQL Calls to the Debug Output Window
+        /// </summary>
+        public static void SQLLoggingStop( this System.Data.Entity.DbContext dbContext )
+        {
+            DebugHelper.SQLLoggingStop();
         }
     }
 }

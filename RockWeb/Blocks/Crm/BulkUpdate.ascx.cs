@@ -266,7 +266,6 @@ namespace RockWeb.Blocks.Crm
             if ( !Page.IsPostBack )
             {
                 cpCampus.Campuses = CampusCache.All();
-
                 Individuals = new List<Individual>();
                 SelectedFields = new List<string>();
 
@@ -501,6 +500,12 @@ namespace RockWeb.Blocks.Crm
                         newEmailActive = ddlIsEmailActive.SelectedValue == "Active";
                     }
                     EvaluateChange( changes, "Email Is Active", newEmailActive );
+                }
+
+                if ( SelectedFields.Contains( ddlCommunicationPreference.ClientID ) )
+                {
+                    var newCommunicationPreference = ddlCommunicationPreference.SelectedValueAsEnum<CommunicationType>();
+                    EvaluateChange( changes, "Communication Preference", newCommunicationPreference );
                 }
 
                 if ( SelectedFields.Contains( ddlEmailPreference.ClientID ) )
@@ -794,6 +799,7 @@ namespace RockWeb.Blocks.Crm
                     newEmailActive = ddlIsEmailActive.SelectedValue == "Active";
                 }
 
+                var newCommunicationPreference = ddlCommunicationPreference.SelectedValueAsEnumOrNull<CommunicationType>();
                 EmailPreference? newEmailPreference = ddlEmailPreference.SelectedValue.ConvertToEnumOrNull<EmailPreference>();
 
                 string newEmailNote = tbEmailNote.Text;
@@ -871,6 +877,12 @@ namespace RockWeb.Blocks.Crm
                     {
                         History.EvaluateChange( changes, "Email Is Active", person.IsEmailActive, newEmailActive );
                         person.IsEmailActive = newEmailActive;
+                    }
+
+                    if ( SelectedFields.Contains( ddlCommunicationPreference.ClientID ) )
+                    {
+                        History.EvaluateChange( changes, "Communication Preference", person.CommunicationPreference, newCommunicationPreference );
+                        person.CommunicationPreference = newCommunicationPreference.Value;
                     }
 
                     if ( SelectedFields.Contains( ddlEmailPreference.ClientID ) )
@@ -1302,41 +1314,47 @@ namespace RockWeb.Blocks.Crm
                 if ( !string.IsNullOrWhiteSpace( ddlTagList.SelectedValue ) )
                 {
                     int tagId = ddlTagList.SelectedValue.AsInteger();
-                    var taggedItemService = new TaggedItemService( rockContext );
 
-                    // get guids of selected individuals
-                    var personGuids = new PersonService( rockContext ).Queryable( true )
-                                        .Where( p =>
-                                            ids.Contains( p.Id ) )
-                                        .Select( p => p.Guid )
-                                        .ToList();
-
-                    if ( ddlTagAction.SelectedValue == "Add" )
+                    var tag = new TagService( rockContext ).Get( tagId );
+                    if ( tag != null && tag.IsAuthorized( "TAG", CurrentPerson ) )
                     {
-                        foreach ( var personGuid in personGuids )
-                        {
-                            if ( !taggedItemService.Queryable().Where( t => t.TagId == tagId && t.EntityGuid == personGuid ).Any() )
-                            {
-                                TaggedItem taggedItem = new TaggedItem();
-                                taggedItem.TagId = tagId;
-                                taggedItem.EntityGuid = personGuid;
+                        var taggedItemService = new TaggedItemService( rockContext );
 
-                                taggedItemService.Add( taggedItem );
-                                rockContext.SaveChanges();
+                        // get guids of selected individuals
+                        var personGuids = new PersonService( rockContext ).Queryable( true )
+                                            .Where( p =>
+                                                ids.Contains( p.Id ) )
+                                            .Select( p => p.Guid )
+                                            .ToList();
+
+                        if ( ddlTagAction.SelectedValue == "Add" )
+                        {
+                            foreach ( var personGuid in personGuids )
+                            {
+                                if ( !taggedItemService.Queryable().Where( t => t.TagId == tagId && t.EntityGuid == personGuid ).Any() )
+                                {
+                                    TaggedItem taggedItem = new TaggedItem();
+                                    taggedItem.TagId = tagId;
+                                    taggedItem.EntityTypeId = personEntityTypeId;
+                                    taggedItem.EntityGuid = personGuid;
+
+                                    taggedItemService.Add( taggedItem );
+                                    rockContext.SaveChanges();
+                                }
                             }
                         }
-                    }
-                    else // remove
-                    {
-                        foreach ( var personGuid in personGuids )
+                        else // remove
                         {
-                            var taggedPerson = taggedItemService.Queryable().Where( t => t.TagId == tagId && t.EntityGuid == personGuid ).FirstOrDefault();
-                            if ( taggedPerson != null )
+                            foreach ( var personGuid in personGuids )
                             {
-                                taggedItemService.Delete( taggedPerson );
+                                var taggedPerson = taggedItemService.Queryable().Where( t => t.TagId == tagId && t.EntityGuid == personGuid ).FirstOrDefault();
+                                if ( taggedPerson != null )
+                                {
+                                    taggedItemService.Delete( taggedPerson );
+                                }
                             }
+                            rockContext.SaveChanges();
                         }
-                        rockContext.SaveChanges();
                     }
                 }
                 #endregion
@@ -1474,6 +1492,7 @@ namespace RockWeb.Blocks.Crm
             ypGraduation.Enabled = ddlGradePicker.Enabled;
 
             SetControlSelection( cpCampus, "Campus" );
+            SetControlSelection( ddlCommunicationPreference, "Communication Preference" );
             SetControlSelection( ddlSuffix, "Suffix" );
             SetControlSelection( ddlRecordStatus, "Record Status" );
             SetControlSelection( ddlIsEmailActive, "Email Status" );

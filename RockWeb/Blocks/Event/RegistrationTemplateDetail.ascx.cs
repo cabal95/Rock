@@ -843,7 +843,7 @@ namespace RockWeb.Blocks.Event
             RegistrationTemplate.DiscountCodeTerm = string.IsNullOrWhiteSpace( tbDiscountCodeTerm.Text ) ? "Discount Code" : tbDiscountCodeTerm.Text;
             RegistrationTemplate.SuccessTitle = tbSuccessTitle.Text;
             RegistrationTemplate.SuccessText = ceSuccessText.Text;
-
+            RegistrationTemplate.RegistrationInstructions = heInstructions.Text;
             if ( !Page.IsValid || !RegistrationTemplate.IsValid )
             {
                 return;
@@ -2195,7 +2195,7 @@ namespace RockWeb.Blocks.Event
 
             tbSuccessTitle.Text = RegistrationTemplate.SuccessTitle;
             ceSuccessText.Text = RegistrationTemplate.SuccessText;
-
+            heInstructions.Text = RegistrationTemplate.RegistrationInstructions;
             BuildControls( true );
         }
 
@@ -2238,6 +2238,7 @@ namespace RockWeb.Blocks.Event
             lWorkflowType.Visible = !string.IsNullOrWhiteSpace( lWorkflowType.Text );
 
             rcwForms.Label = string.Format( "<strong>Forms</strong> ({0}) <i class='fa fa-caret-down'></i>", RegistrationTemplate.Forms.Count() );
+            lFormsReadonly.Text = string.Empty;
             if ( RegistrationTemplate.Forms.Any() )
             {
                 foreach ( var form in RegistrationTemplate.Forms.OrderBy( a => a.Order ) )

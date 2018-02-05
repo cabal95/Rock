@@ -200,12 +200,22 @@ namespace Rock.Web.UI.Controls
                     {
                         ids.Add( group.Id.ToString() );
                         names.Add( group.Name );
-                        var parentGroup = group.ParentGroup;
-                        var groupParentIds = GetGroupAncestorsIdList( parentGroup );
-                        parentIds.AddRange( groupParentIds );
+                        if ( group.ParentGroup != null && !parentIds.Contains( group.ParentGroup.Id ) )
+                        {
+                            var parentGroup = group.ParentGroup;
+                            var groupParentIds = GetGroupAncestorsIdList( parentGroup );
+                            foreach ( var groupParentId in groupParentIds )
+                            {
+                                if ( !parentIds.Contains( groupParentId ) )
+                                {
+                                    parentIds.Add( groupParentId );
+                                }
+                            }
+                        }
                     }
                 }
 
+                // NOTE: Order is important (parents before children) since the GroupTreeView loads on demand
                 InitialItemParentIds = parentIds.AsDelimited( "," );
                 ItemIds = ids;
                 ItemNames = names;
@@ -231,8 +241,19 @@ namespace Rock.Web.UI.Controls
         /// </summary>
         protected override void SetValuesOnSelect()
         {
-            var groups = new GroupService( new RockContext() ).Queryable().Where( g => ItemIds.Contains( g.Id.ToString() ) );
-            this.SetValues( groups );
+            var groupIds = ItemIds.Where( i => i != "0" ).AsIntegerList();
+            if ( groupIds.Any() )
+            {
+                var groups = new GroupService( new RockContext() )
+                    .Queryable()
+                    .Where( g => groupIds.Contains( g.Id ) )
+                    .ToList();
+                this.SetValues( groups );
+            }
+            else
+            {
+                this.SetValues( null );
+            }
         }
 
         /// <summary>

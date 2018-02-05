@@ -467,6 +467,27 @@ namespace Rock.Web.UI.Controls
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether [allow multiple uploads].
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [allow multiple uploads]; otherwise, <c>false</c>.
+        /// </value>
+        public bool AllowMultipleUploads
+        {
+            get
+            {
+                EnsureChildControls();
+                return _fileUpload.AllowMultiple;
+            }
+
+            set
+            {
+                EnsureChildControls();
+                _fileUpload.AllowMultiple = value;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the submit function client script.
         /// </summary>
         /// <value>
@@ -665,7 +686,8 @@ namespace Rock.Web.UI.Controls
 
                 writer.Write( @"
                     <div class='js-upload-progress upload-progress' style='display:none;'>
-                        <i class='fa fa-refresh fa-3x fa-spin'></i>                    
+                        <i class='fa fa-refresh fa-3x fa-spin'></i>
+                        <div class='js-upload-progress-percent'></div>
                     </div>" );
 
                 if (this.DisplayMode == UploaderDisplayMode.Button)
@@ -806,28 +828,28 @@ Rock.controls.fileUploader.initialize({{
             if ( eventArgument == "FileUploaded" && FileUploaded != null )
             {
                 EnsureChildControls();
-                
+
                 // grab the _hfBinaryFileId value of the Request.Params
                 _hfBinaryFileId.Value = System.Web.HttpContext.Current?.Request?.Params[_hfBinaryFileId.UniqueID];
 
-                if (IsBinaryFile)
+                if ( IsBinaryFile )
                 {
-                    FileUploaded( this, new FileUploaderEventArgs( this.UploadedContentFilePath ));
+                    FileUploaded( this, new FileUploaderEventArgs( this.BinaryFileId ) );
                 }
                 else
                 {
-                    FileUploaded( this, new FileUploaderEventArgs( this.BinaryFileId ));
+                    FileUploaded( this, new FileUploaderEventArgs( this.UploadedContentFilePath ) );
                 }
             }
 
             if ( eventArgument == "FileRemoved" )
             {
+                this.BinaryFileId = 0;
+
                 if ( FileRemoved != null )
                 {
                     FileRemoved( this, new FileUploaderEventArgs( this.BinaryFileId ) );
                 }
-
-                this.BinaryFileId = 0;
             }
         }
     }

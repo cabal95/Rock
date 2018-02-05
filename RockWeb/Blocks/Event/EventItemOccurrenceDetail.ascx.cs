@@ -105,6 +105,13 @@ namespace RockWeb.Blocks.Event
             else
             {
                 ShowDialog();
+
+                var rockContext = new RockContext();
+                var eventItemOccurrence = new EventItemOccurrenceService( rockContext ).Get( hfEventItemOccurrenceId.Value.AsInteger() );
+                
+                eventItemOccurrence.LoadAttributes();
+                phAttributeEdits.Controls.Clear();
+                Helper.AddEditControls( eventItemOccurrence, phAttributeEdits, false, BlockValidationGroup );
             }
         }
 
@@ -265,6 +272,10 @@ namespace RockWeb.Blocks.Event
                 eventItemOccurrence.ContactEmail = tbEmail.Text;
                 eventItemOccurrence.Note = htmlOccurrenceNote.Text;
 
+                // Update any attributes
+                eventItemOccurrence.LoadAttributes( rockContext );
+                Helper.GetEditValues( phAttributeEdits, eventItemOccurrence );
+
                 // Remove any linkage no longer in UI
                 Guid uiLinkageGuid = LinkageState != null ? LinkageState.Guid : Guid.Empty;
                 foreach( var linkage in eventItemOccurrence.Linkages.Where( l => !l.Guid.Equals(uiLinkageGuid)).ToList())
@@ -316,6 +327,7 @@ namespace RockWeb.Blocks.Event
                 }
 
                 rockContext.SaveChanges();
+                eventItemOccurrence.SaveAttributeValues( rockContext );
 
                 var qryParams = new Dictionary<string, string>();
                 qryParams.Add( "EventCalendarId", PageParameter( "EventCalendarId" ) );
@@ -796,6 +808,8 @@ namespace RockWeb.Blocks.Event
                     ShowEditDetails( eventItemOccurrence );
                 }
             }
+            eventItemOccurrence.LoadAttributes();
+            Helper.AddDisplayControls( eventItemOccurrence, phAttributes, null, false, false );
         }
 
         private void ShowEditDetails( EventItemOccurrence eventItemOccurrence )
@@ -895,6 +909,10 @@ namespace RockWeb.Blocks.Event
             ppContact.SetValue( eventItemOccurrence.ContactPersonAlias != null ? eventItemOccurrence.ContactPersonAlias.Person : null );
             pnPhone.Text = eventItemOccurrence.ContactPhone;
             tbEmail.Text = eventItemOccurrence.ContactEmail;
+
+            eventItemOccurrence.LoadAttributes();
+            phAttributeEdits.Controls.Clear();
+            Helper.AddEditControls( eventItemOccurrence, phAttributeEdits, true, BlockValidationGroup );
 
             htmlOccurrenceNote.Text = eventItemOccurrence.Note;
 
@@ -1103,7 +1121,7 @@ namespace RockWeb.Blocks.Event
             using ( var rockContext = new RockContext() )
             {
                 foreach( var template in new RegistrationTemplateService( rockContext )
-                    .Queryable().AsNoTracking() )
+                    .Queryable().AsNoTracking().OrderBy( t => t.Name ) )
                 {
                     if ( template.IsAuthorized( Authorization.VIEW, CurrentPerson ) )
                     {
@@ -1134,7 +1152,9 @@ namespace RockWeb.Blocks.Event
                 {
                     foreach ( var instance in new RegistrationInstanceService( rockContext )
                         .Queryable().AsNoTracking()
-                        .Where( i => i.RegistrationTemplateId == templateId.Value ) )
+                        .Where( i => i.RegistrationTemplateId == templateId.Value )
+                        .OrderBy( i => i.Name )
+                        )
                     {
                         ListItem li = new ListItem( instance.Name, instance.Id.ToString() );
                         ddlExistingLinkageInstance.Items.Add( li );

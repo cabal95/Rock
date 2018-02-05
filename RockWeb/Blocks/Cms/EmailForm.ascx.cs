@@ -19,35 +19,33 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
 using Rock;
+using Rock.Attribute;
+using Rock.Communication;
 using Rock.Data;
 using Rock.Model;
+using Rock.Security;
 using Rock.Web.Cache;
 using Rock.Web.UI.Controls;
-using Rock.Attribute;
-using System.Web;
-using System.Text.RegularExpressions;
-using System.Net.Mail;
-using Rock.Communication;
-using Rock.Security;
 
 namespace RockWeb.Blocks.Cms
 {
     /// <summary>
-    /// Template block for developers to use to start a new block.
+    /// 
     /// </summary>
     [DisplayName( "Email Form" )]
     [Category( "CMS" )]
     [Description( "Block that takes and HTML form and emails the contents to an address of your choosing." )]
 
-    [TextField( "Receipient Email(s)", "Email addresses (comma delimited) to send the contents to.", true, "", "", 0, "RecipientEmail" )]
+    [TextField( "Recipient Email(s)", "Email addresses (comma delimited) to send the contents to.", true, "", "", 0, "RecipientEmail" )]
     [TextField( "Subject", "The subject line for the email. <span class='tip tip-lava'></span>", true, "", "", 1 )]
     [TextField( "From Email", "The email address to use for the from. <span class='tip tip-lava'></span>", true, "", "", 2 )]
     [TextField( "From Name", "The name to use for the from address. <span class='tip tip-lava'></span>", true, "", "", 3 )]
-    [CodeEditorField( "HTML Form", "The HTML for the form the user will complete. <span class='tip tip-lava'></span>", CodeEditorMode.Lava, CodeEditorTheme.Rock, 400, false, @"{% if CurentUser %}
+    [CodeEditorField( "HTML Form", "The HTML for the form the user will complete. <span class='tip tip-lava'></span>", CodeEditorMode.Lava, CodeEditorTheme.Rock, 400, false, @"{% if CurrentPerson %}
     {{ CurrentPerson.NickName }}, could you please complete the form below.
 {% else %}
     Please complete the form below.
@@ -119,24 +117,9 @@ namespace RockWeb.Blocks.Cms
     [BooleanField( "Enable Debug", "Shows the fields available to merge in lava.", false, "", 11 )]
     [BooleanField( "Save Communication History", "Should a record of this communication be saved to the recipient's profile", false, "", 12 )]
     [LavaCommandsField( "Enabled Lava Commands", "The Lava commands that should be enabled for this HTML block.", false, order: 13 )]
-
     public partial class EmailForm : Rock.Web.UI.RockBlock
     {
-        #region Fields
-
-        // used for private variables
-
-        #endregion
-
-        #region Properties
-
-        // used for public / protected properties
-
-        #endregion
-
         #region Base Control Methods
-
-        //  overrides of the base RockBlock methods (i.e. OnInit, OnLoad)
 
         /// <summary>
         /// Raises the <see cref="E:System.Web.UI.Control.Init" /> event.
@@ -166,7 +149,6 @@ namespace RockWeb.Blocks.Cms
             }
 
             Page.Form.Enctype = "multipart/form-data";
-
         }
 
         /// <summary>
@@ -215,8 +197,6 @@ namespace RockWeb.Blocks.Cms
 
         #region Events
 
-        // handlers called by the controls on your block
-
         /// <summary>
         /// Handles the BlockUpdated event of the control.
         /// </summary>
@@ -227,6 +207,11 @@ namespace RockWeb.Blocks.Cms
             ShowForm();
         }
 
+        /// <summary>
+        /// Handles the Click event of the btnSubmit control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void btnSubmit_Click( object sender, EventArgs e )
         {
             SendEmail();
@@ -244,6 +229,9 @@ namespace RockWeb.Blocks.Cms
 
         #region Methods
 
+        /// <summary>
+        /// Shows the form.
+        /// </summary>
         private void ShowForm()
         {
             var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
@@ -251,6 +239,9 @@ namespace RockWeb.Blocks.Cms
             lEmailForm.Text = GetAttributeValue( "HTMLForm" ).ResolveMergeFields( mergeFields, GetAttributeValue( "EnabledLavaCommands" ) );
         }
 
+        /// <summary>
+        /// Sends the email.
+        /// </summary>
         private void SendEmail()
         {
             // ensure this is not from a bot
@@ -274,12 +265,14 @@ namespace RockWeb.Blocks.Cms
 
             if ( !isBot )
             {
+                var message = new RockEmailMessage();
+                message.EnabledLavaCommands = GetAttributeValue( "EnabledLavaCommands" );
+
                 // create merge objects
-                var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
+                var mergeFields = new Dictionary<string, object>();
 
                 // create merge object for fields
                 Regex rgxRockControls = new Regex( @"^ctl\d*\$.*" );
-
                 var formFields = new Dictionary<string, object>();
                 for ( int i = 0; i < Request.Form.Count; i++ )
                 {
@@ -297,33 +290,44 @@ namespace RockWeb.Blocks.Cms
                 mergeFields.Add( "FormFields", formFields );
 
                 // get attachments
-                List<Attachment> attachments = new List<Attachment>();
-
+                var rockContext = new RockContext();
+                var binaryFileService = new BinaryFileService( rockContext );
+                var binaryFileType = new BinaryFileTypeService( rockContext ).Get( Rock.SystemGuid.BinaryFiletype.DEFAULT.AsGuid() );
                 for ( int i = 0; i < Request.Files.Count; i++ )
                 {
-                    HttpPostedFile attachmentFile = Request.Files[i];
+                    var uploadedFile = Request.Files[i];
+                    if ( uploadedFile.ContentLength > 0 && uploadedFile.FileName.IsNotNullOrWhitespace() )
+                    {
+                        var binaryFile = new BinaryFile();
+                        binaryFileService.Add( binaryFile );
+                        binaryFile.BinaryFileTypeId = binaryFileType.Id;
+                        binaryFile.IsTemporary = false;
+                        binaryFile.MimeType = uploadedFile.ContentType;
+                        binaryFile.FileSize = uploadedFile.ContentLength;
+                        binaryFile.FileName = Path.GetFileName( uploadedFile.FileName );
+                        binaryFile.ContentStream = uploadedFile.InputStream;
+                        rockContext.SaveChanges();
 
-                    string fileName = System.IO.Path.GetFileName( attachmentFile.FileName );
-
-                    Attachment attachment = new Attachment( attachmentFile.InputStream, fileName );
-
-                    attachments.Add( attachment );
+                        message.Attachments.Add( binaryFileService.Get( binaryFile.Id ) );
+                    }
                 }
 
-                mergeFields.Add( "AttachmentCount", attachments.Count );
+                mergeFields.Add( "AttachmentCount", message.Attachments.Count );
 
                 // send email
-                List<string> recipients = GetAttributeValue( "RecipientEmail" ).Split( ',' ).ToList();
-                for ( var i = 0; i < recipients.Count; i++ )
+                foreach ( string recipient in GetAttributeValue( "RecipientEmail" ).Split( ',' ).ToList() )
                 {
-                    recipients[i] = recipients[i].ResolveMergeFields( mergeFields, GetAttributeValue( "EnabledLavaCommands" ) );
+                    message.AddRecipient( new RecipientData( recipient, mergeFields ) );
                 }
-                string message = GetAttributeValue( "MessageBody" ).ResolveMergeFields( mergeFields, GetAttributeValue( "EnabledLavaCommands" ) );
-                string fromEmail = GetAttributeValue( "FromEmail" ).ResolveMergeFields( mergeFields, GetAttributeValue( "EnabledLavaCommands" ) );
-                string fromName = GetAttributeValue( "FromName" ).ResolveMergeFields( mergeFields, GetAttributeValue( "EnabledLavaCommands" ) );
-                string subject = GetAttributeValue( "Subject" ).ResolveMergeFields( mergeFields, GetAttributeValue( "EnabledLavaCommands" ) );
 
-                Email.Send( fromEmail, fromName, subject, recipients, message, ResolveRockUrl( "~/" ), ResolveRockUrl( "~~/" ), attachments, GetAttributeValue( "SaveCommunicationHistory" ).AsBoolean() );
+                message.Message = GetAttributeValue( "MessageBody" );
+                message.FromEmail = GetAttributeValue( "FromEmail" );
+                message.FromName = GetAttributeValue( "FromName" );
+                message.Subject = GetAttributeValue( "Subject" );
+                message.AppRoot = ResolveRockUrl( "~/" );
+                message.ThemeRoot = ResolveRockUrl( "~~/" );
+                message.CreateCommunicationRecord = GetAttributeValue( "SaveCommunicationHistory" ).AsBoolean();
+                message.Send();
 
                 // set response
                 if ( !string.IsNullOrWhiteSpace( GetAttributeValue( "ResponsePage" ) ) )
@@ -352,6 +356,5 @@ namespace RockWeb.Blocks.Cms
         }
 
         #endregion
-
     }
 }

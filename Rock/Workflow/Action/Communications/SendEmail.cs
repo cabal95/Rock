@@ -44,7 +44,13 @@ namespace Rock.Workflow.Action
         new string[] { "Rock.Field.Types.GroupRoleFieldType" } )]
     [TextField( "Subject", "The subject that should be used when sending email. <span class='tip tip-lava'></span>", false, "", "", 3 )]
     [CodeEditorField( "Body", "The body of the email that should be sent. <span class='tip tip-lava'></span> <span class='tip tip-html'></span>", Web.UI.Controls.CodeEditorMode.Html, Web.UI.Controls.CodeEditorTheme.Rock, 200, false, "", "", 4 )]
-    [BooleanField( "Save Communication History", "Should a record of this communication be saved to the recipient's profile", false, "", 5 )]
+    [WorkflowAttribute( "Attachment One", "Workflow attribute that contains the email attachment. Note file size that can be sent is limited by both the sending and receiving email services typically 10 - 25 MB.", false, "", "", 5, "AttachmentOne",
+        new string[] { "Rock.Field.Types.FileFieldType", "Rock.Field.Types.ImageFieldType" } )]
+    [WorkflowAttribute( "Attachment Two", "Workflow attribute that contains the email attachment. Note file size that can be sent is limited by both the sending and receiving email services typically 10 - 25 MB.", false, "", "", 6, "AttachmentTwo",
+        new string[] { "Rock.Field.Types.FileFieldType", "Rock.Field.Types.ImageFieldType" } )]
+    [WorkflowAttribute( "Attachment Three", "Workflow attribute that contains the email attachment. Note file size that can be sent is limited by both the sending and receiving email services typically 10 - 25 MB.", false, "", "", 7, "AttachmentThree",
+        new string[] { "Rock.Field.Types.FileFieldType", "Rock.Field.Types.ImageFieldType" } )]
+    [BooleanField( "Save Communication History", "Should a record of this communication be saved to the recipient's profile", false, "", 8 )]
     public class SendEmail : ActionComponent
     {
         /// <summary>
@@ -55,7 +61,7 @@ namespace Rock.Workflow.Action
         /// <param name="entity">The entity.</param>
         /// <param name="errorMessages">The error messages.</param>
         /// <returns></returns>
-        public override bool Execute( RockContext rockContext, WorkflowAction action, Object entity, out List<string> errorMessages )
+        public override bool Execute( RockContext rockContext, WorkflowAction action, object entity, out List<string> errorMessages )
         {
             errorMessages = new List<string>();
 
@@ -65,10 +71,14 @@ namespace Rock.Workflow.Action
             string fromValue = GetAttributeValue( action, "From" );
             string subject = GetAttributeValue( action, "Subject" );
             string body = GetAttributeValue( action, "Body" );
+            BinaryFile[] attachments = { new BinaryFileService( rockContext ).Get( GetAttributeValue( action, "AttachmentOne", true ).AsGuid() ),
+                new BinaryFileService( rockContext ).Get( GetAttributeValue( action, "AttachmentTwo", true ).AsGuid() ),
+                new BinaryFileService( rockContext ).Get( GetAttributeValue( action, "AttachmentThree", true ).AsGuid() ) };
 
             bool createCommunicationRecord = GetAttributeValue( action, "SaveCommunicationHistory" ).AsBoolean();
 
-            string from = string.Empty;
+            string fromEmail = string.Empty;
+            string fromName = string.Empty;
             Guid? fromGuid = fromValue.AsGuidOrNull();
             if ( fromGuid.HasValue )
             {
@@ -89,20 +99,21 @@ namespace Rock.Workflow.Action
                                     .FirstOrDefault();
                                 if ( person != null && !string.IsNullOrWhiteSpace( person.Email ) )
                                 {
-                                    from = string.Format( "{0} <{1}>", person.FullName, person.Email );
+                                    fromEmail = person.Email;
+                                    fromName = person.FullName;
                                 }
                             }
                         }
                         else
                         {
-                            from = fromAttributeValue;
+                            fromEmail = fromAttributeValue;
                         }
                     }
                 }
             }
             else
             {
-                from = fromValue;
+                fromEmail = fromValue;
             }
 
             Guid? guid = to.AsGuidOrNull();
@@ -119,9 +130,10 @@ namespace Rock.Workflow.Action
                             case "Rock.Field.Types.TextFieldType":
                             case "Rock.Field.Types.EmailFieldType":
                                 {
-                                    Send( toValue, from, subject, body, mergeFields, rockContext, createCommunicationRecord );
+                                    Send( toValue, fromEmail, fromName, subject, body, mergeFields, rockContext, createCommunicationRecord, attachments );
                                     break;
                                 }
+
                             case "Rock.Field.Types.PersonFieldType":
                                 {
                                     Guid personAliasGuid = toValue.AsGuid();
@@ -151,18 +163,20 @@ namespace Rock.Workflow.Action
                                         {
                                             var personDict = new Dictionary<string, object>( mergeFields );
                                             personDict.Add( "Person", person );
-                                            Send( person.Email, from, subject, body, personDict, rockContext, createCommunicationRecord );
+                                            Send( person.Email, fromEmail, fromName, subject, body, personDict, rockContext, createCommunicationRecord, attachments );
                                         }
                                     }
+
                                     break;
                                 }
+
                             case "Rock.Field.Types.GroupFieldType":
                             case "Rock.Field.Types.SecurityRoleFieldType":
                                 {
                                     int? groupId = toValue.AsIntegerOrNull();
                                     Guid? groupGuid = toValue.AsGuidOrNull();
 
-                                    //Get the Group Role attribute value
+                                    // Get the Group Role attribute value
                                     Guid? groupRoleValueGuid = GetGroupRoleValue( action );
 
                                     IQueryable<GroupMember> qry = null;
@@ -172,17 +186,15 @@ namespace Rock.Workflow.Action
                                     {
                                         qry = new GroupMemberService( rockContext ).GetByGroupId( groupId.Value );
                                     }
-
-                                    // Handle situations where the attribute value stored is the Guid
-                                    else if ( groupGuid.HasValue )
+                                    else if ( groupGuid.HasValue ) 
                                     {
+                                        // Handle situations where the attribute value stored is the Guid
                                         qry = new GroupMemberService( rockContext ).GetByGroupGuid( groupGuid.Value );
                                     }
                                     else
                                     {
                                         action.AddLogEntry( "Invalid Recipient: No valid group id or Guid", true );
                                     }
-
 
                                     if ( groupRoleValueGuid.HasValue )
                                     {
@@ -195,16 +207,17 @@ namespace Rock.Workflow.Action
                                             .Where( m => m.GroupMemberStatus == GroupMemberStatus.Active )
                                             .Select( m => m.Person ) )
                                         {
-                                            if ( ( person.IsEmailActive ) &&
+                                            if ( person.IsEmailActive &&
                                                 person.EmailPreference != EmailPreference.DoNotEmail &&
                                                 !string.IsNullOrWhiteSpace( person.Email ) )
                                             {
                                                 var personDict = new Dictionary<string, object>( mergeFields );
                                                 personDict.Add( "Person", person );
-                                                Send( person.Email, from, subject, body, personDict, rockContext, createCommunicationRecord );
+                                                Send( person.Email, fromEmail, fromName, subject, body, personDict, rockContext, createCommunicationRecord, attachments );
                                             }
                                         }
                                     }
+
                                     break;
                                 }
                         }
@@ -213,7 +226,7 @@ namespace Rock.Workflow.Action
             }
             else
             {
-                Send( to.ResolveMergeFields( mergeFields ), from, subject, body, mergeFields, rockContext, createCommunicationRecord );
+                Send( to.ResolveMergeFields( mergeFields ), fromEmail, fromName, subject, body, mergeFields, rockContext, createCommunicationRecord, attachments );
             }
 
             return true;
@@ -234,37 +247,27 @@ namespace Rock.Workflow.Action
             return groupRoleGuid;
         }
 
-        private void Send( string recipients, string from, string subject, string body, Dictionary<string, object> mergeFields, RockContext rockContext, bool createCommunicationRecord )
+        private void Send( string recipients, string fromEmail, string fromName, string subject, string body, Dictionary<string, object> mergeFields, RockContext rockContext, bool createCommunicationRecord, BinaryFile[] attachments )
         {
-            var recipientList = recipients.SplitDelimitedValues().ToList();
-
-            var mediumData = new Dictionary<string, string>();
-            mediumData.Add( "From", from.ResolveMergeFields( mergeFields ) );
-            mediumData.Add( "Subject", subject.ResolveMergeFields( mergeFields ) );
-            mediumData.Add( "Body", System.Text.RegularExpressions.Regex.Replace( body.ResolveMergeFields( mergeFields ), @"\[\[\s*UnsubscribeOption\s*\]\]", string.Empty ) );
-
-            var mediumEntity = EntityTypeCache.Read( Rock.SystemGuid.EntityType.COMMUNICATION_MEDIUM_EMAIL.AsGuid(), rockContext );
-            if ( mediumEntity != null )
+            var emailMessage = new RockEmailMessage();
+            foreach ( string recipient in recipients.SplitDelimitedValues().ToList() )
             {
-                var medium = MediumContainer.GetComponent( mediumEntity.Name );
-                if ( medium != null && medium.IsActive )
-                {
-                    var transport = medium.Transport;
-                    if ( transport != null && transport.IsActive )
-                    {
-                        var appRoot = GlobalAttributesCache.Read( rockContext ).GetValue( "InternalApplicationRoot" );
-
-                        if ( transport is Rock.Communication.Transport.SMTPComponent )
-                        {
-                            ( (Rock.Communication.Transport.SMTPComponent)transport ).Send( mediumData, recipientList, appRoot, string.Empty, createCommunicationRecord );
-                        }
-                        else
-                        {
-                            transport.Send( mediumData, recipientList, appRoot, string.Empty );
-                        }
-                    }
-                }
+                emailMessage.AddRecipient( new RecipientData( recipient, mergeFields ) );
             }
+
+            emailMessage.FromEmail = fromEmail;
+            emailMessage.FromName = fromName;
+            emailMessage.Subject = subject;
+            emailMessage.Message = body;
+
+            foreach (BinaryFile b in attachments)
+            {
+                emailMessage.Attachments.Add( b );
+            }
+            
+            emailMessage.CreateCommunicationRecord = createCommunicationRecord;
+
+            emailMessage.Send();
         }
     }
 }

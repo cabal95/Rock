@@ -53,9 +53,25 @@
         </div>
 
         <script type="text/javascript">
+            var <%=pnlTreeviewContent.ClientID%>IScroll = null;
 
             var scrollbPage = $('#<%=pnlTreeviewContent.ClientID%>').closest('.treeview-scroll');
-            scrollbPage.tinyscrollbar({ axis: 'x', sizethumb: 60, size: 200 });
+            var scrollContainer = scrollbPage.find('.viewport');
+            var scrollIndicator = scrollbPage.find('.track');
+                <%=pnlTreeviewContent.ClientID%>IScroll = new IScroll(scrollContainer[0], {
+                    mouseWheel: false,
+                    scrollX: true,
+                    scrollY: false,
+                    indicators: {
+                        el: scrollIndicator[0],
+                        interactive: true,
+                        resize: false,
+                        listenX: true,
+                        listenY: false,
+                    },
+                    click: false,
+                    preventDefaultException: { tagName: /.*/ }
+                });
 
             // resize scrollbar when the window resizes
             $(document).ready(function () {
@@ -125,7 +141,9 @@
 
                 $(scrollControl).find('.viewport').height(overviewHeight);
 
-                scrollControl.tinyscrollbar_update('relative');
+                if (<%=pnlTreeviewContent.ClientID%>IScroll) {
+                        <%=pnlTreeviewContent.ClientID%>IScroll.refresh();
+                }
             }
         </script>
     </ContentTemplate>

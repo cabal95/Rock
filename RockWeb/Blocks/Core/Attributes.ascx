@@ -13,18 +13,19 @@
             <div class="panel panel-block">
                 <div class="panel-heading">
                     <h1 class="panel-title"><i class="fa fa-list-ul"></i> Attribute List</h1>
+                    <div class="form-inline pull-right clearfix">
+                        <Rock:EntityTypePicker ID="ddlEntityType" runat="server" Label="Entity Type" IncludeGlobalOption="true" AutoPostBack="true" OnSelectedIndexChanged="ddlEntityType_SelectedIndexChanged"  />
+                    </div>
                 </div>
                 <div class="panel-body">
-
-                    <div class="grid grid-panel">
-                        <Rock:GridFilter ID="rFilter" runat="server" OnDisplayFilterValue="rFilter_DisplayFilterValue">
-                            <Rock:EntityTypePicker ID="ddlEntityType" runat="server" Label="Entity Type" IncludeGlobalOption="true" AutoPostBack="true" OnSelectedIndexChanged="ddlEntityType_SelectedIndexChanged" />
+                    <asp:Panel ID="pnlGrid" runat="server" CssClass="grid grid-panel">
+                            <Rock:GridFilter ID="rFilter" runat="server" OnDisplayFilterValue="rFilter_DisplayFilterValue">
                             <Rock:CategoryPicker ID="cpCategoriesFilter" runat="server" Label="Categories" AllowMultiSelect="true" />
                             <Rock:RockCheckBox ID="cbAnalyticsEnabled" runat="server" Label="Show only attributes with Analytics Enabled" />
                         </Rock:GridFilter>
-                        <Rock:Grid ID="rGrid" runat="server" AllowSorting="true" RowItemText="setting" TooltipField="Description" OnRowSelected="rGrid_RowSelected">
+                            <Rock:Grid ID="rGrid" runat="server" RowItemText="setting" TooltipField="Description" OnRowSelected="rGrid_RowSelected">
                             <Columns>
-                                <Rock:ReorderField Visible="false" />
+                                <Rock:ReorderField />
                                 <Rock:RockBoundField
                                     DataField="Id"
                                     HeaderText="Id"
@@ -40,13 +41,13 @@
                                         <asp:Literal ID="lCategories" runat="server"></asp:Literal>
                                     </ItemTemplate>
                                 </Rock:RockTemplateField>
-                                <Rock:RockTemplateField>
+                                <Rock:RockTemplateField ID="rtDefaultValue">
                                     <HeaderTemplate>Default Value</HeaderTemplate>
                                     <ItemTemplate>
                                         <asp:Literal ID="lDefaultValue" runat="server"></asp:Literal>
                                     </ItemTemplate>
                                 </Rock:RockTemplateField>
-                                <Rock:RockTemplateField>
+                                <Rock:RockTemplateField ID="rtValue">
                                     <HeaderTemplate>Value</HeaderTemplate>
                                     <ItemTemplate>
                                         <asp:Literal ID="lValue" runat="server"></asp:Literal>
@@ -57,8 +58,7 @@
                                 <Rock:DeleteField OnClick="rGrid_Delete" />
                             </Columns>
                         </Rock:Grid>
-                    </div>
-
+                    </asp:Panel>
                 </div>
             </div>
 
@@ -72,7 +72,7 @@
             <Content>
                 <asp:ValidationSummary ID="valSummaryTop" runat="server" HeaderText="Please Correct the Following" CssClass="alert alert-danger" />
                 <asp:panel ID="pnlEntityTypeQualifier" runat="server" Visible="false" class="well">
-                    <Rock:EntityTypePicker ID="ddlAttrEntityType" runat="server" Label="Entity Type" IncludeGlobalOption="true" Required="true" AutoPostBack="true" OnSelectedIndexChanged="ddlAttrEntityType_SelectedIndexChanged" />
+                    <Rock:EntityTypePicker ID="ddlAttrEntityType" runat="server" Label="Entity Type" IncludeGlobalOption="true" Required="true" AutoPostBack="true" OnSelectedIndexChanged="ddlAttrEntityType_SelectedIndexChanged" EnhanceForLongLists="true" />
                     <div class="row">
                         <div class="col-md-6">
                             <Rock:RockTextBox ID="tbAttrQualifierField" runat="server" Label="Qualifier Field" />
@@ -82,7 +82,7 @@
                         </div>
                     </div>
                 </asp:panel>
-                <Rock:AttributeEditor ID="edtAttribute" runat="server" ShowActions="false" ValidationGroup="Attribute" ShowInGridVisible="true" />
+                <Rock:AttributeEditor ID="edtAttribute" runat="server" ShowActions="false" ValidationGroup="Attribute" IsShowInGridVisible="true" />
             </Content>
         </Rock:ModalDialog>
 
@@ -94,7 +94,7 @@
             </Content>
         </Rock:ModalDialog>
 
-        <Rock:NotificationBox ID="nbMessage" runat="server" Title="Error" NotificationBoxType="Danger" Visible="false" />
+        <Rock:NotificationBox ID="nbMessage" runat="server" NotificationBoxType="Warning" Visible="false" />
 
     </ContentTemplate>
 </asp:UpdatePanel>

@@ -100,6 +100,16 @@ namespace Rock.Model
         public string LifeStage { get; set; }
 
         /// <summary>
+        /// Gets or sets the life stage level.
+        /// </summary>
+        /// <value>
+        /// The life stage level.
+        /// </value>
+        [MaxLength( 50 )]
+        [DataMember]
+        public string LifeStageLevel { get; set; }
+
+        /// <summary>
         /// Gets or sets the MaritalStatus
         /// </summary>
         /// <value>
@@ -241,6 +251,15 @@ namespace Rock.Model
         /// </value>
         [DataMember]
         public int? OrganizationIndividualCount { get; set; }
+
+         /// <summary>
+        /// Gets or sets the mean age.
+        /// </summary>
+        /// <value>
+        /// The mean age.
+        /// </value>
+        [DataMember]
+        public int? MeanAge { get; set; }
 
         #endregion
 

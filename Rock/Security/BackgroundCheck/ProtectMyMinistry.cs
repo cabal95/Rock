@@ -161,7 +161,7 @@ namespace Rock.Security.BackgroundCheck
 
                 if ( ssnAttribute != null )
                 {
-                    string ssn = Encryption.DecryptString( workflow.GetAttributeValue( ssnAttribute.Key ) ).AsNumeric();
+                    string ssn = Field.Types.SSNFieldType.UnencryptAndClean( workflow.GetAttributeValue( ssnAttribute.Key ) );
                     if ( !string.IsNullOrWhiteSpace( ssn ) && ssn.Length == 9 )
                     {
                         subjectElement.Add( new XElement( "SSN", ssn.Insert( 5, "-" ).Insert( 3, "-" ) ) );
@@ -350,7 +350,7 @@ namespace Rock.Security.BackgroundCheck
                             xSSNElement.Value = "XXX-XX-XXXX";
                         }
 
-                        backgroundCheck.ResponseXml = string.Format( @"
+                        backgroundCheck.ResponseData = string.Format( @"
 Request XML ({0}): 
 ------------------------ 
 {1}
@@ -548,7 +548,7 @@ Response XML ({2}):
                     xSSNElement.Value = "XXX-XX-XXXX";
                 }
 
-                backgroundCheck.ResponseXml = backgroundCheck.ResponseXml + string.Format( @"
+                backgroundCheck.ResponseData = backgroundCheck.ResponseData + string.Format( @"
 Response XML ({0}): 
 ------------------------ 
 {1}
