@@ -34,16 +34,14 @@ using Rock.Communication;
 
 namespace com.centralaz.Accountability.Jobs
 {
-
     /// <summary>
     /// Job to send reminders to accountability group members to submit a report.
     /// </summary>
-    [CommunicationTemplateField( "Template", "", true, "" )]
+    [SystemEmailField( "Template", "The system email to use for sending the reminder", true, "", "", 1 )]
     [PersonField("Sender", "The person who the emails will be send on account of.")]
     [DisallowConcurrentExecution]
     public class SendAccountabilityReportReminder : IJob
     {
-
         /// <summary>
         /// Initializes a new instance of the <see cref="SendCommunications"/> class.
         /// </summary>
@@ -62,40 +60,39 @@ namespace com.centralaz.Accountability.Jobs
             var emailTemplate = dataMap.Get( "Template" ).ToString().AsGuid();
             var senderAliasGuid = dataMap.Get( "Sender" ).ToString().AsGuid();
             var senderAlias = new PersonAliasService( rockContext ).Get( senderAliasGuid );
-            if ( senderAlias != null )
+            if ( senderAlias == null )
             {
-                var pageId = ( new PageService( rockContext ).Get( "64B5B1F6-472A-4C64-85B5-1F6864FE1992".AsGuid() ) ).Id;
-                foreach ( var groupType in new GroupTypeService( rockContext ).Queryable() )
+                return;
+            }
+
+            var pageId = ( new PageService( rockContext ).Get( "64B5B1F6-472A-4C64-85B5-1F6864FE1992".AsGuid() ) ).Id;
+
+            foreach ( var groupType in new GroupTypeService( rockContext ).Queryable() )
+            {
+                if ( groupType.InheritedGroupType != null && groupType.InheritedGroupType.Guid == "DC99BF69-8A1A-411F-A267-1AE75FDC2341".AsGuid() )
                 {
-                    if ( groupType.InheritedGroupType != null )
+                    foreach ( Group group in groupType.Groups )
                     {
-                        if ( groupType.InheritedGroupType.Guid == "DC99BF69-8A1A-411F-A267-1AE75FDC2341".AsGuid() )
+                        group.LoadAttributes();
+                        DateTime reportStartDate = DateTime.Parse( group.GetAttributeValue( "ReportStartDate" ).ToString() );
+                        if ( reportStartDate.DayOfWeek == DateTime.Now.DayOfWeek )
                         {
-                            foreach ( Group group in groupType.Groups )
+                            DateTime nextDueDate = NextReportDate( reportStartDate );
+                            int daysUntilDueDate = ( nextDueDate - DateTime.Today ).Days;
+                            foreach ( GroupMember groupMember in group.Members )
                             {
-                                group.LoadAttributes();
-                                DateTime reportStartDate = DateTime.Parse( group.GetAttributeValue( "ReportStartDate" ).ToString() );
-                                if ( reportStartDate.DayOfWeek == DateTime.Now.DayOfWeek )
+                                ResponseSetService responseSetService = new ResponseSetService( new AccountabilityContext() );
+                                // All caught up case
+                                if ( daysUntilDueDate == 0 && !responseSetService.DoesResponseSetExistWithSubmitDate( nextDueDate, groupMember.PersonId, group.Id ) )
                                 {
-                                    DateTime nextDueDate = NextReportDate( reportStartDate );
-                                    int daysUntilDueDate = ( nextDueDate - DateTime.Today ).Days;
-                                    foreach ( GroupMember groupMember in group.Members )
-                                    {
-                                        ResponseSetService responseSetService = new ResponseSetService( new AccountabilityContext() );
-                                        //All caught up case
-                                        if ( daysUntilDueDate == 0 && !responseSetService.DoesResponseSetExistWithSubmitDate( nextDueDate, groupMember.PersonId, group.Id ) )
-                                        {
-                                            Send( groupMember, pageId, emailTemplate, senderAlias.Id );
-                                        }
-                                    }
+                                    Send( groupMember, pageId, emailTemplate, senderAlias.Person.Email );
                                 }
                             }
                         }
                     }
                 }
-            }           
+            }
         }
-
 
         protected DateTime NextReportDate( DateTime reportStartDate )
         {
@@ -120,123 +117,27 @@ namespace com.centralaz.Accountability.Jobs
         }
 
 
-        private void Send( GroupMember recipient, int pageId, Guid emailTemplateGuid, int senderAliasId,  string appRoot = "", string themeRoot = "" )
-        {
-            var rockContext = new RockContext();
-            var communication = UpdateCommunication( rockContext, recipient, emailTemplateGuid, pageId );
-
-            if ( communication != null )
-            {
-                string message = string.Empty;
-
-                communication.Status = CommunicationStatus.Approved;
-                communication.ReviewedDateTime = RockDateTime.Now;
-                communication.CreatedByPersonAliasId = senderAliasId;
-
-                message = "Communication has been queued for sending.";
-                rockContext.SaveChanges();
-
-                var transaction = new Rock.Transactions.SendCommunicationTransaction();
-                transaction.CommunicationId = communication.Id;
-                //transaction.PersonAlias = CurrentPersonAlias;
-                Rock.Transactions.RockQueue.TransactionQueue.Enqueue( transaction );
-            }
-
-        }
-
-
-        private Dictionary<string, object> CombineMergeFields( GroupMember groupMember, int pageId )
-        {
-            //var mergeFields = Rock.Web.Cache.GlobalAttributesCache.GetMergeFields( groupMember.Person );
-            var mergeFields = new Dictionary<string, object>();
-
-            mergeFields.Add( "GroupName", groupMember.Group.Name );
-            //string url = ( String.Format( "{0}page/{1}?GroupId={2}", System.Web.VirtualPathUtility.ToAbsolute("~"), pageId, groupMember.GroupId ) );
-            String url = VirtualPathUtility.ToAbsolute( String.Format( "~/page/{0}?GroupId={1}", pageId, groupMember.GroupId ) );
-            mergeFields.Add( "ReportPageUrl", url );
-            return mergeFields;
-        }
-
         /// <summary>
-        /// Updates a communication model with the user-entered values
+        /// Sends the specified recipient.
         /// </summary>
-        /// <param name="communicationService">The service.</param>
-        /// <returns></returns>
-        private Communication UpdateCommunication( RockContext rockContext, GroupMember recipient, Guid emailTemplateGuid, int pageId )
+        /// <param name="recipient">The recipient.</param>
+        /// <param name="pageId">The page identifier.</param>
+        /// <param name="systemEmailGuid">The system email's unique identifier.</param>
+        /// <param name="senderEmail">The sender email address.</param>
+        private void Send( GroupMember groupMember, int pageId, Guid systemEmailGuid, string senderEmail )
         {
-            var communicationService = new CommunicationService( rockContext );
-            var recipientService = new CommunicationRecipientService( rockContext );
-
-            Communication communication = null;
-
-            communication = new Rock.Model.Communication();
-            communication.Status = CommunicationStatus.Transient;
-            // communication.SenderPersonAliasId = CurrentPersonAliasId;
-            communicationService.Add( communication );
-
-            if ( !communication.Recipients.Any( r => r.PersonAlias != null && r.PersonAlias.PersonId == recipient.PersonId ) )
+            if ( groupMember.Person.Email != string.Empty && groupMember.Person.IsEmailActive )
             {
-                var person = new PersonService( rockContext ).Get( recipient.PersonId );
-                if ( person != null )
-                {
-                    var communicationRecipient = new CommunicationRecipient();
-                    communicationRecipient.PersonAlias = person.PrimaryAlias;
-                    communicationRecipient.AdditionalMergeValues = CombineMergeFields( recipient, pageId );
-                    communication.Recipients.Add( communicationRecipient );
-                }
+                var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
+                mergeFields.Add( "GroupName", groupMember.Group.Name );
+                String url = VirtualPathUtility.ToAbsolute( String.Format( "~/page/{0}?GroupId={1}", pageId, groupMember.GroupId ) );
+                mergeFields.Add( "ReportPageUrl", url );
+
+                var emailMessage = new RockEmailMessage( systemEmailGuid );
+                emailMessage.AddRecipient( new RecipientData( groupMember.Person.Email, mergeFields ) );
+                emailMessage.FromEmail = senderEmail;
+                emailMessage.Send();
             }
-
-            // communication.IsBulkCommunication = cbBulk.Checked;
-
-            communication.MediumEntityTypeId = ( new EntityTypeService( rockContext ).Get( Rock.SystemGuid.EntityType.COMMUNICATION_MEDIUM_EMAIL.AsGuid() ) ).Id;
-            communication.MediumData.Clear();
-            //communication.AdditionalMergeFields.Add( recipient.Group.Name );
-            //String url = VirtualPathUtility.ToAbsolute( String.Format( "~/page/{0}?GroupId={1}", pageId, recipient.GroupId ) );
-
-            //  communication.AdditionalMergeFields.Add( url );
-            Dictionary<string, string> MediumData = new Dictionary<string, string>();
-            var template = new CommunicationTemplateService( new RockContext() ).Get( emailTemplateGuid );
-            if ( template != null )
-            {
-                var mediumData = template.MediumData;
-                if ( !mediumData.ContainsKey( "Subject" ) )
-                {
-                    mediumData.Add( "Subject", template.Subject );
-                }
-
-                foreach ( var dataItem in mediumData )
-                {
-                    if ( !string.IsNullOrWhiteSpace( dataItem.Value ) )
-                    {
-                        if ( MediumData.ContainsKey( dataItem.Key ) )
-                        {
-                            MediumData[dataItem.Key] = dataItem.Value;
-                        }
-                        else
-                        {
-                            MediumData.Add( dataItem.Key, dataItem.Value );
-                        }
-                    }
-                }
-            }
-
-            foreach ( var keyVal in MediumData )
-            {
-                if ( !string.IsNullOrEmpty( keyVal.Value ) )
-                {
-                    communication.MediumData.Add( keyVal.Key, keyVal.Value );
-                }
-            }
-
-            if ( communication.MediumData.ContainsKey( "Subject" ) )
-            {
-                communication.Subject = communication.MediumData["Subject"];
-                communication.MediumData.Remove( "Subject" );
-            }
-
-            communication.FutureSendDateTime = null;
-
-            return communication;
         }
     }
 }
