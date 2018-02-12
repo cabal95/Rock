@@ -236,13 +236,24 @@ namespace com.centralaz.Finance.Transactions
                 var binaryFileService = new BinaryFileService( rockContext );
 
                 MergeTemplateType statementTemplateType = StatementTemplate.GetMergeTemplateType();
+
+                string fileExtension = string.Empty;
+                if ( statementTemplateType.TypeName == "com.minecartstudio.PdfToolkit.PdfMergeTemplateType" )
+                {
+                    fileExtension = "pdf";
+                }
+                else
+                {
+                    fileExtension = Path.GetExtension( StatementTemplate.TemplateBinaryFile.FileName );
+                }
+
                 if ( statementTemplateType != null )
                 {
                     try
                     {
                         for ( ChapterNumber = 1; ( ( ChapterNumber - 1 ) * ChapterSize ) < givingIdCount; ChapterNumber++ )
                         {
-                            var fileName = String.Format( "{0}_ContributionStatements_Chapter_{1:000}_of_{2:000}.html", DateTime.Now.ToString( "MMddyyyy" ), ChapterNumber, totalChapters );
+                            var fileName = String.Format( "{0}_ContributionStatements_Chapter_{1:000}_of_{2:000}.{3}", DateTime.Now.ToString( "MMddyyyy" ), ChapterNumber, totalChapters, fileExtension );
                             var mergeFields = GetStatementMergeFields( rockContext );
 
                             BinaryFile outputBinaryFileDoc = null;
