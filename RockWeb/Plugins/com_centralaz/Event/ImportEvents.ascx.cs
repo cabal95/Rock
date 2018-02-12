@@ -35,6 +35,7 @@ using Rock.Attribute;
 using CsvHelper;
 using DDay.iCal;
 using DDay.iCal.Serialization.iCalendar;
+using CsvHelper.Configuration;
 
 namespace RockWeb.Plugins.com_centralaz.Event
 {
@@ -222,6 +223,8 @@ namespace RockWeb.Plugins.com_centralaz.Event
 
                 }
                 while ( list.Count != 0 );
+
+                _rockContext.SaveChanges();
 
             }
             catch ( System.Exception ex )
@@ -567,6 +570,7 @@ namespace RockWeb.Plugins.com_centralaz.Event
                     Guid = Guid.NewGuid(),
                     Location = item.Name,
                     Schedule = new Schedule(),
+                    CampusId = item.CampusId,
                     CreatedDateTime = RockDateTime.Now,
                     CreatedByPersonAliasId = CurrentPersonAliasId,
                 };
@@ -576,6 +580,8 @@ namespace RockWeb.Plugins.com_centralaz.Event
                 linkage.RegistrationInstanceId = registrationInstance.Id;
                 linkage.PublicName = item.Name;
                 linkage.GroupId = group.Id;
+                
+
                 eventItemOccurrence.Linkages.Add( linkage );
                 eventItem.EventItemOccurrences.Add( eventItemOccurrence );
             }
@@ -587,6 +593,12 @@ namespace RockWeb.Plugins.com_centralaz.Event
             eventItemOccurrence.Schedule = new Schedule();
             eventItemOccurrence.Schedule.iCalendarContent = sbSchedule.iCalendarContent;
 
+            // Save to get the eventItemOccurenceId
+            _rockContext.SaveChanges();
+
+            // Set the linkage UrlSlug
+            var linkage2 = eventItemOccurrence.Linkages.FirstOrDefault();
+            linkage2.UrlSlug = string.Format( "{0}-{1}", registrationInstance.Id, eventItemOccurrence.Id );
             _rockContext.SaveChanges();
 
             return eventItemOccurrence.Id;
@@ -651,13 +663,14 @@ namespace RockWeb.Plugins.com_centralaz.Event
 
                 group.GroupLocations.Add( groupLocation );
                 _rockContext.SaveChanges();
-
-                // Save the attribute values.
-                group.LoadAttributes();
-                group.SetAttributeValue( _GROUP_ATTRIB_REGISTRATIONINSTANCEID, registrationInstanceid.ToString() );
-                group.SaveAttributeValues( _rockContext );
             }
 
+            // Save the attribute values.
+            group.LoadAttributes();
+            group.SetAttributeValue( _GROUP_ATTRIB_REGISTRATIONINSTANCEID, registrationInstanceid.ToString() );
+            group.SaveAttributeValues( _rockContext );
+
+            group.CampusId = item.CampusId; 
             group.GroupCapacity = item.MaxRegistrants;
             group.ModifiedDateTime = RockDateTime.Now;
             group.ModifiedByPersonAliasId = CurrentPersonAliasId;
@@ -745,6 +758,8 @@ namespace RockWeb.Plugins.com_centralaz.Event
             int i = 0;
             string lastSuccessfulItemName = string.Empty;
 
+            var campuses = CampusCache.All();
+
             try
             {
                 var list = new Queue<ImportEventGroup>();
@@ -752,7 +767,9 @@ namespace RockWeb.Plugins.com_centralaz.Event
                 string physicalFileName = this.Request.MapPath( fuprExampleContentFile.UploadedContentFilePath );
                 using ( StreamReader sr = new StreamReader( physicalFileName ) )
                 {
+                    //CvsConfiguration 
                     CsvReader csvReader = new CsvReader( sr );
+                    csvReader.Configuration.WillThrowOnMissingField = false;
 
                     try
                     { 
@@ -760,6 +777,7 @@ namespace RockWeb.Plugins.com_centralaz.Event
                         foreach ( var r in records )
                         {
                             i++;
+                            r.CampusId = campuses.Where( c => c.Name.ToLower() == r.Campus.Trim().ToLower() ).Select( c => c.Id ).FirstOrDefault();
                             lastSuccessfulItemName = r.Name;
                             list.Enqueue( r );
                         }
@@ -776,7 +794,7 @@ namespace RockWeb.Plugins.com_centralaz.Event
                             sbErrors.AppendFormat( "(That's the one that comes after '<b>{0}</b>'. ) ", lastSuccessfulItemName );
                         }
 
-                        sbErrors.AppendFormat( "<small class='text-muted'>{0}</small>", ex2.Message );
+                        sbErrors.AppendFormat( "<small class='text-info'>{0}</small>", ex2.Message );
                     }
                 }
             }
@@ -896,6 +914,16 @@ namespace RockWeb.Plugins.com_centralaz.Event
         #endregion
     }
 
+    public sealed class ImportEventGroupClassMap : CsvClassMap<ImportEventGroup>
+    {
+        public ImportEventGroupClassMap()
+        {
+           // Map( m => m.CampusId ).Ignore;
+            //Map( m => m.FirstName ).Index( 1 ).Name( "First Name" );
+            //Map( m => m.LastName ).Index( 2 ).Name( "Last Name" );
+        }
+    }
+
     /// <summary>
     /// A helper class to hold a single record from the imported data.
     /// </summary>
@@ -907,6 +935,8 @@ namespace RockWeb.Plugins.com_centralaz.Event
         public string City { get; set; }
         public string State { get; set; }
         public string Zip { get; set; }
+        public string Campus { get; set; }
+        public int CampusId { get; set; }
         public int MaxRegistrants { get; set; }
     }
 

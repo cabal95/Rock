@@ -43,6 +43,7 @@
                                     <asp:ListItem>City</asp:ListItem>
                                     <asp:ListItem>State</asp:ListItem>
                                     <asp:ListItem>Zip</asp:ListItem>
+                                    <asp:ListItem>Campus</asp:ListItem>
                                     <asp:ListItem>MaxRegistrants</asp:ListItem>
                                 </asp:BulletedList>
                                 <div class="row">
