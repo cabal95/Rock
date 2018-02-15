@@ -2126,6 +2126,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 var groups = new GroupService( rockContext ).GetByGuids( groupGuidList.Distinct().ToList() );
                 foreach ( var group in groups )
                 {
+                    var emailMessage = new RockEmailMessage( GetAttributeValue( "SystemEmail" ).AsGuid() );
+                    emailMessage.EnabledLavaCommands = "Execute";
+
                     var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
                     mergeFields.Add( "Reservation", reservation );
                     var recipients = new List<RecipientData>();
@@ -2141,12 +2144,13 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                             var personDict = new Dictionary<string, object>( mergeFields );
                             personDict.Add( "Person", person );
                             recipients.Add( new RecipientData( person.Email, personDict ) );
+                            emailMessage.AddRecipient( new RecipientData( person.Email, personDict ) );
                         }
                     }
 
                     if ( recipients.Any() )
                     {
-                        Email.Send( GetAttributeValue( "SystemEmail" ).AsGuid(), recipients, string.Empty, string.Empty, GetAttributeValue( "SaveCommunicationHistory" ).AsBoolean() );
+                        emailMessage.Send();
                     }
                 }
             }
@@ -2177,3 +2181,4 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         #endregion
     }
 }
+ 
