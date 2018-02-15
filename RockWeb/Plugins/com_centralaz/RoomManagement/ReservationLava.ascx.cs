@@ -63,7 +63,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
     [TextField( "Report Font", "", true, "Gotham", "", 0 )]
     [TextField( "Report Logo", "URL to the logo (PNG) to display in the printed report.", true, "~/Plugins/com_centralaz/RoomManagement/Assets/Icons/Central_Logo_Black_rgb_165_90.png", "", 0 )]
-    [TextField( "Font Awesome Ttf", "URL to the FontAwesome ttf to use for checkmarks in the printed report", true, "~/Assets/Fonts/FontAwesome/fontawesome-webfont.ttf", "", 0 )]
 
     [BooleanField( "Enable Debug", "Display a list of merge fields available for lava.", false, "", 14 )]
     public partial class ReservationLava : Rock.Web.UI.RockBlock
@@ -308,6 +307,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             var listItemFontNormal = FontFactory.GetFont( font, 8, Font.NORMAL );
             var listItemFontUnapproved = FontFactory.GetFont( font, 8, Font.ITALIC, Color.MAGENTA );
             var noteFont = FontFactory.GetFont( font, 8, Font.NORMAL, Color.GRAY );
+            Font zapfdingbats = new Font( Font.ZAPFDINGBATS );
 
             List<ReservationService.ReservationSummary> reservationSummaryList = GetReservationSummaries();
 
@@ -371,10 +371,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             String title = String.Format( "Reservations for: {0} - {1}", filterStartDateTime.ToString( "MMMM d" ), filterEndDateTime.ToString( "MMMM d" ) );
             document.Add( new Paragraph( title, titleFont ) );
 
-            var fontAwesomeUrl = Server.MapPath( ResolveRockUrl( GetAttributeValue( "FontAwesomeTtf" ) ) );
-            var fontAwesome = BaseFont.CreateFont( fontAwesomeUrl, BaseFont.IDENTITY_H, BaseFont.EMBEDDED );
-            Font fontAwe = new Font( fontAwesome, 8 );
-
             // Populate the Lists            
             foreach ( var reservationDay in reservationSummaries )
             {
@@ -433,7 +429,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                             var listItem = new iTextSharp.text.ListItem( reservationLocation.Location.Name, listItemFontNormal );
                             if ( reservationLocation.ApprovalState == ReservationLocationApprovalState.Approved )
                             {
-                                listItem.Add( new Phrase( "\uf00c", fontAwe ) );
+                                listItem.Add( new Phrase( "\u0034", zapfdingbats ) );
                             }
                             locationList.Add( listItem );
                         }
@@ -452,7 +448,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                             var listItem = new iTextSharp.text.ListItem( String.Format( "{0}({1})", reservationResource.Resource.Name, reservationResource.Quantity ), listItemFontNormal );
                             if ( reservationResource.ApprovalState == ReservationResourceApprovalState.Approved )
                             {
-                                listItem.Add( new Phrase( "\uf00c", fontAwe ) );
+                                listItem.Add( new Phrase( "\u0034", zapfdingbats ) );
                             }
                             resourceList.Add( listItem );
                         }
