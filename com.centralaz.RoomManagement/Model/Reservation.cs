@@ -39,6 +39,10 @@ namespace com.centralaz.RoomManagement.Model
 
         #region Entity Properties
 
+        [Required]
+        [DataMember]
+        public int ReservationTypeId { get; set; }
+
         [DataMember]
         [MaxLength( 50 )]
         public string Name { get; set; }
@@ -141,6 +145,9 @@ namespace com.centralaz.RoomManagement.Model
         #endregion
 
         #region Virtual Properties
+
+        [DataMember]
+        public virtual ReservationType ReservationType { get; set; }
 
         [LavaInclude]
         public virtual Schedule Schedule { get; set; }
@@ -382,6 +389,7 @@ namespace com.centralaz.RoomManagement.Model
         /// </summary>
         public ReservationConfiguration()
         {
+            this.HasRequired( p => p.ReservationType ).WithMany( p => p.Reservations ).HasForeignKey( p => p.ReservationTypeId ).WillCascadeOnDelete( true );
             this.HasRequired( r => r.Campus ).WithMany().HasForeignKey( r => r.CampusId ).WillCascadeOnDelete( false );
             this.HasRequired( r => r.ReservationMinistry ).WithMany().HasForeignKey( r => r.ReservationMinistryId ).WillCascadeOnDelete( false );
             this.HasRequired( r => r.Schedule ).WithMany().HasForeignKey( r => r.ScheduleId ).WillCascadeOnDelete( false );
