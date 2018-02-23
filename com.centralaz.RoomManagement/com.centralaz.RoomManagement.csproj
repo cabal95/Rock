@@ -92,7 +92,6 @@
     <Compile Include="Field\Types\ReservationApprovalStateFieldType.cs" />
     <Compile Include="Field\Types\ReservationFieldType.cs" />
     <Compile Include="Jobs\FireWorkflowFromReservationInDateRange.cs" />
-    <Compile Include="Migrations\019_ReservationTypes.cs" />
     <Compile Include="Migrations\018_ModifyApprovalWorkflow.cs" />
     <Compile Include="Migrations\017_AddDetailPageToReservationList.cs" />
     <Compile Include="Migrations\016_UpdateWFLavaTemplateAttribute.cs" />
@@ -111,6 +110,7 @@
     <Compile Include="Migrations\003_SampleData.cs" />
     <Compile Include="Migrations\002_Pages.cs" />
     <Compile Include="Migrations\001_CreateDb.cs" />
+    <Compile Include="Migrations\019_ReservationTypes.cs" />
     <Compile Include="Model\ReservationTypeService.cs" />
     <Compile Include="Model\ReservationType.cs" />
     <Compile Include="Model\ReservationWorkflowService.cs" />

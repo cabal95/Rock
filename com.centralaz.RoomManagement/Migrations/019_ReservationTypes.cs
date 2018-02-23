@@ -15,6 +15,11 @@
 // </copyright>
 //
 using System;
+using System.Data.Entity;
+using System.Linq;
+using Rock;
+using Rock.Data;
+using Rock.Model;
 using Rock.Plugin;
 
 namespace com.centralaz.RoomManagement.Migrations
@@ -79,49 +84,8 @@ namespace com.centralaz.RoomManagement.Migrations
 
                 ALTER TABLE [dbo].[_com_centralaz_RoomManagement_ReservationType] CHECK CONSTRAINT [FK__com_centralaz_RoomManagement_ReservationType_ModifiedByPersonAliasId]
 " );
-            var now = DateTime.Now;
-            var sqlQry = string.Format( @"
-INSERT INTO [dbo].[_com_centralaz_RoomManagement_ReservationType](
-	                [IsSystem],
-                    [Name],
-	                [Description],
-	                [IsActive],
-                    [FinalApprovalGroupId],
-                    [SuperAdminGroupId],
-                    [NotificationEmailId],
-                    [DefaultSetupTime],
-                    [IsCommunicationHistorySaved],
-                    [IsNumberAttendingRequired],
-                    [IsContactDetailsRequired],
-                    [IsSetupTimeRequired],
-	                [Guid])
-VALUES
-                    (0,
-                    '{0}',
-                    '{1}',
-                    1,
-                    {2},
-                    {3},
-                    {4},
-                    {5},
-                    {6},
-                    {7},
-                    {8},
-                    {9},
-                    '{10}')
-                    "
-                    , "Default Reservation Type" // Name
-                    , "The default reservation type." // Description
-                    , "NULL" //Final Approval Group Id
-                    , "NULL" // SuperAdminGroupId
-                    , "NULL" //NotificationEmailId
-                    , "NULL" //DefaultSetupTime
-                    , 1 // Is Communication History Saved
-                    , 1 // Is Number Attending Required
-                    , 1 // Is Contact Details Required
-                    , 1 // Is Setup Time Required
-                    , Guid.NewGuid() // Guid
-);
+
+            string sqlQry = GenerateDefaultReservationTypeSql();
             Sql( sqlQry );
 
 
@@ -161,14 +125,14 @@ VALUES
             RockMigrationHelper.DeleteBlockType( "6931E212-A76A-4DBB-9B97-86E5CDD0793A" );
             RockMigrationHelper.DeletePage( "CFF84B6D-C852-4FC4-B602-9F045EDC8854" ); //  Page: Reservation Configuration
 
-            // Page: Reservation Configuration
+            // Page: Reservation Types
             RockMigrationHelper.AddPage( true, "0FF1D7F4-BF6D-444A-BD71-645BD764EC40", "D65F783D-87A9-4CC9-8110-E83466A0EADB", "Reservation Types", "", "CFF84B6D-C852-4FC4-B602-9F045EDC8854", "fa fa-gear" ); // Site:Rock RMS
             RockMigrationHelper.UpdateBlockType( "Reservation Type List", "Block to display the reservation types.", "~/Plugins/com_centralaz/RoomManagement/ReservationTypeList.ascx", "com_centralaz > Room Management", "F28B44CF-D49D-4A45-8189-381A1F942C86" );
-            // Add Block to Page: Reservation Configuration, Site: Rock RMS
+            // Add Block to Page: Reservation Types, Site: Rock RMS
             RockMigrationHelper.AddBlock( true, "CFF84B6D-C852-4FC4-B602-9F045EDC8854", "", "F28B44CF-D49D-4A45-8189-381A1F942C86", "Reservation Type List", "Main", "", "", 0, "87FCDDF1-D938-4BC9-AEA3-32F2B3F86494" );
             // Attrib for BlockType: Reservation Type List:Detail Page
             RockMigrationHelper.UpdateBlockTypeAttribute( "F28B44CF-D49D-4A45-8189-381A1F942C86", "BD53F9C9-EBA9-4D3F-82EA-DE5DD34A8108", "Detail Page", "DetailPage", "", "Page used to view details of a reservation type.", 0, @"", "A56ED80C-A8EC-44DD-84BA-03F12F281B9C" );
-            // Attrib Value for Block:Reservation Type List, Attribute:Detail Page Page: Reservation Configuration, Site: Rock RMS
+            // Attrib Value for Block:Reservation Type List, Attribute:Detail Page Page: Reservation Types, Site: Rock RMS
             RockMigrationHelper.AddBlockAttributeValue( "87FCDDF1-D938-4BC9-AEA3-32F2B3F86494", "A56ED80C-A8EC-44DD-84BA-03F12F281B9C", @"dc6d7ace-e23f-4ce6-9d66-a63348a1ef4e" );
 
 
@@ -177,8 +141,8 @@ VALUES
             RockMigrationHelper.UpdateBlockType( "Reservation Type Detail", "Displays the details of the given Reservation Type for editing.", "~/Plugins/com_centralaz/RoomManagement/ReservationTypeDetail.ascx", "com_centralaz > Room Management", "CBAAEC6D-9B97-4FCB-96A9-5C53FB4E030E" );
             // Add Block to Page: Reservation Type Detail, Site: Rock RMS
             RockMigrationHelper.AddBlock( true, "DC6D7ACE-E23F-4CE6-9D66-A63348A1EF4E", "", "CBAAEC6D-9B97-4FCB-96A9-5C53FB4E030E", "Reservation Type Detail", "Main", "", "", 0, "160ED605-4BC3-46FD-8C24-A1BB9AD4ECB4" );
-
         }
+
         public override void Down()
         {
             RockMigrationHelper.DeleteBlock( "160ED605-4BC3-46FD-8C24-A1BB9AD4ECB4" );
@@ -188,7 +152,7 @@ VALUES
             RockMigrationHelper.DeleteAttribute( "A56ED80C-A8EC-44DD-84BA-03F12F281B9C" );
             RockMigrationHelper.DeleteBlock( "87FCDDF1-D938-4BC9-AEA3-32F2B3F86494" );
             RockMigrationHelper.DeleteBlockType( "F28B44CF-D49D-4A45-8189-381A1F942C86" );
-            RockMigrationHelper.DeletePage( "CFF84B6D-C852-4FC4-B602-9F045EDC8854" ); //  Page: Reservation Configuration
+            RockMigrationHelper.DeletePage( "CFF84B6D-C852-4FC4-B602-9F045EDC8854" ); //  Page: Reservation Types
 
             // Page: Reservation Configuration
             RockMigrationHelper.AddPage( "0FF1D7F4-BF6D-444A-BD71-645BD764EC40", "D65F783D-87A9-4CC9-8110-E83466A0EADB", "Reservation Configuration", "", "CFF84B6D-C852-4FC4-B602-9F045EDC8854", "fa fa-gear" ); // Site:Rock RMS
@@ -213,6 +177,120 @@ VALUES
                 ALTER TABLE [dbo].[_com_centralaz_RoomManagement_ReservationType] DROP CONSTRAINT [FK__com_centralaz_RoomManagement_ReservationType_CreatedByPersonAliasId]
                 ALTER TABLE [dbo].[_com_centralaz_RoomManagement_ReservationType] DROP CONSTRAINT [FK__com_centralaz_RoomManagement_ReservationType_ModifiedByPersonAliasId]
                 DROP TABLE [dbo].[_com_centralaz_RoomManagement_ReservationType]" );
+        }
+
+
+        private string GenerateDefaultReservationTypeSql()
+        {
+            string finalApprovalGroupValue = null;
+            string superAdminGroupValue = null;
+            string notificationEmailValue = null;
+            int? defaultSetupTime = -1;
+            bool isCommunicationHistorySaved = false;
+            bool isNumberAttendingRequired = true;
+            bool isContactDetailsRequired = true;
+            bool isSetupTimeRequired = true;
+
+            var blockGuid = "65091E04-77CE-411C-989F-EAD7D15778A0".AsGuid();
+            var rockContext = new RockContext();
+            int? blockId = new BlockService( rockContext ).Queryable().Where( b => b.Guid == blockGuid ).Select( b => b.Id ).FirstOrDefault();
+            if ( blockId.HasValue )
+            {
+                finalApprovalGroupValue = GetAttributeValueFromBlock( blockId.Value, "E715D25F-CA53-4B16-B8B2-4A94FD3A3560".AsGuid() );
+                superAdminGroupValue = GetAttributeValueFromBlock( blockId.Value, "BBA41563-5379-43FA-955B-93C1926A4F66".AsGuid() );
+                notificationEmailValue = GetAttributeValueFromBlock( blockId.Value, "F3FBDD84-5E9B-40C2-B199-3FAE1C2308DC".AsGuid() );
+
+                var defaultSetupTimeValue = GetAttributeValueFromBlock( blockId.Value, "2FA0C64D-9511-4278-9445-BD0A847EA299".AsGuid() );
+                if ( defaultSetupTimeValue != null )
+                {
+                    defaultSetupTime = defaultSetupTimeValue.AsIntegerOrNull();
+                }
+
+                var isCommunicationHistorySavedValue = GetAttributeValueFromBlock( blockId.Value, "B90006F5-9B17-48DD-B455-5BAA2BE1A9A2".AsGuid() );
+                if ( isCommunicationHistorySavedValue != null )
+                {
+                    isCommunicationHistorySaved = isCommunicationHistorySavedValue.AsBoolean();
+                }
+
+                var isNumberAttendingRequiredValue = GetAttributeValueFromBlock( blockId.Value, "7162CFE4-FACD-4D75-8F09-2D42DBF1A887".AsGuid() );
+                if ( isNumberAttendingRequiredValue != null )
+                {
+                    isNumberAttendingRequired = isNumberAttendingRequiredValue.AsBoolean();
+                }
+
+                var isContactDetailsRequiredValue = GetAttributeValueFromBlock( blockId.Value, "1C8DE8CB-E078-4483-9648-7C2CC57E6985".AsGuid() );
+                if ( isContactDetailsRequiredValue != null )
+                {
+                    isContactDetailsRequired = isContactDetailsRequiredValue.AsBoolean();
+                }
+
+                var isSetupTimeRequiredValue = GetAttributeValueFromBlock( blockId.Value, "A184337B-BB99-4261-A295-0F54447CF0C6".AsGuid() );
+                if ( isSetupTimeRequiredValue != null )
+                {
+                    isSetupTimeRequired = isSetupTimeRequiredValue.AsBoolean();
+                }
+            }
+
+            var sqlQry = string.Format( @"
+DECLARE @finalApprovalGroupId INT = NULL;
+DECLARE @superAdminGroupId INT = NULL;
+DECLARE @notificationEmailId INT = NULL;
+
+SET @finalApprovalGroupId = (Select Id From [Group] Where [Guid] = '{2}')
+SET @superAdminGroupId = (Select Id From [Group] Where [Guid] = '{3}')
+SET @notificationEmailId = (Select Id From [SystemEmail] Where [Guid] = '{4}')
+
+INSERT INTO [dbo].[_com_centralaz_RoomManagement_ReservationType](
+	                [IsSystem],
+                    [Name],
+	                [Description],
+	                [IsActive],
+                    [IconCssClass],
+                    [FinalApprovalGroupId],
+                    [SuperAdminGroupId],
+                    [NotificationEmailId],
+                    [DefaultSetupTime],
+                    [IsCommunicationHistorySaved],
+                    [IsNumberAttendingRequired],
+                    [IsContactDetailsRequired],
+                    [IsSetupTimeRequired],
+	                [Guid])
+VALUES
+                    (0,
+                    '{0}',
+                    '{1}',
+                    1,
+                    'fa fa-home',
+                    @finalApprovalGroupId,
+                    @superAdminGroupId,
+                    @notificationEmailId,
+                    {5},
+                    {6},
+                    {7},
+                    {8},
+                    {9},
+                    'E443F926-0882-41D5-91EF-480EA366F660')"
+                    , "Default Reservation Type" // Name
+                    , "The default reservation type." // Description
+                    , finalApprovalGroupValue ?? Guid.Empty.ToString() //Final Approval Group Id
+                    , superAdminGroupValue ?? Guid.Empty.ToString() // SuperAdminGroupId
+                    , notificationEmailValue ?? Guid.Empty.ToString() //NotificationEmailId
+                    , defaultSetupTime.HasValue ? defaultSetupTime.ToString() : "NULL" //DefaultSetupTime
+                    , isCommunicationHistorySaved ? 1 : 0 // Is Communication History Saved
+                    , isNumberAttendingRequired ? 1 : 0 // Is Number Attending Required
+                    , isContactDetailsRequired ? 1 : 0 // Is Contact Details Required
+                    , isSetupTimeRequired ? 1 : 0 // Is Setup Time Required
+);
+            return sqlQry;
+        }
+        private string GetAttributeValueFromBlock( int blockId, Guid attributeGuid )
+        {
+            var value = new AttributeValueService( new RockContext() ).Queryable().Where( av =>
+                   av.Attribute.Guid == attributeGuid &&
+                   av.EntityId == blockId )
+                .Select( av => av.Value )
+                .FirstOrDefault();
+            return value;
         }
     }
 }

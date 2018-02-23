@@ -914,12 +914,12 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 ddlNotificationEmail.SetValue( reservationType.NotificationEmailId.Value );
 
             }
-            if ( reservationType.NotificationEmailId.HasValue )
+            if ( reservationType.FinalApprovalGroupId.HasValue )
             {
                 ddlFinalApprovalGroup.SetValue( reservationType.FinalApprovalGroupId.Value );
 
             }
-            if ( reservationType.NotificationEmailId.HasValue )
+            if ( reservationType.SuperAdminGroupId.HasValue )
             {
                 ddlSuperAdminGroup.SetValue( reservationType.SuperAdminGroupId.Value );
 
