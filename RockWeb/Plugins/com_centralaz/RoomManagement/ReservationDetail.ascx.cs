@@ -45,14 +45,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
     [DisplayName( "Reservation Detail" )]
     [Category( "com_centralaz > Room Management" )]
     [Description( "Block for viewing a reservation detail" )]
-    [SecurityRoleField( "Super Admin Group", "The superadmin group that can force an approve / deny status on reservations, i.e. a facilities team.", false, "", "" )]
-    [SecurityRoleField( "Final Approval Group", "An optional group that provides final approval for a reservation. If used, this should be the same group as in the Reservation Approval Workflow.", false, "", "" )]
-    [SystemEmailField( "System Email", "A system email to use when notifying approvers about a reservation request.", true, "", "", 0 )]
-    [BooleanField( "Save Communication History", "Should a record of this communication be saved to the recipient's profile", false, "", 2 )]
-    [BooleanField( "Require Setup & Cleanup Time", "Should the setup and cleanup time be required to be supplied?", true, "", 3, "RequireSetupCleanupTime" )]
-    [IntegerField( "Defatult Setup & Cleanup Time", "If you wish to default to a particular setup and cleanup time, you can supply a value here. (Use -1 to indicate no default value)", false, -1, "", 4, "DefaultSetupCleanupTime" )]
-    [BooleanField( "Require Number Attending", "Should the Number Attending be required to be supplied?", true, "", 5 )]
-    [BooleanField( "Require Contact Details", "Should the Event and Administrative Contact be required to be supplied?", true, "", 6 )]
 
     public partial class ReservationDetail : Rock.Web.UI.RockBlock
     {
@@ -113,6 +105,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 return baseLocationRestUrl;
             }
         }
+
+        private ReservationType ReservationType { get; set; }
 
         /// <summary>
         /// Gets or sets the state of the resources.
@@ -185,6 +179,16 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             else
             {
                 NewReservationLocationList = JsonConvert.DeserializeObject<List<Guid>>( json );
+            }
+
+            json = ViewState["ReservationType"] as string;
+            if ( string.IsNullOrWhiteSpace( json ) )
+            {
+                ReservationType = new ReservationType();
+            }
+            else
+            {
+                ReservationType = JsonConvert.DeserializeObject<ReservationType>( json );
             }
         }
 
@@ -267,6 +271,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 ContractResolver = new Rock.Utility.IgnoreUrlEncodedKeyContractResolver()
             };
 
+            ViewState["ReservationType"] = JsonConvert.SerializeObject( ReservationType, Formatting.None, jsonSetting );
             ViewState["ResourcesState"] = JsonConvert.SerializeObject( ResourcesState, Formatting.None, jsonSetting );
             ViewState["LocationsState"] = JsonConvert.SerializeObject( LocationsState, Formatting.None, jsonSetting );
             ViewState["NewReservationResourceList"] = JsonConvert.SerializeObject( NewReservationResourceList, Formatting.None, jsonSetting );
@@ -362,6 +367,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                         reservationResourceService.Delete( reservationResource );
                     }
                 }
+
+                reservation.ReservationType = ReservationType;
+                reservation.ReservationTypeId = ReservationType.Id;
 
                 foreach ( var reservationLocationState in LocationsState )
                 {
@@ -785,7 +793,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         protected void gResources_Delete( object sender, RowEventArgs e )
         {
             nbErrorWarning.Visible = false;
-            Guid rowGuid = (Guid)e.RowKeyValue;
+            Guid rowGuid = ( Guid ) e.RowKeyValue;
             ResourcesState.RemoveEntity( rowGuid );
 
             var headControl = phResourceAnswers.FindControl( "cReservationResource_" + rowGuid.ToString() ) as Control;
@@ -814,7 +822,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="RowEventArgs"/> instance containing the event data.</param>
         protected void gResources_Edit( object sender, RowEventArgs e )
         {
-            Guid reservationResourceGuid = (Guid)e.RowKeyValue;
+            Guid reservationResourceGuid = ( Guid ) e.RowKeyValue;
             LoadPickers();
             gResources_ShowEdit( reservationResourceGuid );
         }
@@ -875,7 +883,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             if ( e.RowKeyValue != null )
             {
-                var reservationResource = ResourcesState.FirstOrDefault( r => r.Guid.Equals( (Guid)e.RowKeyValue ) );
+                var reservationResource = ResourcesState.FirstOrDefault( r => r.Guid.Equals( ( Guid ) e.RowKeyValue ) );
                 if ( reservationResource != null )
                 {
                     failure = false;
@@ -907,7 +915,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             if ( e.RowKeyValue != null )
             {
-                var reservationResource = ResourcesState.FirstOrDefault( r => r.Guid.Equals( (Guid)e.RowKeyValue ) );
+                var reservationResource = ResourcesState.FirstOrDefault( r => r.Guid.Equals( ( Guid ) e.RowKeyValue ) );
                 if ( reservationResource != null )
                 {
                     failure = false;
@@ -949,7 +957,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 }
                 else
                 {
-                    var superAdminGroup = new GroupService( new RockContext() ).Get( GetAttributeValue( "SuperAdminGroup" ).AsGuid() );
+                    var superAdminGroup = ReservationType.SuperAdminGroup;
                     if ( superAdminGroup != null )
                     {
                         if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( superAdminGroup.Id ) )
@@ -958,7 +966,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                         }
                         else
                         {
-                            var finalApprovalGroup = new GroupService( new RockContext() ).Get( GetAttributeValue( "FinalApprovalGroup" ).AsGuid() );
+                            var finalApprovalGroup = ReservationType.FinalApprovalGroup;
                             if ( finalApprovalGroup != null )
                             {
                                 if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( finalApprovalGroup.Id ) )
@@ -1058,7 +1066,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         protected void gLocations_Delete( object sender, RowEventArgs e )
         {
             nbErrorWarning.Visible = false;
-            Guid rowGuid = (Guid)e.RowKeyValue;
+            Guid rowGuid = ( Guid ) e.RowKeyValue;
 
             // check for attached resources and remove them too
             var reservationLocation = LocationsState.FirstOrDefault( a => a.Guid == rowGuid );
@@ -1113,7 +1121,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="RowEventArgs"/> instance containing the event data.</param>
         protected void gLocations_Edit( object sender, RowEventArgs e )
         {
-            Guid reservationLocationGuid = (Guid)e.RowKeyValue;
+            Guid reservationLocationGuid = ( Guid ) e.RowKeyValue;
             gLocations_ShowEdit( reservationLocationGuid );
         }
 
@@ -1171,7 +1179,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             if ( e.RowKeyValue != null )
             {
-                var reservationLocation = LocationsState.FirstOrDefault( r => r.Guid.Equals( (Guid)e.RowKeyValue ) );
+                var reservationLocation = LocationsState.FirstOrDefault( r => r.Guid.Equals( ( Guid ) e.RowKeyValue ) );
                 if ( reservationLocation != null )
                 {
                     failure = false;
@@ -1203,7 +1211,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             if ( e.RowKeyValue != null )
             {
-                var reservationLocation = LocationsState.FirstOrDefault( r => r.Guid.Equals( (Guid)e.RowKeyValue ) );
+                var reservationLocation = LocationsState.FirstOrDefault( r => r.Guid.Equals( ( Guid ) e.RowKeyValue ) );
                 if ( reservationLocation != null )
                 {
                     failure = false;
@@ -1255,7 +1263,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 }
                 else
                 {
-                    var superAdminGroup = new GroupService( new RockContext() ).Get( GetAttributeValue( "SuperAdminGroup" ).AsGuid() );
+                    var superAdminGroup = ReservationType.SuperAdminGroup;
                     if ( superAdminGroup != null )
                     {
                         if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( superAdminGroup.Id ) )
@@ -1264,7 +1272,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                         }
                         else
                         {
-                            var finalApprovalGroup = new GroupService( new RockContext() ).Get( GetAttributeValue( "FinalApprovalGroup" ).AsGuid() );
+                            var finalApprovalGroup = ReservationType.FinalApprovalGroup;
                             if ( finalApprovalGroup != null )
                             {
                                 if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( finalApprovalGroup.Id ) )
@@ -1301,20 +1309,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             RockContext rockContext = new RockContext();
             ReservationService roomReservationService = new ReservationService( rockContext );
             Reservation reservation = null;
-            nbSetupTime.Required = nbCleanupTime.Required = GetAttributeValue( "RequireSetupCleanupTime" ).AsBoolean();
-            nbAttending.Required = GetAttributeValue( "RequireNumberAttending" ).AsBoolean();
-            bool requireContactDetails = GetAttributeValue( "RequireContactDetails" ).AsBoolean();
-
-            if ( requireContactDetails )
-            {
-                ppAdministrativeContact.Required = true;
-                pnAdministrativeContactPhone.Required = true;
-                tbAdministrativeContactEmail.Required = true;
-
-                ppEventContact.Required = true;
-                pnEventContactPhone.Required = true;
-                tbEventContactEmail.Required = true;
-            }
 
             if ( PageParameter( "ReservationId" ).AsIntegerOrNull() != null )
             {
@@ -1346,6 +1340,34 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     {
                         reservation.AdministrativeContactPhone = mobilePhone.NumberFormatted;
                     }
+                }
+
+                var reservationTypeService = new ReservationTypeService( rockContext );
+                if ( PageParameter( "ReservationTypeId" ).AsInteger() != 0 )
+                {
+                    ReservationType = reservationTypeService.Get( PageParameter( "ReservationTypeId" ).AsInteger() );
+                }
+
+                if ( ReservationType == null )
+                {
+                    ReservationType = reservationTypeService.Get( "E443F926-0882-41D5-91EF-480EA366F660".AsGuid() );
+                }
+
+                reservation.ReservationType = ReservationType;
+
+                nbSetupTime.Required = nbCleanupTime.Required = ReservationType.IsSetupTimeRequired;
+                nbAttending.Required = ReservationType.IsNumberAttendingRequired;
+                bool requireContactDetails = ReservationType.IsContactDetailsRequired;
+
+                if ( requireContactDetails )
+                {
+                    ppAdministrativeContact.Required = true;
+                    pnAdministrativeContactPhone.Required = true;
+                    tbAdministrativeContactEmail.Required = true;
+
+                    ppEventContact.Required = true;
+                    pnEventContactPhone.Required = true;
+                    tbEventContactEmail.Required = true;
                 }
 
                 if ( PageParameter( "LocationId" ).AsInteger() != 0 )
@@ -1390,6 +1412,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             else
             {
                 pdAuditDetails.SetEntity( reservation, ResolveRockUrl( "~" ) );
+                ReservationType = reservation.ReservationType;
             }
 
             sbSchedule.iCalendarContent = string.Empty;
@@ -1414,7 +1437,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             fuSetupPhoto.BinaryFileId = reservation.SetupPhotoId;
 
-            var defaultTime = GetAttributeValue( "DefaultSetupCleanupTime" );
+            var defaultTime = ReservationType.DefaultSetupTime.ToString();
             if ( defaultTime == "-1" )
             {
                 defaultTime = string.Empty;
@@ -1470,8 +1493,14 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
             ddlMinistry.SetValue( reservation.ReservationMinistryId );
 
+            foreach ( var reservationType in new ReservationTypeService( rockContext ).Queryable().AsNoTracking().OrderBy( m => m.Name ).ToList() )
+            {
+                ddlReservationType.Items.Add( new ListItem( reservationType.Name, reservationType.Id.ToString().ToUpper() ) );
+            }
+            ddlReservationType.SetValue( ReservationType.Id );
+
             bool canApprove = false;
-            var superAdminGroup = new GroupService( new RockContext() ).Get( GetAttributeValue( "SuperAdminGroup" ).AsGuid() );
+            var superAdminGroup = ReservationType.SuperAdminGroup;
             if ( superAdminGroup != null )
             {
                 if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( superAdminGroup.Id ) )
@@ -1480,7 +1509,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 }
                 else
                 {
-                    var finalApprovalGroup = new GroupService( new RockContext() ).Get( GetAttributeValue( "FinalApprovalGroup" ).AsGuid() );
+                    var finalApprovalGroup = ReservationType.FinalApprovalGroup;
                     if ( finalApprovalGroup != null )
                     {
                         if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( finalApprovalGroup.Id ) )
@@ -1568,7 +1597,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
                         childControl.ID = "cReservationLocation_" + reservationLocation.Guid.ToString();
                         hfReservationLocationGuid.ID = "hfReservationLocationGuid_" + reservationLocation.Guid.ToString();
-                        phAttributes.ID = "phAttributes_" + reservationLocation.Guid.ToString(); ;
+                        phAttributes.ID = "phAttributes_" + reservationLocation.Guid.ToString();
+                        ;
 
                         bool setValue = locationList.Contains( reservationLocation.Guid );
                         Rock.Attribute.Helper.AddEditControls( reservationLocation, phAttributes, setValue, BlockValidationGroup );
@@ -1599,8 +1629,10 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                         hfReservationResourceGuid.Value = reservationResource.Guid.ToString();
 
                         childControl.ID = "cReservationResource_" + reservationResource.Guid.ToString();
-                        hfReservationResourceGuid.ID = "hfReservationResourceGuid_" + reservationResource.Guid.ToString(); ;
-                        phAttributes.ID = "phAttributes_" + reservationResource.Guid.ToString(); ;
+                        hfReservationResourceGuid.ID = "hfReservationResourceGuid_" + reservationResource.Guid.ToString();
+                        ;
+                        phAttributes.ID = "phAttributes_" + reservationResource.Guid.ToString();
+                        ;
 
                         bool setValue = resourceList.Contains( reservationResource.Guid );
                         Rock.Attribute.Helper.AddEditControls( reservationResource, phAttributes, setValue, BlockValidationGroup );
@@ -1848,7 +1880,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
                 if ( message != null )
                 {
-                    nbLocationConflicts.Text = string.Format ( "{0} is already reserved for the scheduled times by the following reservations:<ul>{1}</ul>", location.Name, message );
+                    nbLocationConflicts.Text = string.Format( "{0} is already reserved for the scheduled times by the following reservations:<ul>{1}</ul>", location.Name, message );
                     nbLocationConflicts.Visible = true;
                 }
                 else
@@ -1959,9 +1991,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             Group finalApprovalGroup = null;
             bool inApprovalGroups = false;
             bool isSuperAdmin = false;
-            finalApprovalGroup = new GroupService( new RockContext() ).Get( GetAttributeValue( "FinalApprovalGroup" ).AsGuid() );
+            finalApprovalGroup = ReservationType.FinalApprovalGroup;
 
-            var superAdminGroup = new GroupService( new RockContext() ).Get( GetAttributeValue( "SuperAdminGroup" ).AsGuid() );
+            var superAdminGroup = ReservationType.SuperAdminGroup;
             if ( superAdminGroup != null )
             {
                 if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( superAdminGroup.Id ) )
@@ -2146,7 +2178,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
                     if ( recipients.Any() )
                     {
-                        Email.Send( GetAttributeValue( "SystemEmail" ).AsGuid(), recipients, string.Empty, string.Empty, GetAttributeValue( "SaveCommunicationHistory" ).AsBoolean() );
+                        Email.Send( ReservationType.NotificationEmail.Guid, recipients, string.Empty, string.Empty, ReservationType.IsCommunicationHistorySaved );
                     }
                 }
             }
@@ -2175,5 +2207,10 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         }
 
         #endregion
+
+        protected void ddlReservationType_SelectedIndexChanged( object sender, EventArgs e )
+        {
+            ReservationType = new ReservationTypeService( new RockContext() ).Get( ddlReservationType.SelectedValueAsId().Value );
+        }
     }
 }

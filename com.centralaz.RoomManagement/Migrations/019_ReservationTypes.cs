@@ -256,7 +256,7 @@ INSERT INTO [dbo].[_com_centralaz_RoomManagement_ReservationType](
                     [IsSetupTimeRequired],
 	                [Guid])
 VALUES
-                    (0,
+                    (1,
                     '{0}',
                     '{1}',
                     1,

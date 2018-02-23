@@ -1,7 +1,8 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="ReservationDetail.ascx.cs" Inherits="RockWeb.Plugins.com_centralaz.RoomManagement.ReservationDetail" %>
 <%@ Register TagPrefix="CentralAZ" Assembly="com.centralaz.RoomManagement" Namespace="com.centralaz.RoomManagement.Web.UI.Controls" %>
 <script type="text/javascript">
-    function clearActiveDialog() {
+    function clearActiveDialog()
+    {
         $('#<%=hfActiveDialog.ClientID %>').val('');
     }
 </script>
@@ -23,7 +24,14 @@
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <Rock:DataTextBox ID="rtbName" runat="server" Label="Event Name" Required="true" SourceTypeName="com.centralaz.RoomManagement.Model.Reservation, com.centralaz.RoomManagement" PropertyName="Name" />
+                        <div class="row">
+                            <div class="col-md-6">
+                                <Rock:DataTextBox ID="rtbName" runat="server" Label="Event Name" Required="true" SourceTypeName="com.centralaz.RoomManagement.Model.Reservation, com.centralaz.RoomManagement" PropertyName="Name" />
+                            </div>
+                            <div class="col-md-6">
+                                <Rock:RockDropDownList ID="ddlReservationType" Label="Reservation Type" runat="server" OnSelectedIndexChanged="ddlReservationType_SelectedIndexChanged" />
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <Rock:RockControlWrapper ID="rcwSchedule" runat="server" Label="Schedule">
