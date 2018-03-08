@@ -368,8 +368,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     }
                 }
 
-                reservation.ReservationType = ReservationType;
-                reservation.ReservationTypeId = ReservationType.Id;
+                var reservationType = new ReservationTypeService( rockContext ).Get( ReservationType.Id );
+                reservation.ReservationType = reservationType;
+                reservation.ReservationTypeId = reservationType.Id;
 
                 foreach ( var reservationLocationState in LocationsState )
                 {
@@ -1354,6 +1355,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 }
 
                 reservation.ReservationType = ReservationType;
+                ddlReservationType.Enabled = true;
 
                 nbSetupTime.Required = nbCleanupTime.Required = ReservationType.IsSetupTimeRequired;
                 nbAttending.Required = ReservationType.IsNumberAttendingRequired;
@@ -1413,6 +1415,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 pdAuditDetails.SetEntity( reservation, ResolveRockUrl( "~" ) );
                 ReservationType = reservation.ReservationType;
+                ddlReservationType.Enabled = false;
             }
 
             sbSchedule.iCalendarContent = string.Empty;

@@ -50,6 +50,9 @@ namespace com.centralaz.RoomManagement.Model
         public bool IsActive { get; set; }
 
         [DataMember]
+        public bool IsSystem { get; set; }
+
+        [DataMember]
         public string IconCssClass { get; set; }
 
         [DataMember]
