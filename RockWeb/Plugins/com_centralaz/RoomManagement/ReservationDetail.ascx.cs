@@ -2070,7 +2070,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 if ( reservation.ReservationLocations.All( rl => rl.ApprovalState == ReservationLocationApprovalState.Approved ) && reservation.ReservationResources.All( rr => rr.ApprovalState == ReservationResourceApprovalState.Approved ) )
                 {
-                    if ( finalApprovalGroup == null || isSuperAdmin )
+                    if ( finalApprovalGroup == null || inApprovalGroups )
                     {
                         reservation.ApprovalState = ReservationApprovalState.Approved;
                     }
