@@ -111,7 +111,7 @@ namespace com.centralaz.RoomManagement.Transactions
                                     {
                                         if ( State == EntityState.Modified && QualifiersMatch( rockContext, reservationWorkflowTrigger, PreviousApprovalState, ApprovalState ) )
                                         {
-                                            LaunchWorkflow( rockContext, reservationWorkflowTrigger, "Status Changed" );
+                                            LaunchWorkflow( rockContext, reservationWorkflowTrigger, "State Changed" );
                                         }
                                         break;
                                     }
@@ -159,9 +159,8 @@ namespace com.centralaz.RoomManagement.Transactions
 
         private void LaunchWorkflow( RockContext rockContext, ReservationWorkflowTrigger reservationWorkflowTrigger, string name )
         {
-            var workflowTypeService = new WorkflowTypeService( rockContext );
-            var workflowType = workflowTypeService.Get( reservationWorkflowTrigger.WorkflowTypeId.Value );
-            if ( workflowType != null )
+            var workflowType = Rock.Web.Cache.WorkflowTypeCache.Read( reservationWorkflowTrigger.WorkflowTypeId.Value );
+            if ( workflowType != null && ( workflowType.IsActive ?? true ) )
             {
                 Reservation reservation = null;
                 if ( ReservationGuid.HasValue )
