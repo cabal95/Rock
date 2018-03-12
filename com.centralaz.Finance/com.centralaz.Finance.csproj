@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Migrations\007_UpdateToStoredProc.cs" />
     <Compile Include="Utility\FinanceHelper.cs" />
     <Compile Include="Migrations\006_StoredProcRevamp.cs" />
     <Compile Include="Migrations\005_ContributionLetter.cs" />
