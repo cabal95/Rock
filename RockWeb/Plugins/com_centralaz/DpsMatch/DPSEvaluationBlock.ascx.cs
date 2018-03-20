@@ -45,7 +45,8 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
     [NoteTypeField( "Alert Note Type", "The alert note type you use for noting a possible match that needs more data on the Rock person record. The last note of that type which is an Alert will be shown.", false, "Rock.Model.Person", defaultValue: "66A1B9D7-7EFA-40F3-9415-E54437977D60" )]
     [LinkedPage( "Add Note Page", "A special page that allows adding a note to a person by passing the note text and personid to the block on the special page.", false )]
     [TextField( "Alert Note Text", "The text for the alert note that is placed on the person's timeline when you have a possible match that needs more data on the Rock person record.", true, "Same name to registered sex offender. Verify DOB, Address and photo before serving. See security director if you have questions." )]
-
+    [IntegerField( "Database Timeout", "The number of seconds to wait before reporting a database timeout.", false, 180, "", 0 )]
+    [WorkflowTypeField( "WorkflowType", "The workflow to fire after a Dps file has been uploaded and processed", false, true, "EDB241A0-FD88-4D75-966E-CF590C1D24AA" )]
     public partial class DPSEvaluationBlock : Rock.Web.UI.RockBlock
     {
         #region Fields
@@ -180,6 +181,18 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
             }
         }
 
+        protected void fuOffenderFile_FileUploaded( object sender, Rock.Web.UI.Controls.FileUploaderEventArgs e )
+        {
+            var transaction = new com.centralaz.DpsMatch.Transactions.GenerateDpsMatches();
+            transaction.WorkflowTypeGuid = GetAttributeValue( "WorkflowType" ).AsGuidOrNull();
+            transaction.DpsFileId = fuOffenderFile.BinaryFileId;
+            transaction.DatabaseTimeout = GetAttributeValue( "DatabaseTimeout" ).AsIntegerOrNull();
+            Rock.Transactions.RockQueue.TransactionQueue.Enqueue( transaction );
+            nbUploadMessage.Text = "Your file has been uploaded. An assigned security worker will be notified once it has finished processing.";
+            nbUploadMessage.NotificationBoxType = Rock.Web.UI.Controls.NotificationBoxType.Success;
+            nbUploadMessage.Visible = true;
+        }
+
         /// <summary>
         /// Handles the Click event of the lbReset control.
         /// </summary>
@@ -278,9 +291,9 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
             List<Match> matchList = new MatchService( new DpsMatchContext() ).Queryable().Where( m => m.MatchPercentage >= 60 ).ToList();
             foreach ( Match match in matchList )
             {
-                if ( !match.VerifiedDate.HasValue || match.IsMatch == true || ( match.PersonAlias.Person.ModifiedDateTime.HasValue && match.VerifiedDate.Value.Date < match.PersonAlias.Person.ModifiedDateTime.Value.Date ) || match.VerifiedDate.Value.Date < match.Offender.ModifiedDateTime.Value.Date )
+                if ( match.IsMatch != false )
                 {
-                    if ( match.IsMatch != false )
+                    if ( !match.VerifiedDate.HasValue || match.IsMatch == true || ( match.PersonAlias.Person.ModifiedDateTime.HasValue && match.VerifiedDate.Value.Date < match.PersonAlias.Person.ModifiedDateTime.Value.Date ) || match.VerifiedDate.Value.Date < match.Offender.ModifiedDateTime.Value.Date )
                     {
                         if ( _matchList.ContainsKey( match.OffenderId ) )
                         {
@@ -426,7 +439,7 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
                             note.Text,
                             note.CreatedByPersonName,
                             note.CreatedDateTime != null ? note.CreatedDateTime.Value.ToString( "MM/dd/yy" ) : string.Empty
-                         ) 
+                         )
                     );
                 }
                 else

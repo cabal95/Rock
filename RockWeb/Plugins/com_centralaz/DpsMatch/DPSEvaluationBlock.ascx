@@ -7,7 +7,13 @@
             </div>
             <div class="panel-body">
                 <asp:HiddenField ID="hfSelectedColumn" runat="server" />
-
+                <div class="row">
+                    <div class="col-md-6">
+                        <Rock:FileUploader ID="fuOffenderFile" runat="server" Label="Upload Offender List" OnFileUploaded="fuOffenderFile_FileUploaded" />
+                        <Rock:NotificationBox ID="nbUploadMessage" runat="server" Visible="false" />
+                    </div>
+                </div>
+                <br />
                 <div class="grid">
                     <Rock:Grid ID="gValues" runat="server" AllowSorting="false" EmptyDataText="No Results" />
                 </div>

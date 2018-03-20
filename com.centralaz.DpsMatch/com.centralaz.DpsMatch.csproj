@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="Data\DpsMatchContext.cs" />
     <Compile Include="Data\DpsMatchService.cs" />
+    <Compile Include="Migrations\006_AlgorithmImprovements.cs" />
     <Compile Include="Migrations\005_NoteTypeAndGroup.cs" />
     <Compile Include="Migrations\003_OffenderPageAndTag.cs" />
     <Compile Include="Migrations\002_WorkflowConfig.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="Model\MatchService.cs" />
     <Compile Include="Model\OffenderService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Transactions\GenerateDpsMatches.cs" />
     <Compile Include="Web\UI\Controls\Grid\MatchField.cs" />
     <Compile Include="Web\UI\Controls\Grid\OffenderField.cs" />
     <Compile Include="Workflow\Action\ImportOffenders.cs" />
