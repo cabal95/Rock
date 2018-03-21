@@ -94,128 +94,128 @@ namespace com.centralaz.Workflow.Action.CheckIn
                         var groupTypes = new List<CheckInGroupType>();
 
                         bool canPrintLabels = canCheckInDictionary.ContainsKey( person.Person.Id ) ? canCheckInDictionary[person.Person.Id] : true;
-                        if ( canPrintLabels )
+
+                        // Get Primary area group types first
+                        personGroupTypes.Where( t => checkInState.ConfiguredGroupTypes.Contains( t.GroupType.Id ) ).ToList().ForEach( t => groupTypes.Add( t ) );
+
+                        // Then get additional areas
+                        personGroupTypes.Where( t => !checkInState.ConfiguredGroupTypes.Contains( t.GroupType.Id ) ).ToList().ForEach( t => groupTypes.Add( t ) );
+
+                        var personLabels = GetLabels( person.Person, new List<KioskLabel>() );
+
+                        var personLabelsAdded = new List<Guid>();
+
+                        foreach ( var groupType in groupTypes )
                         {
-                            // Get Primary area group types first
-                            personGroupTypes.Where( t => checkInState.ConfiguredGroupTypes.Contains( t.GroupType.Id ) ).ToList().ForEach( t => groupTypes.Add( t ) );
+                            groupType.Labels = new List<CheckInLabel>();
 
-                            // Then get additional areas
-                            personGroupTypes.Where( t => !checkInState.ConfiguredGroupTypes.Contains( t.GroupType.Id ) ).ToList().ForEach( t => groupTypes.Add( t ) );
+                            var groupTypeLabels = GetLabels( groupType.GroupType, personLabels );
 
-                            var personLabels = GetLabels( person.Person, new List<KioskLabel>() );
+                            var PrinterIPs = new Dictionary<int, string>();
 
-                            var personLabelsAdded = new List<Guid>();
-
-                            foreach ( var groupType in groupTypes )
+                            foreach ( var group in groupType.GetGroups( true ) )
                             {
-                                groupType.Labels = new List<CheckInLabel>();
+                                var groupLabels = GetLabels( group.Group, groupTypeLabels );
 
-                                var groupTypeLabels = GetLabels( groupType.GroupType, personLabels );
-
-                                var PrinterIPs = new Dictionary<int, string>();
-
-                                foreach ( var group in groupType.GetGroups( true ) )
+                                foreach ( var location in group.GetLocations( true ) )
                                 {
-                                    var groupLabels = GetLabels( group.Group, groupTypeLabels );
+                                    var locationLabels = GetLabels( location.Location, groupLabels );
 
-                                    foreach ( var location in group.GetLocations( true ) )
+                                    foreach ( var labelCache in locationLabels.OrderBy( l => l.LabelType ).ThenBy( l => l.Order ) )
                                     {
-                                        var locationLabels = GetLabels( location.Location, groupLabels );
+                                        person.SetOptions( labelCache );
 
-                                        foreach ( var labelCache in locationLabels.OrderBy( l => l.LabelType ).ThenBy( l => l.Order ) )
+                                        if ( labelCache.LabelType == KioskLabelType.Family )
                                         {
-                                            person.SetOptions( labelCache );
-
-                                            if ( labelCache.LabelType == KioskLabelType.Family )
+                                            if ( familyLabelsAdded.Contains( labelCache.Guid ) ||
+                                                personLabelsAdded.Contains( labelCache.Guid ) )
                                             {
-                                                if ( familyLabelsAdded.Contains( labelCache.Guid ) ||
-                                                    personLabelsAdded.Contains( labelCache.Guid ) )
+                                                continue;
+                                            }
+                                            else
+                                            {
+                                                familyLabelsAdded.Add( labelCache.Guid );
+                                            }
+                                        }
+                                        else if ( labelCache.LabelType == KioskLabelType.Person )
+                                        {
+                                            if ( personLabelsAdded.Contains( labelCache.Guid ) )
+                                            {
+                                                continue;
+                                            }
+                                            else
+                                            {
+                                                personLabelsAdded.Add( labelCache.Guid );
+                                            }
+                                        }
+
+                                        var mergeObjects = new Dictionary<string, object>();
+                                        foreach ( var keyValue in commonMergeFields )
+                                        {
+                                            mergeObjects.Add( keyValue.Key, keyValue.Value );
+                                        }
+
+                                        mergeObjects.Add( "Location", location );
+                                        mergeObjects.Add( "Group", group );
+                                        mergeObjects.Add( "Person", person );
+                                        mergeObjects.Add( "People", people );
+                                        mergeObjects.Add( "GroupType", groupType );
+
+                                        var groupMembers = groupMemberService.Queryable().AsNoTracking()
+                                            .Where( m =>
+                                                m.PersonId == person.Person.Id &&
+                                                m.GroupId == group.Group.Id )
+                                            .ToList();
+                                        mergeObjects.Add( "GroupMembers", groupMembers );
+
+                                        //string debugInfo = mergeObjects.lavaDebugInfo();
+                                        var label = new CheckInLabel( labelCache, mergeObjects, person.Person.Id );
+                                        label.FileGuid = labelCache.Guid;
+                                        label.PrintFrom = checkInState.Kiosk.Device.PrintFrom;
+                                        label.PrintTo = checkInState.Kiosk.Device.PrintToOverride;
+
+                                        if ( label.PrintTo == PrintTo.Default )
+                                        {
+                                            label.PrintTo = groupType.GroupType.AttendancePrintTo;
+                                        }
+
+                                        if ( label.PrintTo == PrintTo.Kiosk )
+                                        {
+                                            var device = checkInState.Kiosk.Device;
+                                            if ( device != null )
+                                            {
+                                                label.PrinterDeviceId = device.PrinterDeviceId;
+                                            }
+                                        }
+                                        else if ( label.PrintTo == PrintTo.Location )
+                                        {
+                                            var deviceId = location.Location.PrinterDeviceId;
+                                            if ( deviceId != null )
+                                            {
+                                                label.PrinterDeviceId = deviceId;
+                                            }
+                                        }
+
+                                        if ( label.PrinterDeviceId.HasValue )
+                                        {
+                                            if ( PrinterIPs.ContainsKey( label.PrinterDeviceId.Value ) )
+                                            {
+                                                label.PrinterAddress = PrinterIPs[label.PrinterDeviceId.Value];
+                                            }
+                                            else
+                                            {
+                                                var printerDevice = new DeviceService( rockContext ).Get( label.PrinterDeviceId.Value );
+                                                if ( printerDevice != null )
                                                 {
-                                                    continue;
-                                                }
-                                                else
-                                                {
-                                                    familyLabelsAdded.Add( labelCache.Guid );
+                                                    PrinterIPs.Add( printerDevice.Id, printerDevice.IPAddress );
+                                                    label.PrinterAddress = printerDevice.IPAddress;
                                                 }
                                             }
-                                            else if ( labelCache.LabelType == KioskLabelType.Person )
-                                            {
-                                                if ( personLabelsAdded.Contains( labelCache.Guid ) )
-                                                {
-                                                    continue;
-                                                }
-                                                else
-                                                {
-                                                    personLabelsAdded.Add( labelCache.Guid );
-                                                }
-                                            }
+                                        }
 
-                                            var mergeObjects = new Dictionary<string, object>();
-                                            foreach ( var keyValue in commonMergeFields )
-                                            {
-                                                mergeObjects.Add( keyValue.Key, keyValue.Value );
-                                            }
-
-                                            mergeObjects.Add( "Location", location );
-                                            mergeObjects.Add( "Group", group );
-                                            mergeObjects.Add( "Person", person );
-                                            mergeObjects.Add( "People", people );
-                                            mergeObjects.Add( "GroupType", groupType );
-
-                                            var groupMembers = groupMemberService.Queryable().AsNoTracking()
-                                                .Where( m =>
-                                                    m.PersonId == person.Person.Id &&
-                                                    m.GroupId == group.Group.Id )
-                                                .ToList();
-                                            mergeObjects.Add( "GroupMembers", groupMembers );
-
-                                            //string debugInfo = mergeObjects.lavaDebugInfo();
-                                            var label = new CheckInLabel( labelCache, mergeObjects, person.Person.Id );
-                                            label.FileGuid = labelCache.Guid;
-                                            label.PrintFrom = checkInState.Kiosk.Device.PrintFrom;
-                                            label.PrintTo = checkInState.Kiosk.Device.PrintToOverride;
-
-                                            if ( label.PrintTo == PrintTo.Default )
-                                            {
-                                                label.PrintTo = groupType.GroupType.AttendancePrintTo;
-                                            }
-
-                                            if ( label.PrintTo == PrintTo.Kiosk )
-                                            {
-                                                var device = checkInState.Kiosk.Device;
-                                                if ( device != null )
-                                                {
-                                                    label.PrinterDeviceId = device.PrinterDeviceId;
-                                                }
-                                            }
-                                            else if ( label.PrintTo == PrintTo.Location )
-                                            {
-                                                var deviceId = location.Location.PrinterDeviceId;
-                                                if ( deviceId != null )
-                                                {
-                                                    label.PrinterDeviceId = deviceId;
-                                                }
-                                            }
-
-                                            if ( label.PrinterDeviceId.HasValue )
-                                            {
-                                                if ( PrinterIPs.ContainsKey( label.PrinterDeviceId.Value ) )
-                                                {
-                                                    label.PrinterAddress = PrinterIPs[label.PrinterDeviceId.Value];
-                                                }
-                                                else
-                                                {
-                                                    var printerDevice = new DeviceService( rockContext ).Get( label.PrinterDeviceId.Value );
-                                                    if ( printerDevice != null )
-                                                    {
-                                                        PrinterIPs.Add( printerDevice.Id, printerDevice.IPAddress );
-                                                        label.PrinterAddress = printerDevice.IPAddress;
-                                                    }
-                                                }
-                                            }
-
+                                        if ( canPrintLabels )
+                                        {
                                             groupType.Labels.Add( label );
-
                                         }
                                     }
                                 }
