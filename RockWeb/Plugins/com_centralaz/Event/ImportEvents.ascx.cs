@@ -522,9 +522,9 @@ namespace RockWeb.Plugins.com_centralaz.Event
             registrationInstance.StartDateTime = sourceInstance.StartDateTime;
             registrationInstance.EndDateTime = sourceInstance.EndDateTime;
             registrationInstance.SendReminderDateTime = sourceInstance.SendReminderDateTime;
-            registrationInstance.ContactPersonAliasId = sourceInstance.ContactPersonAliasId;
-            registrationInstance.ContactPhone = sourceInstance.ContactPhone;
-            registrationInstance.ContactEmail = sourceInstance.ContactEmail;
+            //registrationInstance.ContactPersonAliasId = sourceInstance.ContactPersonAliasId;
+            //registrationInstance.ContactPhone = sourceInstance.ContactPhone;
+            //registrationInstance.ContactEmail = sourceInstance.ContactEmail;
             registrationInstance.AccountId = sourceInstance.AccountId;
 
             // Render some lava to replace keywords in the source registration instance
