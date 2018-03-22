@@ -29,6 +29,7 @@ using Rock;
 using Rock.Attribute;
 using Rock.Data;
 using Rock.Model;
+using Rock.Web.UI.Controls;
 
 namespace RockWeb.Plugins.com_centralaz.DpsMatch
 {
@@ -66,6 +67,8 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
         {
             base.OnInit( e );
 
+            gfSettings.ApplyFilterClick += gfSettings_ApplyFilterClick;
+
             // this event gets fired after block settings are updated. it's nice to repaint the screen if these settings would alter it
             this.AddConfigurationUpdateTrigger( upnlContent );
         }
@@ -79,18 +82,7 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
             base.OnLoad( e );
 
             if ( !Page.IsPostBack )
-            {
-                var noteType = new NoteTypeService( new RockContext() ).Get( GetAttributeValue( "AlertNoteType" ).AsGuid() );
-                if ( noteType != null )
-                {
-                    _alertNoteTypeId = noteType.Id;
-                }
-
-                if ( _matchList == null || _matchList.Count == 0 )
-                {
-                    PopulateMatchList();
-                }
-
+            {               
                 ShowDetail();
             }
         }
@@ -205,6 +197,15 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
             ShowDetail();
         }
 
+        protected void gfSettings_ApplyFilterClick( object sender, EventArgs e )
+        {
+
+            gfSettings.SaveUserPreference( "MatchThreshold", rsMatchThreshold.SelectedValue.ToString() );
+            PopulateMatchList();
+            BuildColumns();
+            BindGrid();
+        }
+
         #endregion
 
         #region Methods
@@ -214,9 +215,23 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
         /// </summary>
         private void ShowDetail()
         {
+            var noteType = new NoteTypeService( new RockContext() ).Get( GetAttributeValue( "AlertNoteType" ).AsGuid() );
+            if ( noteType != null )
+            {
+                _alertNoteTypeId = noteType.Id;
+            }
+
+            if ( _matchList == null || _matchList.Count == 0 )
+            {
+                BindFilter();
+
+                PopulateMatchList();
+            }
+
             if ( _matchList.Count > 0 )
             {
                 BuildColumns();
+                BindFilter();
                 BindGrid();
             }
             else
@@ -267,6 +282,19 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
             }
         }
 
+        private void BindFilter()
+        {
+
+            if ( !string.IsNullOrWhiteSpace( gfSettings.GetUserPreference( "MatchThreshold" ) ) )
+            {
+                rsMatchThreshold.SelectedValue = gfSettings.GetUserPreference( "MatchThreshold" ).AsInteger();
+            }
+            else
+            {
+                rsMatchThreshold.SelectedValue = 70;
+            }
+        }
+
         /// <summary>
         /// Binds the values.
         /// </summary>
@@ -279,6 +307,14 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
                 List<Match> matchSubList = _matchList.ElementAt( _dictionaryIndex ).Value;
                 gValues.DataSource = GetDataTable( offender, matchSubList );
                 gValues.DataBind();
+                gValues.Visible = true;
+            }
+            else
+            {
+                gValues.Visible = false;
+                nbComplete.Text = GetAttributeValue( "CompletionText" );
+                nbComplete.Visible = true;
+                lbNext.Visible = false;
             }
         }
 
@@ -287,8 +323,14 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
         /// </summary>
         protected void PopulateMatchList()
         {
+            int matchThreshold = rsMatchThreshold.SelectedValue.Value;
+            if ( matchThreshold == 0 )
+            {
+                matchThreshold = 60;
+            }
+
             _matchList = new Dictionary<int, List<Match>>();
-            List<Match> matchList = new MatchService( new DpsMatchContext() ).Queryable().Where( m => m.MatchPercentage >= 60 ).ToList();
+            List<Match> matchList = new MatchService( new DpsMatchContext() ).Queryable().Where( m => m.MatchPercentage >= matchThreshold ).ToList();
             foreach ( Match match in matchList )
             {
                 if ( match.IsMatch != false )
@@ -405,14 +447,7 @@ namespace RockWeb.Plugins.com_centralaz.DpsMatch
             rowValues.Add( String.Format( "{0}", offender.Sex ) );
             foreach ( Match match in matchList )
             {
-                if ( match.PersonAlias.Person.Gender == Gender.Male )
-                {
-                    rowValues.Add( "M" );
-                }
-                else
-                {
-                    rowValues.Add( "F" );
-                }
+                rowValues.Add( match.PersonAlias.Person.Gender );
             }
             tbl.Rows.Add( rowValues.ToArray() );
 
