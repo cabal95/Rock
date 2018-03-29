@@ -67,6 +67,7 @@ namespace RockWeb.Plugins.com_centralaz.Event
         private readonly string _USER_PREF_REGISTRATIONINSTANCESOURCEID = "CentralAZImportEvents:RegistrationInstanceSourceId";
         private readonly string _USER_PREF_GROUPTYPEID = "CentralAZImportEvents:GroupTypeId";
         private readonly string _USER_PREF_PARENTGROUPID = "CentralAZImportEvents:ParentGroupId";
+        private readonly string _USER_PREF_SCHEDULE = "CentralAZImportEvents:iCalSchedule";
 
         private readonly string _GROUP_ATTRIB_REGISTRATIONINSTANCEID = "RegistrationInstanceId";
         private readonly string _GROUP_ATTRIB_EVENTOCCURRENCEID = "EventOccurrenceId";
@@ -358,11 +359,14 @@ namespace RockWeb.Plugins.com_centralaz.Event
 
             gpParentGroup.SetValue( null );
 
+            sbSchedule.iCalendarContent = "";
+
             SetUserPreference( _USER_PREF_EVENTITEMID, string.Empty );
             SetUserPreference( _USER_PREF_REGTEMPLATEID, string.Empty );
             SetUserPreference( _USER_PREF_REGISTRATIONINSTANCESOURCEID, string.Empty );
             SetUserPreference( _USER_PREF_GROUPTYPEID, string.Empty );
             SetUserPreference( _USER_PREF_PARENTGROUPID, string.Empty );
+            SetUserPreference( _USER_PREF_SCHEDULE, string.Empty );
         }
 
         #endregion
@@ -731,6 +735,14 @@ namespace RockWeb.Plugins.com_centralaz.Event
             {
                 gpParentGroup.SetValue( groupId );
             }
+
+            var iCal = GetUserPreference( _USER_PREF_SCHEDULE );
+            if ( iCal != null )
+            {
+                sbSchedule.iCalendarContent = iCal;
+                var schedule = new Schedule { iCalendarContent = sbSchedule.iCalendarContent };
+                lScheduleText.Text = schedule.FriendlyScheduleText;
+            }
         }
 
         /// <summary>
@@ -770,6 +782,7 @@ namespace RockWeb.Plugins.com_centralaz.Event
                     //CvsConfiguration 
                     CsvReader csvReader = new CsvReader( sr );
                     csvReader.Configuration.WillThrowOnMissingField = false;
+                    csvReader.Configuration.IgnoreHeaderWhiteSpace = true;
 
                     try
                     { 
@@ -909,6 +922,7 @@ namespace RockWeb.Plugins.com_centralaz.Event
             SetUserPreference( _USER_PREF_REGISTRATIONINSTANCESOURCEID, registrationInstanceSourceId.HasValue ? registrationInstanceSourceId.Value.ToStringSafe() : string.Empty );
             SetUserPreference( _USER_PREF_GROUPTYPEID, gtpGroupType.SelectedValue );
             SetUserPreference( _USER_PREF_PARENTGROUPID, parentGroupId.HasValue ? parentGroupId.Value.ToStringSafe() : string.Empty );
+            SetUserPreference( _USER_PREF_SCHEDULE, sbSchedule.iCalendarContent != null ? sbSchedule.iCalendarContent : string.Empty );
         }
 
         #endregion
