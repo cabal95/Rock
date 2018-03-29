@@ -41,10 +41,16 @@ namespace RockWeb.Plugins.com_centralaz.CheckIn
     [AttributeField( Rock.SystemGuid.EntityType.GROUP, "Group Special Needs Attribute", "Select the attribute used to filter special needs groups.", false, false, "", order: 1 )]
     [AttributeField( Rock.SystemGuid.EntityType.GROUP, "Group Last Name Start Letter Attribute", "Select the attribute used to define the last name start letter of the group.", false, false, "", order: 2 )]
     [AttributeField( Rock.SystemGuid.EntityType.GROUP, "Group Last Name End Letter Attribute", "Select the attribute used to define the last name end letter of the group.", false, false, "", order: 3 )]
+    [TextField( "Group A Color", "The CSS color (#rrggbb) to use for styling items of the first same age group.", true, "#7bb0d6", "Advanced", 0 )]
+    [TextField( "Group B Color", "The CSS color (#rrggbb) to use for styling items of the second same age group.", true, "#b0cc60", "Advanced", 1 )]
 
     public partial class MultiServiceCheckinOverview : RockBlock
     {
         #region Properties 
+
+        string rowAgeGroupText = string.Empty;
+        Queue<string> colorQueue = new Queue<string>( new[] { "color-group-a", "color-group-b" } );
+        string currentRowColorGroup = "color-group-b";
 
         /// <summary>
         /// Gets the age range attribute key.
@@ -552,6 +558,17 @@ namespace RockWeb.Plugins.com_centralaz.CheckIn
                     {
                         lAge.Text = group.GetAttributeValue( AgeRangeAttributeKey ).SplitDelimitedValues().Select( a => a.AsDouble().ToString( "0.##" ) )
                         .ToList().AsDelimited( " to " );
+                        if ( rowAgeGroupText != lAge.Text )
+                        {
+                            rowAgeGroupText = lAge.Text;
+
+                            // swap to the next color in the queue and add it to the end of the queue
+                            var colorCssClass = colorQueue.Dequeue();
+                            colorQueue.Enqueue( colorCssClass );
+                            currentRowColorGroup = colorCssClass;
+                        }
+
+                        e.Row.AddCssClass( currentRowColorGroup );
                     }
                 }
 

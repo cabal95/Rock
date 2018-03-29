@@ -1,5 +1,9 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="MultiServiceCheckinOverview.ascx.cs" Inherits="RockWeb.Plugins.com_centralaz.CheckIn.MultiServiceCheckinOverview" %>
 
+<style>
+    .color-group-a { border-left: solid 20px <%= GetAttributeValue( "GroupAColor" )%>}
+    .color-group-b { border-left: solid 20px <%= GetAttributeValue( "GroupBColor" )%>}
+</style>
 <asp:UpdatePanel ID="upCheckinScheduleBuilder" runat="server">
     <ContentTemplate>
 
