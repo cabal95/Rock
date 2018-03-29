@@ -558,17 +558,6 @@ namespace RockWeb.Plugins.com_centralaz.CheckIn
                     {
                         lAge.Text = group.GetAttributeValue( AgeRangeAttributeKey ).SplitDelimitedValues().Select( a => a.AsDouble().ToString( "0.##" ) )
                         .ToList().AsDelimited( " to " );
-                        if ( rowAgeGroupText != lAge.Text )
-                        {
-                            rowAgeGroupText = lAge.Text;
-
-                            // swap to the next color in the queue and add it to the end of the queue
-                            var colorCssClass = colorQueue.Dequeue();
-                            colorQueue.Enqueue( colorCssClass );
-                            currentRowColorGroup = colorCssClass;
-                        }
-
-                        e.Row.AddCssClass( currentRowColorGroup );
                     }
                 }
 
@@ -595,6 +584,27 @@ namespace RockWeb.Plugins.com_centralaz.CheckIn
                     }
                     lGrade.Text = gradesFormatted.AsDelimited( " to " );
                 }
+
+                if ( lAge.Text != "" && rowAgeGroupText != lAge.Text )
+                {
+                    rowAgeGroupText = lAge.Text;
+
+                    // swap to the next color in the queue and add it to the end of the queue
+                    var colorCssClass = colorQueue.Dequeue();
+                    colorQueue.Enqueue( colorCssClass );
+                    currentRowColorGroup = colorCssClass;
+                }
+                else if ( lGrade.Text != "" && rowAgeGroupText != lGrade.Text )
+                {
+                    rowAgeGroupText = lGrade.Text;
+
+                    // swap to the next color in the queue and add it to the end of the queue
+                    var colorCssClass = colorQueue.Dequeue();
+                    colorQueue.Enqueue( colorCssClass );
+                    currentRowColorGroup = colorCssClass;
+                }
+
+                e.Row.AddCssClass( currentRowColorGroup );
 
                 Literal lSpecialNeeds = e.Row.FindControl( "lSpecialNeeds" ) as Literal;
                 if ( lSpecialNeeds != null )
