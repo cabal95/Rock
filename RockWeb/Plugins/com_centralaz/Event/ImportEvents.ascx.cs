@@ -90,6 +90,9 @@ namespace RockWeb.Plugins.com_centralaz.Event
         protected override void OnInit( EventArgs e )
         {
             base.OnInit( e );
+            // Display the version number.  If the plugin has an assembly you can do it like this:
+            // lVersionText.Text = com.centralaz.PLUGINASSEMBLY.VersionInfo.GetPluginProductVersionNumber();
+            lVersionText.Text = "1.2.0";
 
             // this event gets fired after block settings are updated. it's nice to repaint the screen if these settings would alter it
             this.BlockUpdated += Block_BlockUpdated;
@@ -145,7 +148,6 @@ namespace RockWeb.Plugins.com_centralaz.Event
 
             if ( e.CurrentStepIndex == 0 )
             {
-
                 if ( !ValidateFileUpload() || Session[SESSIONKEY_TO_PROCESS] == null )
                 {
                     e.Cancel = true;

@@ -117,6 +117,8 @@
                     </WizardSteps>
 
                 </asp:Wizard>
+                <small class="text-muted">v<asp:Literal ID="lVersionText" runat ="server"></asp:Literal></small>
+
             </div>
         </div>
     </ContentTemplate>
