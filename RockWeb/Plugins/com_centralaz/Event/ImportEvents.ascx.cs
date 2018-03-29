@@ -640,6 +640,7 @@ namespace RockWeb.Plugins.com_centralaz.Event
                     Guid = Guid.NewGuid(),
                     Name = item.Name,
                     CreatedDateTime = RockDateTime.Now,
+                    Description = item.Description,
                 };
 
                 // Tie it back a Location
@@ -673,6 +674,12 @@ namespace RockWeb.Plugins.com_centralaz.Event
             group.LoadAttributes();
             group.SetAttributeValue( _GROUP_ATTRIB_REGISTRATIONINSTANCEID, registrationInstanceid.ToString() );
             group.SaveAttributeValues( _rockContext );
+
+            // Set the group's description if one came in the import.
+            if ( ! string.IsNullOrWhiteSpace( item.Description ) )
+            {
+                group.Description = item.Description;
+            }
 
             group.CampusId = item.CampusId; 
             group.GroupCapacity = item.MaxRegistrants;
@@ -952,6 +959,8 @@ namespace RockWeb.Plugins.com_centralaz.Event
         public string Campus { get; set; }
         public int CampusId { get; set; }
         public int MaxRegistrants { get; set; }
+        public string Description { get; set; }
+
     }
 
     public class ImportSettings

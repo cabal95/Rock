@@ -35,7 +35,7 @@
                         <asp:WizardStep ID="WizardStep1" runat="server" Title="Upload List Data" >
                             <div class="col-md-12">
                                 <h3>Step 1 - Choose File to Import</h3>
-                                Upload a file (csv) containing the following seven (7) required fields:<br />
+                                Upload a file (csv) containing the following nine (9) required fields:<br />
                                 <asp:BulletedList ID="BulletedList1" runat="server">
                                     <asp:ListItem>Name</asp:ListItem>
                                     <asp:ListItem>CrossStreets</asp:ListItem>
@@ -45,6 +45,7 @@
                                     <asp:ListItem>Zip</asp:ListItem>
                                     <asp:ListItem>Campus</asp:ListItem>
                                     <asp:ListItem>MaxRegistrants</asp:ListItem>
+                                    <asp:ListItem>Description</asp:ListItem>
                                 </asp:BulletedList>
                                 <div class="row">
                                     <div class="col-md-12">
