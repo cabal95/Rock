@@ -2,18 +2,18 @@
 
 <asp:UpdatePanel ID="upnlExample" runat="server">
     <ContentTemplate>
+        <asp:HiddenField ID="hfFileEncoding" runat="server" />
         <div class="panel panel-block">
             <div class="panel panel-heading">
                 Import People To Group
+                <small class="text-muted pull-right">v<asp:Literal ID="lVersionText" runat ="server"></asp:Literal></small>
             </div>
             <div class="panel panel-body">
-                <div class="row alert alert-danger" runat="server" id="divErrors" visible="false">
-                    <div class="col-md-12">
+                <div class="alert alert-danger" runat="server" id="divErrors" visible="false">
                         <b>There was a problem with the file you are trying to upload.</b>
                         <div>
                             <asp:Label ID="lblErrors" runat="server" ></asp:Label>
                         </div>
-                    </div>
                 </div>
                 <asp:Wizard ID="Wizard1" runat="server" ActiveStepIndex="0"
                     Width="100%" 
@@ -34,6 +34,7 @@
                     <WizardSteps>
                         <asp:WizardStep ID="WizardStep1" runat="server" Title="Upload List Data" >
                             <div class="col-md-12">
+
                                 <h3>Step 1 - Choose File to Import</h3>
                                 Upload a file (csv) containing the following nine (9) required fields:<br />
                                 <asp:BulletedList ID="BulletedList1" runat="server">
@@ -117,7 +118,6 @@
                     </WizardSteps>
 
                 </asp:Wizard>
-                <small class="text-muted">v<asp:Literal ID="lVersionText" runat ="server"></asp:Literal></small>
 
             </div>
         </div>

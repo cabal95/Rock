@@ -92,7 +92,7 @@ namespace RockWeb.Plugins.com_centralaz.Event
             base.OnInit( e );
             // Display the version number.  If the plugin has an assembly you can do it like this:
             // lVersionText.Text = com.centralaz.PLUGINASSEMBLY.VersionInfo.GetPluginProductVersionNumber();
-            lVersionText.Text = "1.2.0";
+            lVersionText.Text = "1.2.1";
 
             // this event gets fired after block settings are updated. it's nice to repaint the screen if these settings would alter it
             this.BlockUpdated += Block_BlockUpdated;
@@ -256,6 +256,8 @@ namespace RockWeb.Plugins.com_centralaz.Event
                 lblCompleteMsg.Text += miscProblems + " of the provided items were unable to be added or updated:<br /><br /> " +
                     string.Join( "<br/> ", probItems.ToArray() ) + "<br /><br />";
             }
+
+            lblCompleteMsg.Text += string.Format( "<p>&nbsp;</p><p class='text-muted'><i>The import detected the file's encoding was {0}</i></p>", hfFileEncoding.Value );
         }
 
         /// <summary>
@@ -633,6 +635,8 @@ namespace RockWeb.Plugins.com_centralaz.Event
         {
             var group = parentGroup.Groups.Where( g => g.Name == item.Name ).FirstOrDefault();
 
+            var description = RemoveSpecialCharacters( item.Description );
+
             if ( group == null )
             {
                 group = new Rock.Model.Group()
@@ -642,7 +646,7 @@ namespace RockWeb.Plugins.com_centralaz.Event
                     Guid = Guid.NewGuid(),
                     Name = item.Name,
                     CreatedDateTime = RockDateTime.Now,
-                    Description = item.Description,
+                    Description = description,
                 };
 
                 // Tie it back a Location
@@ -678,9 +682,9 @@ namespace RockWeb.Plugins.com_centralaz.Event
             group.SaveAttributeValues( _rockContext );
 
             // Set the group's description if one came in the import.
-            if ( ! string.IsNullOrWhiteSpace( item.Description ) )
+            if ( ! string.IsNullOrWhiteSpace( description ) )
             {
-                group.Description = item.Description;
+                group.Description = description;
             }
 
             group.CampusId = item.CampusId; 
@@ -786,7 +790,24 @@ namespace RockWeb.Plugins.com_centralaz.Event
                 var list = new Queue<ImportEventGroup>();
 
                 string physicalFileName = this.Request.MapPath( fuprExampleContentFile.UploadedContentFilePath );
-                using ( StreamReader sr = new StreamReader( physicalFileName ) )
+
+                //char ch;
+                //int Tchar = 0;
+                //StreamReader reader = new StreamReader( physicalFileName, Encoding.Unicode );
+                //do
+                //{
+                //    ch = ( char ) reader.Read();
+                //    Console.Write( ch );
+                //    if ( Convert.ToInt32( ch ) == 34 )
+                //    {
+                //        Console.Write( @";" );
+                //    }
+                //    Tchar++;
+                //} while ( !reader.EndOfStream );
+                //reader.Close();
+                //reader.Dispose();
+
+                using ( StreamReader sr = new StreamReader( physicalFileName) )
                 {
                     //CvsConfiguration 
                     CsvReader csvReader = new CsvReader( sr );
@@ -795,11 +816,17 @@ namespace RockWeb.Plugins.com_centralaz.Event
 
                     try
                     { 
-                        var records = csvReader.GetRecords<ImportEventGroup>();
+                        var records = csvReader.GetRecords<ImportEventGroup>().ToList();
                         foreach ( var r in records )
                         {
                             i++;
-                            r.CampusId = campuses.Where( c => c.Name.ToLower() == r.Campus.Trim().ToLower() ).Select( c => c.Id ).FirstOrDefault();
+                            var campusId = campuses.Where( c => c.Name.ToLower() == r.Campus.Trim().ToLower() ).Select( c => c.Id ).FirstOrDefault();
+                            if ( campusId == 0 )
+                            {
+                                throw new Exception( string.Format( "Record number {0} does not have a valid campus. ", i ) );
+                            }
+                            r.CampusId = campusId;
+
                             lastSuccessfulItemName = r.Name;
                             list.Enqueue( r );
                         }
@@ -818,6 +845,8 @@ namespace RockWeb.Plugins.com_centralaz.Event
 
                         sbErrors.AppendFormat( "<small class='text-info'>{0}</small>", ex2.Message );
                     }
+
+                    hfFileEncoding.Value = sr.CurrentEncoding.EncodingName;
                 }
             }
             catch ( Exception ex )
@@ -935,6 +964,46 @@ namespace RockWeb.Plugins.com_centralaz.Event
         }
 
         #endregion
+
+        public string RemoveSpecialCharacters( string str )
+        {
+            // Convert MS special quotes to regular quotes.
+            if ( str.IndexOf( '\u2032' ) > -1 )
+            {
+                str = str.Replace( '\u2032', '\'' );
+            }
+            if ( str.IndexOf( '\u2033' ) > -1 )
+            {
+                str = str.Replace( '\u2033', '\"' );
+            }
+            if ( str.IndexOf( '\u2026' ) > -1 )
+            {
+                str = str.Replace( "\u2026", "..." );
+            }
+            if ( str.IndexOf( '\u201d' ) > -1 )
+            {
+                str = str.Replace( '\u201d', '\'' );
+            }
+            if ( str.IndexOf( '\u0092' ) > -1 )
+            {
+                str = str.Replace( '\u0092', '\'' );
+            }
+            str = str.Replace( ( char ) 0x2019, '\'' );
+            str = str.Replace( ( char ) 0x92, '\'' );
+            str = str.Replace( ( char ) 0xA0, ' ' );
+
+            StringBuilder sb = new StringBuilder();
+            foreach ( char c in str )
+            {
+                if ( ( c >= '0' && c <= '9' ) || ( c >= 'A' && c <= 'Z' ) || ( c >= 'a' && c <= 'z' ) 
+                    || c == '.' || c == ',' || c == '_' || c == '\'' || c == ' ' || c == '-' || c == '"' || c == '!' || c == '?' )
+                {
+                    sb.Append( c );
+                }
+            }
+            return sb.ToString();
+        }
+
     }
 
     public sealed class ImportEventGroupClassMap : CsvClassMap<ImportEventGroup>
