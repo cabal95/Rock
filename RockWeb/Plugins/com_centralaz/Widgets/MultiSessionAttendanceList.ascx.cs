@@ -29,6 +29,7 @@ using Rock.Web.Cache;
 using Rock.Web.UI.Controls;
 using Rock.Attribute;
 using Rock.Web.UI;
+using System.Data;
 
 namespace RockWeb.Plugins.com_centralaz.Widgets
 {
@@ -64,12 +65,6 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             FirstAttributeCache = ViewState["FirstAttributeCache"] as AttributeCache;
             SecondAttributeCache = ViewState["SecondAttributeCache"] as AttributeCache;
             ThirdAttributeCache = ViewState["ThirdAttributeCache"] as AttributeCache;
-
-            // Add Link to Profile Page Column
-            if ( !string.IsNullOrEmpty( GetAttributeValue( "PersonProfilePage" ) ) )
-            {
-                AddPersonProfileLinkColumn();
-            }
         }
 
         /// <summary>
@@ -80,9 +75,13 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
         {
             base.OnInit( e );
             gList.GridRebind += gList_GridRebind;
+
+            gList.PersonIdField = "Id";
             gList.DataKeyNames = new string[] { "Id" };
             gList.RowDataBound += gList_RowDataBound;
             gList.Actions.ShowCommunicate = true;
+            gList.Actions.ShowBulkUpdate = false;
+            gList.Actions.ShowMergePerson = false;
 
             gfSettings.ApplyFilterClick += gfSettings_ApplyFilterClick;
             gfSettings.DisplayFilterValue += gfSettings_DisplayFilterValue;
@@ -152,36 +151,25 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
 
         protected void gList_RowDataBound( object sender, GridViewRowEventArgs e )
         {
-            Person person = e.Row.DataItem as Person;
-            if ( person != null )
+            PersonAttendanceDataRow personAttendanceDataRow = e.Row.DataItem as PersonAttendanceDataRow;
+            if ( personAttendanceDataRow != null )
             {
-                person.LoadAttributes();
-
-                foreach ( var cell in e.Row.Cells.OfType<DataControlFieldCell>() )
+                CheckBox checkBox_AttendedFirstSession = e.Row.FindControl( "checkBox_AttendedFirstSession" ) as CheckBox;
+                if ( checkBox_AttendedFirstSession != null )
                 {
-                    if ( cell.ContainingField is CheckBoxEditableField )
-                    {
-                        CheckBoxEditableField checkBoxEditableField = cell.ContainingField as CheckBoxEditableField;
-                        if ( checkBoxEditableField != null )
-                        {
-                            string attributeKey = GetAttributeKey( checkBoxEditableField.HeaderText );
+                    checkBox_AttendedFirstSession.Enabled = !personAttendanceDataRow.AttendedFirstSession;
+                }
 
-                            CheckBox checkBox = cell.Controls[0] as CheckBox;
-                            if ( checkBox != null )
-                            {
-                                var attendedDate = person.GetAttributeValue( attributeKey );
-                                if ( attendedDate.AsDateTime() != null )
-                                {
-                                    checkBox.Checked = true;
-                                    checkBox.Enabled = false;
-                                }
-                                else
-                                {
-                                    checkBox.Checked = false;
-                                }
-                            }
-                        }
-                    }
+                CheckBox checkBox_AttendedSecondSession = e.Row.FindControl( "checkBox_AttendedSecondSession" ) as CheckBox;
+                if ( checkBox_AttendedSecondSession != null )
+                {
+                    checkBox_AttendedSecondSession.Enabled = !personAttendanceDataRow.AttendedSecondSession;
+                }
+
+                CheckBox checkBox_AttendedThirdSession = e.Row.FindControl( "checkBox_AttendedThirdSession" ) as CheckBox;
+                if ( checkBox_AttendedThirdSession != null )
+                {
+                    checkBox_AttendedThirdSession.Enabled = !personAttendanceDataRow.AttendedThirdSession;
                 }
             }
         }
@@ -239,49 +227,55 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                 foreach ( GridViewRow row in gList.Rows )
                 {
                     var checkCount = 0;
-                    Person person = row.DataItem as Person;
-                    person.LoadAttributes();
 
-                    foreach ( var fieldCell in row.Cells.OfType<DataControlFieldCell>() )
+                    int personId = int.Parse( gList.DataKeys[row.RowIndex].Value.ToString() );
+                    Person person = personService.Get( personId );
+                    if ( person != null )
                     {
-                        CheckBoxEditableField checkBoxTemplateField = fieldCell.ContainingField as CheckBoxEditableField;
-                        if ( checkBoxTemplateField != null )
+                        person.LoadAttributes();
+
+                        foreach ( var fieldCell in row.Cells.OfType<DataControlFieldCell>() )
                         {
-                            string attributeKey = GetAttributeKey( checkBoxTemplateField.HeaderText );
-
-                            CheckBox checkBox = fieldCell.Controls[0] as CheckBox;
-
-                            if ( checkBox.Checked )
+                            CheckBoxEditableField checkBoxTemplateField = fieldCell.ContainingField as CheckBoxEditableField;
+                            if ( checkBoxTemplateField != null )
                             {
-                                checkCount++;
-                                var attributeDate = person.GetAttributeValue( attributeKey );
-                                if ( attributeDate == null || attributeDate.AsDateTime() == null )
+                                string attributeKey = GetAttributeKey( checkBoxTemplateField.HeaderText );
+
+                                CheckBox checkBox = fieldCell.Controls[0] as CheckBox;
+
+                                if ( checkBox.Checked )
                                 {
-                                    person.SetAttributeValue( attributeKey, date.ToString() );
+                                    checkCount++;
+                                    var attributeDate = person.GetAttributeValue( attributeKey );
+                                    if ( attributeDate == null || attributeDate.AsDateTime() == null )
+                                    {
+                                        person.SetAttributeValue( attributeKey, date.ToString() );
+                                        person.SaveAttributeValue( attributeKey, rockContext );
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    person.SaveAttributeValues();
-
-                    // Fire any configured workflows if the person has completed all three sessions
-                    if ( checkCount == 3 )
-                    {
-                        var workflowService = new WorkflowService( rockContext );
-
-                        var workflows = GetAttributeValue( "WorkflowTypes" ).SplitDelimitedValues().AsGuidList();
-
-                        if ( workflows.Any() )
+                        // Fire any configured workflows if the person has completed all three sessions
+                        if ( checkCount == 3 )
                         {
-                            foreach ( var workflowType in workflows )
+                            var workflowService = new WorkflowService( rockContext );
+
+                            var workflows = GetAttributeValue( "WorkflowTypes" ).SplitDelimitedValues().AsGuidList();
+
+                            if ( workflows.Any() )
                             {
-                                LaunchWorkflows( workflowService, workflowType, person.FullName, person );
+                                foreach ( var workflowType in workflows )
+                                {
+                                    LaunchWorkflows( workflowService, workflowType, person.FullName, person );
+                                }
                             }
                         }
                     }
                 }
             }
+
+            BindGrid();
         }
 
 
@@ -301,6 +295,7 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                     pnlPersonList.Visible = true;
                     pnlNotification.Visible = false;
                     BindFilter();
+                    AddColumns();
                     BindGrid();
                 }
                 else
@@ -321,12 +316,6 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             cpCampus.SetValues( gfSettings.GetUserPreference( FilterSetting.CAMPUS ).SplitDelimitedValues().AsIntegerList() );
 
             sdrpRegistrationDateRange.DelimitedValues = gfSettings.GetUserPreference( FilterSetting.DATE_RANGE );
-
-            // Add Link to Profile Page Column
-            if ( !string.IsNullOrEmpty( GetAttributeValue( "PersonProfilePage" ) ) )
-            {
-                AddPersonProfileLinkColumn();
-            }
         }
 
         /// <summary>
@@ -335,20 +324,22 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
         private void BindGrid()
         {
             using ( var rockContext = new RockContext() )
-            {
+            {              
                 PersonService personService = new PersonService( rockContext );
                 EventItemService eventItemService = new EventItemService( rockContext );
                 AttributeValueService attributeValueService = new AttributeValueService( rockContext );
 
+                // Generate Attribute Values Qry
                 var attributeIds = new List<int>();
                 attributeIds.Add( FirstAttributeCache.Id );
                 attributeIds.Add( SecondAttributeCache.Id );
                 attributeIds.Add( ThirdAttributeCache.Id );
 
-                gList.ColumnsOfType<CheckBoxEditableField>().Where( a => a.ID == "cbfA" ).FirstOrDefault().HeaderText = FirstAttributeCache.Name;
-                gList.ColumnsOfType<CheckBoxEditableField>().Where( a => a.ID == "cbfB" ).FirstOrDefault().HeaderText = SecondAttributeCache.Name;
-                gList.ColumnsOfType<CheckBoxEditableField>().Where( a => a.ID == "cbfC" ).FirstOrDefault().HeaderText = ThirdAttributeCache.Name;
+                var qryAttributeValues = attributeValueService.Queryable().Where( av =>
+                          attributeIds.Contains( av.AttributeId ) &&
+                          av.EntityId != null );
 
+                // Grab Registrants
                 var eventItem = eventItemService.Get( GetAttributeValue( "EventItem" ).AsGuid() );
                 if ( eventItem != null )
                 {
@@ -386,28 +377,25 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                             r.CreatedDateTime.Value < dateRange.End.Value );
                     }
 
-                    var qryPersons = qryRegistrations
+                    var qry = qryRegistrations
                         .SelectMany( r => r.Registrants )
-                        .Select( rr => rr.Person );
+                        .Select( rr => new PersonAttendanceDataRow
+                        {
+                            Id = rr.PersonId.Value,
+                            FullName = rr.Person.FullName,
+                            // Person = rr.Person,
+                            RegisteredDateTime = rr.Registration.CreatedDateTime.Value,
+                            AttendedFirstSession = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == FirstAttributeCache.Id ).FirstOrDefault() != null ? ( qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == FirstAttributeCache.Id ).FirstOrDefault().ValueAsDateTime.HasValue ? true : false ) : false,
+                            AttendedSecondSession = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == SecondAttributeCache.Id ).FirstOrDefault() != null ? ( qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == SecondAttributeCache.Id ).FirstOrDefault().ValueAsDateTime.HasValue ? true : false ) : false,
+                            AttendedThirdSession = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == ThirdAttributeCache.Id ).FirstOrDefault() != null ? ( qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == ThirdAttributeCache.Id ).FirstOrDefault().ValueAsDateTime.HasValue ? true : false ) : false
+                        } );
 
                     // Filter out registrants who completed all sessions
+                    qry = qry.Where( p => !( p.AttendedFirstSession && p.AttendedSecondSession && p.AttendedThirdSession ) );
+                    var x = qry.ToList();
 
-                    var personIds = qryPersons.Select( p => p.Id ).ToList();
-
-                    var completedPersonIds = attributeValueService.Queryable().Where( av =>
-                             attributeIds.Contains( av.AttributeId ) &&
-                             av.EntityId != null &&
-                             personIds.Contains( av.EntityId.Value )
-                        )
-                        .GroupBy( av => av.EntityId.Value )
-                        .Where( a => a.Count() >= 3 )
-                        .Select( a => a.Key )
-                        .ToList();
-
-                    qryPersons = qryPersons.Where( p => !completedPersonIds.Contains( p.Id ) );
-
-
-                    gList.SetLinqDataSource( qryPersons );
+                    gList.EntityTypeId = EntityTypeCache.Read<Rock.Model.Person>().Id;
+                    gList.SetLinqDataSource( qry );
                     gList.DataBind();
                 }
             }
@@ -473,22 +461,36 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             return allAttributesPresent;
         }
 
-        private void AddPersonProfileLinkColumn()
+        private void AddColumns()
         {
-            HyperLinkField hlPersonProfileLink = new HyperLinkField();
-            hlPersonProfileLink.ItemStyle.HorizontalAlign = HorizontalAlign.Center;
-            hlPersonProfileLink.HeaderStyle.CssClass = "grid-columncommand";
-            hlPersonProfileLink.ItemStyle.CssClass = "grid-columncommand";
-            hlPersonProfileLink.DataNavigateUrlFields = new string[1] { "Id" };
-            hlPersonProfileLink.DataNavigateUrlFormatString = LinkedPageUrl( "PersonProfilePage", new Dictionary<string, string> { { "PersonId", "###" } } ).Replace( "###", "{0}" );
-            hlPersonProfileLink.DataTextFormatString = "<div class='btn btn-default btn-sm'><i class='fa fa-user'></i></div>";
-            hlPersonProfileLink.DataTextField = "Id";
-            gList.Columns.Add( hlPersonProfileLink );
+            var checkBoxEditableFields = gList.Columns.OfType<CheckBoxEditableField>().ToList();
+            foreach ( var field in checkBoxEditableFields )
+            {
+                gList.Columns.Remove( field );
+            }
+
+            gList.Columns.Add( new CheckBoxEditableField { HeaderText = FirstAttributeCache.Name, DataField = "AttendedFirstSession" } );
+            gList.Columns.Add( new CheckBoxEditableField { HeaderText = SecondAttributeCache.Name, DataField = "AttendedSecondSession" } );
+            gList.Columns.Add( new CheckBoxEditableField { HeaderText = ThirdAttributeCache.Name, DataField = "AttendedThirdSession" } );
+
+            // Add Link to Profile Page Column
+            if ( !string.IsNullOrEmpty( GetAttributeValue( "PersonProfilePage" ) ) )
+            {
+                HyperLinkField hlPersonProfileLink = new HyperLinkField();
+                hlPersonProfileLink.ItemStyle.HorizontalAlign = HorizontalAlign.Center;
+                hlPersonProfileLink.HeaderStyle.CssClass = "grid-columncommand";
+                hlPersonProfileLink.ItemStyle.CssClass = "grid-columncommand";
+                hlPersonProfileLink.DataNavigateUrlFields = new string[1] { "Id" };
+                hlPersonProfileLink.DataNavigateUrlFormatString = LinkedPageUrl( "PersonProfilePage", new Dictionary<string, string> { { "PersonId", "###" } } ).Replace( "###", "{0}" );
+                hlPersonProfileLink.DataTextFormatString = "<div class='btn btn-default btn-sm'><i class='fa fa-user'></i></div>";
+                hlPersonProfileLink.DataTextField = "Id";
+                gList.Columns.Add( hlPersonProfileLink );
+            }
         }
 
         #endregion
 
-        #region Filter's User Preference Setting Keys
+        #region Helper Classes
         /// <summary>
         /// Constant like string-key-settings that are tied to user saved filter preferences.
         /// </summary>
@@ -496,6 +498,22 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
         {
             public const string CAMPUS = "Campus";
             public const string DATE_RANGE = "DateRange";
+        }
+
+        protected class PersonAttendanceDataRow
+        {
+            public int Id { get; set; }
+            //   public Person Person { get; set; }
+
+            public string FullName { get; set; }
+
+            public DateTime RegisteredDateTime { get; set; }
+
+            public bool AttendedFirstSession { get; set; }
+
+            public bool AttendedSecondSession { get; set; }
+
+            public bool AttendedThirdSession { get; set; }
         }
         #endregion
     }

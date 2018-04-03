@@ -19,13 +19,10 @@
                             <Rock:CampusesPicker ID="cpCampus" runat="server" Label="Campuses" />
                             <Rock:SlidingDateRangePicker ID="sdrpRegistrationDateRange" runat="server" Label="Registration Date Range" />
                         </Rock:GridFilter>
-                        <Rock:Grid ID="gList" runat="server" AllowSorting="true" OnRowDataBound="gList_RowDataBound">
+                        <Rock:Grid ID="gList" runat="server" AllowSorting="true">
                             <Columns>
                                 <Rock:SelectField></Rock:SelectField>
                                 <Rock:RockBoundField DataField="FullName" HeaderText="Name" />
-                                <Rock:CheckBoxEditableField ID="cbfA" />
-                                <Rock:CheckBoxEditableField ID="cbfB" />
-                                <Rock:CheckBoxEditableField ID="cbfC" />
                             </Columns>
                         </Rock:Grid>
                     </div>
