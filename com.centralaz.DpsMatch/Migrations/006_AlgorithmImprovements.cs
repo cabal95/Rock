@@ -49,7 +49,8 @@ namespace com.centralaz.DpsMatch.Migrations
 
                DECLARE @cScoreWeightFirstName INT = 30
 			        ,@cScoreWeightLastName INT = 30
-                    ,@cScoreWeightPostalCode INT = 20
+                    ,@cScoreWeightPostalMatch INT = 20
+					,@cScoreWeightPostalConflict INT = -10
                     ,@cScoreWeightGenderMatch INT = 5
                     ,@cScoreWeightGenderConflict INT = -20
 					,@cScoreWeightAgeMatch INT = 5
@@ -86,7 +87,8 @@ namespace com.centralaz.DpsMatch.Migrations
 					,MatchPercentage INT NOT NULL
 					,LastNameMatch BIT NOT NULL
 					,FirstNameMatch  BIT NOT NULL
-					,PostalCodeMatch  BIT NOT NULL
+					,PostalMatch  BIT NOT NULL
+					,PostalConflict  BIT NOT NULL
 					,AgeMatch  BIT NOT NULL
 					,AgeConflict  BIT NOT NULL
 					,GenderMatch  BIT NOT NULL
@@ -99,7 +101,8 @@ namespace com.centralaz.DpsMatch.Migrations
 					,MatchPercentage 
 					,LastNameMatch
 					,FirstNameMatch 
-					,PostalCodeMatch
+					,PostalMatch
+					,PostalConflict
 					,AgeMatch  
 					,AgeConflict 
 					,GenderMatch 
@@ -109,6 +112,7 @@ namespace com.centralaz.DpsMatch.Migrations
                     ,[pa].[Id] [PersonAliasId]
 					,@cScoreWeightLastName
 					,1
+					,0
 					,0
 					,0
 					,0
@@ -133,9 +137,9 @@ namespace com.centralaz.DpsMatch.Migrations
 
 
                 -- Increment the score on potential matches that have the same Address
-                Declare @AddressTable Table ( Id INT);
+                Declare @AddressMatch Table ( Id INT);
 
-                INSERT INTO @AddressTable
+                INSERT INTO @AddressMatch
 				Select Id
 				From (
 					SELECT SUBSTRING([l].[PostalCode],0, 6) AS PersonZip
@@ -156,11 +160,42 @@ namespace com.centralaz.DpsMatch.Migrations
 				Where a.PersonZip = a.OffenderZip
 
 				UPDATE #OffenderMatchTable
-                SET [MatchPercentage] = [MatchPercentage] + @cScoreWeightPostalCode
-				,PostalCodeMatch = 1
+                SET [MatchPercentage] = [MatchPercentage] + @cScoreWeightPostalMatch
+				,PostalMatch = 1
                 WHERE Id IN (
                         SELECT Id
-                        FROM @AddressTable
+                        FROM @AddressMatch
+                        )
+
+			 -- Increment the score on potential matches that have the same Address
+                Declare @AddressConflict Table ( Id INT);
+
+                INSERT INTO @AddressConflict
+				Select Id
+				From (
+					SELECT SUBSTRING([l].[PostalCode],0, 6) AS PersonZip
+						,SUBSTRING(CAST([so].[ResidentialZip] AS NVARCHAR(20)),0,6) as OffenderZip
+						,omt.Id AS 'Id'
+					FROM #OffenderMatchTable omt
+					JOIN [_com_centralaz_DpsMatch_Offender] [so] on so.Id = omt.OffenderId
+					JOIN PersonAlias pa ON pa.Id = omt.PersonAliasId
+					Join Person p on p.Id = pa.PersonId
+					JOIN [GroupMember] [gm] ON [gm].[PersonId] = [p].[Id]
+					JOIN [Group] [g] ON [gm].[GroupId] = [g].[Id]
+					JOIN [GroupLocation] [gl] ON [gl].[GroupId] = [g].[id]
+					JOIN [Location] [l] ON [l].[Id] = [gl].[LocationId]
+						AND [g].[GroupTypeId] = @cGROUPTYPE_FAMILY_ID
+					WHERE [gl].[GroupLocationTypeValueId] = @cLOCATION_TYPE_HOME_ID
+						AND [pa].[AliasPersonId] = [pa].[PersonId] -- limit to only the primary alias
+					) a
+				Where a.PersonZip != a.OffenderZip
+
+				UPDATE #OffenderMatchTable
+                SET [MatchPercentage] = [MatchPercentage] + @cScoreWeightPostalConflict
+				,PostalConflict = 1
+                WHERE Id IN (
+                        SELECT Id
+                        FROM @AddressConflict
                         )
 
                 -- Increment the score on potential matches that have the same FirstName (or NickName)
@@ -236,7 +271,7 @@ namespace com.centralaz.DpsMatch.Migrations
 					JOIN PersonAlias pa ON pa.Id = pm.PersonAliasId
 					JOIN _com_centralaz_DpsMatch_Offender so ON so.Id = pm.OffenderId
 					JOIN Person p ON p.Id = pa.PersonId
-					WHERE ABS((YEAR(GETDATE()) - p.BirthYear) - so.Age) < 10
+					WHERE ABS((YEAR(GETDATE()) - p.BirthYear) - so.Age) < 5
 
                 UPDATE #OffenderMatchTable
                 SET [MatchPercentage] = [MatchPercentage] + @cScoreWeightAgeMatch
@@ -255,7 +290,7 @@ namespace com.centralaz.DpsMatch.Migrations
 					JOIN PersonAlias pa ON pa.Id = pm.PersonAliasId
 					JOIN _com_centralaz_DpsMatch_Offender so ON so.Id = pm.OffenderId
 					JOIN Person p ON p.Id = pa.PersonId
-					WHERE ABS((YEAR(GETDATE()) - p.BirthYear) - so.Age) >= 10
+					WHERE ABS((YEAR(GETDATE()) - p.BirthYear) - so.Age) >= 5
 
                 UPDATE #OffenderMatchTable
                 SET [MatchPercentage] = [MatchPercentage] + @cScoreWeightAgeConflict
@@ -265,12 +300,12 @@ namespace com.centralaz.DpsMatch.Migrations
                         FROM @AgeConflict
                         )
 
-				-- Delete any existing unchanged matches or matches below 60%
-				
+				-- Delete any existing unchanged matches or matches below 60%	
+				Select * from #OffenderMatchTable where MatchPercentage >= 60 order by MatchPercentage desc
+
 				Delete
 				From #OffenderMatchTable
-				Where MatchPercentage < 60
-				Or Id in (
+				Where  Id in (
 					Select omt.Id
 					From #OffenderMatchTable omt
 					Join _com_centralaz_DpsMatch_Match m on 
@@ -327,6 +362,8 @@ namespace com.centralaz.DpsMatch.Migrations
                 /*
                 Explicitly clean up temp tables before the proc exits (vs. have SQL Server do it for us after the proc is done)
                 */
+
+				
                 DROP TABLE #OffenderMatchTable;
 
 
