@@ -38,12 +38,20 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
     [DisplayName( "First Time Guest Entry" )]
     [Category( "com_centralaz > Widgets" )]
     [Description( "Template block for developers to use to start a new detail block." )]
-    [DefinedValueField( "2E6540EA-63F0-40FE-BE50-F2A84735E600", "Connection Status", "The connection status to use for new individuals (default: 'Web Prospect'.)", true, false, Rock.SystemGuid.DefinedValue.PERSON_CONNECTION_STATUS_VISITOR, "", 3 )]
-    [DefinedValueField( "8522BADD-2871-45A5-81DD-C76DA07E2E7E", "Record Status", "The record status to use for new individuals (default: 'Pending'.)", true, false, "283999EC-7346-42E3-B807-BCE9B2BABB49", "", 4 )]
-    [ConnectionOpportunityField( "Connection Opportunity", "The connection opportunity that new requests will be made for.", true, "", false )]
-    [TextField( "Interests", "A comma-delineated list of different options to be interested in", true, "Baptism,Following Jesus Christ( Discover Christ Class ),Serving,Discover Central Class" )]
-    [BooleanField( "Is Sms Default Enabled", "Is the 'Enable SMS' option checked by default.", true )]
-    [BooleanField( "Is Prayer Request Enabled", "Is the Prayer Request text box visible.", true )]
+
+    // Connection Request Settings
+    [ConnectionOpportunityField( "Connection Opportunity", "The connection opportunity that new requests will be made for.", true, "", false, "Connection Request Settings", 0 )]
+    [TextField( "Interests", "A comma-delineated list of different options to be interested in", true, "Baptism,Following Jesus Christ( Discover Christ Class ),Serving,Discover Central Class", "Connection Request Settings", 1 )]
+
+    // Person Settings
+    [DefinedValueField( "2E6540EA-63F0-40FE-BE50-F2A84735E600", "Connection Status", "The connection status to use for new individuals (default: 'Web Prospect'.)", true, false, Rock.SystemGuid.DefinedValue.PERSON_CONNECTION_STATUS_VISITOR, "Person Settings", 2 )]
+    [DefinedValueField( "8522BADD-2871-45A5-81DD-C76DA07E2E7E", "Record Status", "The record status to use for new individuals (default: 'Pending'.)", true, false, "283999EC-7346-42E3-B807-BCE9B2BABB49", "Person Settings", 3 )]
+    [BooleanField( "Is Sms Checked By Default ", "Is the 'Enable SMS' option checked by default.", true, "Person Settings", 4, "IsSmsChecked" )]
+
+    //Prayer Request Settings
+    [BooleanField( "Is Prayer Request Enabled", "Is the Prayer Request text box visible.", true, "Prayer Request Settings", 5 )]
+    [CategoryField( "Prayer Category", "The  category to use for all new prayer requests.", false, "Rock.Model.PrayerRequest", "", "", false, "4B2D88F5-6E45-4B4B-8776-11118C8E8269", "Prayer Request Settings", 6, "PrayerCategory" )]
+
     public partial class FirstTimeGuestEntry : Rock.Web.UI.RockBlock
     {
         #region Fields
@@ -368,9 +376,8 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             tbFirstName.Text = tbLastName.Text = pnCell.Text = tbEmail.Text = pnHome.Text = string.Empty;
             tbSpouseFirstName.Text = tbSpouseLastName.Text = pnSpouseCell.Text = tbSpouseEmail.Text = string.Empty;
             tbComments.Text = tbPrayerRequests.Text = string.Empty;
-
             acAddress.Street1 = acAddress.Street2 = acAddress.City = acAddress.PostalCode = string.Empty;
-
+            pnlNewPerson.Enabled = tbFirstName.Required = tbLastName.Required = tbEmail.Required = true;
         }
 
         protected void ppGuest_SelectPerson( object sender, EventArgs e )
@@ -420,8 +427,8 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             }
 
             // Set SMS Checkbox
-            bool isSmsEnabled = GetAttributeValue( "IsSmsDefaultEnabled" ).AsBoolean( true );
-            cbSpouseSms.Checked = cbSms.Checked = isSmsEnabled;
+            bool IsSmsChecked = GetAttributeValue( "IsSmsChecked" ).AsBoolean( true );
+            cbSpouseSms.Checked = cbSms.Checked = IsSmsChecked;
 
             // Build Interest List
             var interestList = GetAttributeValue( "Interests" ).SplitDelimitedValues( false );
@@ -584,8 +591,30 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
 
         private void CreatePrayerRequest( RockContext rockContext, Person person )
         {
-            if ( person != null )
+            if ( person != null && !tbPrayerRequests.Text.IsNullOrWhiteSpace())
             {
+                PrayerRequest prayerRequest = new PrayerRequest();
+                prayerRequest.RequestedByPersonAliasId = person.PrimaryAliasId;
+                prayerRequest.FirstName = person.NickName;
+                prayerRequest.LastName = person.LastName;
+                prayerRequest.Text = tbPrayerRequests.Text;
+                prayerRequest.Email = person.Email;
+
+                Category category;
+                Guid defaultCategoryGuid = GetAttributeValue( "PrayerCategory" ).AsGuid();
+                if ( !defaultCategoryGuid.IsEmpty() )
+                {
+                    category = new CategoryService( rockContext ).Get( defaultCategoryGuid );
+                    prayerRequest.CategoryId = category.Id;
+                    prayerRequest.Category = category;
+                }
+
+                prayerRequest.IsPublic = false;
+
+                PrayerRequestService prayerRequestService = new PrayerRequestService( rockContext );
+                prayerRequestService.Add( prayerRequest );
+                prayerRequest.EnteredDateTime = RockDateTime.Now;
+                rockContext.SaveChanges(); 
 
             }
         }
