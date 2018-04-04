@@ -364,6 +364,7 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                 // Reload page
                 nbMessage.Text = "Connection Request Created";
                 nbMessage.Visible = true;
+                hfShowSuccess.Value = "true";
                 ClearControls();
                 ShowDetail();
             }
@@ -591,7 +592,7 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
 
         private void CreatePrayerRequest( RockContext rockContext, Person person )
         {
-            if ( person != null && !tbPrayerRequests.Text.IsNullOrWhiteSpace())
+            if ( person != null && !tbPrayerRequests.Text.IsNullOrWhiteSpace() )
             {
                 PrayerRequest prayerRequest = new PrayerRequest();
                 prayerRequest.RequestedByPersonAliasId = person.PrimaryAliasId;
@@ -614,7 +615,7 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                 PrayerRequestService prayerRequestService = new PrayerRequestService( rockContext );
                 prayerRequestService.Add( prayerRequest );
                 prayerRequest.EnteredDateTime = RockDateTime.Now;
-                rockContext.SaveChanges(); 
+                rockContext.SaveChanges();
 
             }
         }

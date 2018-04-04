@@ -7,13 +7,22 @@
 
         if ($('div.alert.alert-success').length > 0)
         {
-            window.setTimeout("fadeAndClear()", 5000);
+            if (document.getElementById('<%= hfShowSuccess.ClientID%>').value == "true")
+            {
+                window.setTimeout("fadeAndClear()", 5000);
+            }
+            else
+            {
+                $('div.alert.alert-success').animate({ opacity: 0 }, 0);
+            }
         }
     }
 
     function fadeAndClear()
     {
         $('div.alert.alert-success').animate({ opacity: 0 }, 2000);
+        document.getElementById('<%= hfShowSuccess.ClientID%>').value = "false";
+
     }
 
 
@@ -21,6 +30,7 @@
 
 <asp:UpdatePanel ID="upnlContent" runat="server">
     <ContentTemplate>
+        <asp:HiddenField ID="hfShowSuccess" runat="server" Value="false" />
         <Rock:NotificationBox ID="nbNotice" runat="server" Visible="false" NotificationBoxType="Danger" />
         <Rock:NotificationBox ID="nbWarning" runat="server" Visible="false" NotificationBoxType="Warning" />
         <asp:Panel ID="pnlView" runat="server" CssClass="panel panel-block">
