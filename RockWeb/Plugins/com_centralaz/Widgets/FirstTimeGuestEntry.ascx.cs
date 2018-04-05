@@ -37,7 +37,7 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
     /// </summary>
     [DisplayName( "First Time Guest Entry" )]
     [Category( "com_centralaz > Widgets" )]
-    [Description( "Template block for developers to use to start a new detail block." )]
+    [Description( "Block for admins to enter First Time Guests off of connection cards." )]
 
     // Connection Request Settings
     [ConnectionOpportunityField( "Connection Opportunity", "The connection opportunity that new requests will be made for.", true, "", false, "Connection Request Settings", 0 )]
