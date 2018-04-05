@@ -30,18 +30,20 @@ using Rock.Web.UI.Controls;
 using Rock.Attribute;
 using System.Text;
 
-namespace RockWeb.Plugins.com_centralaz.Widgets
+namespace RockWeb.Plugins.com_centralaz.Crm
 {
     /// <summary>
-    /// Template block for developers to use to start a new block.
+    /// A block for rapidly adding new people (First Time Guests) and adding them to a connection 
+    /// request which can launch a workflow to perform additional processing.
     /// </summary>
     [DisplayName( "First Time Guest Entry" )]
-    [Category( "com_centralaz > Widgets" )]
-    [Description( "Block for admins to enter First Time Guests off of connection cards." )]
+    [Category( "com_centralaz > Crm" )]
+    [Description( "A block for rapidly adding new people (First Time Guests) and adding them to a connection request which can launch a workflow to perform additional processing." )]
 
     // Connection Request Settings
     [ConnectionOpportunityField( "Connection Opportunity", "The connection opportunity that new requests will be made for.", true, "", false, "Connection Request Settings", 0 )]
-    [TextField( "Interests", "A comma-delineated list of different options to be interested in", true, "Baptism,Following Jesus Christ( Discover Christ Class ),Serving,Discover Central Class", "Connection Request Settings", 1 )]
+    [TextField( "Interests", "A comma-delimited list of different options that can be checked.  These will be added to the Comment field of the connection request.", true, "Baptism, Following Jesus Christ (Discover Christ class), Serving, Discover Central class", "Connection Request Settings", 1 )]
+    [TextField( "Entry Source", "A comma-delimited list of places where the data entry can occur. The selected item will be added to the Comment field of the connection request.", true, "Guest Central, Children's HQ", "Connection Request Settings", 2 )]
 
     // Person Settings
     [DefinedValueField( "2E6540EA-63F0-40FE-BE50-F2A84735E600", "Connection Status", "The connection status to use for new individuals (default: 'Web Prospect'.)", true, false, Rock.SystemGuid.DefinedValue.PERSON_CONNECTION_STATUS_VISITOR, "Person Settings", 2 )]
@@ -69,7 +71,6 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
 
         private const string CAMPUS_SETTING = "FirstTimeGuestEntry_SelectedCampus";
         private const string SOURCE_SETTING = "FirstTimeGuestEntry_SelectedSource";
-
 
         #endregion
 
@@ -116,8 +117,6 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             }
         }
 
-
-
         #endregion
 
         #region Events
@@ -131,7 +130,7 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void Block_BlockUpdated( object sender, EventArgs e )
         {
-
+            ShowDetail();
         }
 
         protected void btnDone_Click( object sender, EventArgs e )
@@ -362,7 +361,7 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                 }
 
                 // Reload page
-                nbMessage.Text = "Connection Request Created";
+                nbMessage.Text = "New entry saved.";
                 nbMessage.Visible = true;
                 hfShowSuccess.Value = "true";
                 ClearControls();
@@ -396,13 +395,11 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
         protected void rblSource_SelectedIndexChanged( object sender, EventArgs e )
         {
             SetUserPreference( SOURCE_SETTING, rblSource.SelectedValue );
-
         }
 
         protected void cpCampus_SelectedIndexChanged( object sender, EventArgs e )
         {
             SetUserPreference( CAMPUS_SETTING, cpCampus.SelectedCampusId.ToString() );
-
         }
 
         #endregion
@@ -413,7 +410,7 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
         {
             // NOTE: Don't include Inactive Campuses for the cpCampus control
             cpCampus.Campuses = CampusCache.All( false );
-            cpCampus.Items[0].Text = "All";
+            cpCampus.Items[0].Text = "";
 
             cpCampus.SelectedCampusId = GetUserPreference( CAMPUS_SETTING ).AsIntegerOrNull();
             if ( cpCampus.SelectedCampusId == null )
@@ -421,17 +418,11 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                 cpCampus.SelectedCampusId = CampusCache.All().First().Id;
             }
 
-            rblSource.SelectedValue = GetUserPreference( SOURCE_SETTING ).ToString();
-            if ( rblSource.SelectedValue.IsNullOrWhiteSpace() )
-            {
-                rblSource.SelectedValue = "Guest Central";
-            }
-
             // Set SMS Checkbox
             bool IsSmsChecked = GetAttributeValue( "IsSmsChecked" ).AsBoolean( true );
             cbSpouseSms.Checked = cbSms.Checked = IsSmsChecked;
 
-            // Build Interest List
+            // Build Interests list...
             var interestList = GetAttributeValue( "Interests" ).SplitDelimitedValues( false );
             cblInterests.Items.Clear();
             foreach ( var interest in interestList )
@@ -440,8 +431,23 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             }
             cblInterests.DataBind();
 
-            tbPrayerRequests.Visible = _isPrayerRequestEnabled;
+            // Build the Entry Source radio button list...
+            var entrySourceList = GetAttributeValue( "EntrySource" ).SplitDelimitedValues( false );
+            rblSource.Items.Clear();
+            foreach ( var item in entrySourceList )
+            {
+                rblSource.Items.Add( new ListItem( item, item ) );
+            }
+            rblSource.DataBind();
 
+            // Use the user's preference and set the Source Setting (if it is still actually still an option in the list).
+            var sourceSetting = GetUserPreference( SOURCE_SETTING ).ToStringSafe();
+            if ( rblSource.Items.Contains( new ListItem( sourceSetting, sourceSetting ) ) )
+            {
+                rblSource.SelectedValue = sourceSetting;
+            }
+
+            tbPrayerRequests.Visible = _isPrayerRequestEnabled;
         }
 
         private bool CheckSettings()
@@ -476,8 +482,8 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
 
             if ( _connectionOpportunity == null )
             {
-                nbNotice.Heading = "Unknown ConnectionOpportunity";
-                nbNotice.Text = "<p>This page requires a valid connectionOpportunity identifying parameter and there was not one provided.</p>";
+                nbNotice.Heading = "Missing Connection Opportunity Setting";
+                nbNotice.Text = "<p>Please edit the block settings. This block requires a valid Connection Opportunity setting.</p>";
                 return false;
             }
 
@@ -578,11 +584,21 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                 connectionRequest.ConnectionOpportunityId = _connectionOpportunity.Id;
                 connectionRequest.ConnectionState = ConnectionState.Active;
                 connectionRequest.ConnectionStatusId = defaultStatusId;
+                connectionRequest.CampusId = cpCampus.SelectedCampusId;
 
                 StringBuilder sb = new StringBuilder();
-                sb.AppendFormat( "Entry Point: {0}\n", rblSource.SelectedValue );
-                sb.AppendFormat( "Interested in: {0}\n", cblInterests.SelectedValues.AsDelimited( ", ", ", and " ) );
-                sb.AppendFormat( "Additional Comments: {0}\n", tbComments.Text );
+                sb.AppendFormat( "* Entry Point: {0}{1}", rblSource.SelectedValue, Environment.NewLine );
+                if ( cblInterests.SelectedValues.Count > 0 )
+                {
+                    sb.AppendFormat( "* Interested in:{0}", Environment.NewLine );
+                    sb.AppendFormat( "  * {0}{1}", cblInterests.SelectedValues.AsDelimited( "\n  * ", "\n  * and " ), Environment.NewLine );
+                }
+
+                if ( !string.IsNullOrWhiteSpace( tbComments.Text ) )
+                {
+                    sb.AppendFormat( "{1}Additional Comments: {0}{1}", tbComments.Text, Environment.NewLine );
+                }
+
                 connectionRequest.Comments = sb.ToString();
 
                 connectionRequestService.Add( connectionRequest );
@@ -616,7 +632,6 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                 prayerRequestService.Add( prayerRequest );
                 prayerRequest.EnteredDateTime = RockDateTime.Now;
                 rockContext.SaveChanges();
-
             }
         }
         #endregion

@@ -1,7 +1,6 @@
-﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="FirstTimeGuestEntry.ascx.cs" Inherits="RockWeb.Plugins.com_centralaz.Widgets.FirstTimeGuestEntry" %>
+﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="FirstTimeGuestEntry.ascx.cs" Inherits="RockWeb.Plugins.com_centralaz.Crm.FirstTimeGuestEntry" %>
 
 <script type="text/javascript">
-
     function pageLoad()
     {
 
@@ -24,8 +23,6 @@
         document.getElementById('<%= hfShowSuccess.ClientID%>').value = "false";
 
     }
-
-
 </script>
 
 <asp:UpdatePanel ID="upnlContent" runat="server">
@@ -41,6 +38,7 @@
 
             <div class="panel-body">
                 <Rock:NotificationBox ID="nbMessage" runat="server" NotificationBoxType="Success" Title="Success" Visible="false" Text=""></Rock:NotificationBox>
+                <asp:ValidationSummary ID="ValidationSummary1" runat="server" HeaderText="Please correct the following" CssClass="alert alert-danger" />
 
                 <div class="row">
                     <div class="col-md-12">
@@ -48,18 +46,14 @@
                             <Rock:PersonPicker ID="ppGuest" runat="server" Label="Choose an existing person" OnSelectPerson="ppGuest_SelectPerson" />
                         </div>
                         <div class="pull-right">
-                            <div class="form-horizontal label-md margin-r-lg">
-                                <Rock:CampusPicker ID="cpCampus" runat="server" CssClass="input-width-lg" Label="Campus" AutoPostBack="true" OnSelectedIndexChanged="cpCampus_SelectedIndexChanged" />
-                                <Rock:RockRadioButtonList ID="rblSource" runat="server" AutoPostBack="true" OnSelectedIndexChanged="rblSource_SelectedIndexChanged">
-                                    <asp:ListItem Text="Entered in Guest Central" Value="Guest Central" />
-                                    <asp:ListItem Text="Entered in Children's HQ" Value="Children's HQ" />
-                                </Rock:RockRadioButtonList>
-                            </div>
+                                <Rock:CampusPicker ID="cpCampus" runat="server" CssClass="input-width-lg" Label="Campus" Required="true" AutoPostBack="true" OnSelectedIndexChanged="cpCampus_SelectedIndexChanged" />
+                                <Rock:RockRadioButtonList ID="rblSource" RequiredErrorMessage="An entry source is required." RepeatDirection="Vertical" runat="server" Required="true" AutoPostBack="true" OnSelectedIndexChanged="rblSource_SelectedIndexChanged"></Rock:RockRadioButtonList>
                         </div>
                     </div>
                 </div>
                 <asp:Panel ID="pnlNewPerson" runat="server">
                     <div class="well">
+                        <p><i>Or if you can't find a person, add them as new:</i></p>
                         <div class="row">
                             <div class="col-md-6">
                                 <Rock:RockTextBox ID="tbFirstName" runat="server" Label="First Name" Required="true"></Rock:RockTextBox>
@@ -97,7 +91,6 @@
 
                             </div>
                         </div>
-
                     </div>
                 </asp:Panel>
 
@@ -107,7 +100,7 @@
 
                 <div class="actions">
                     <asp:LinkButton ID="btnSave" runat="server" CssClass="btn btn-primary margin-r-lg" Text="Save" OnClick="btnSave_Click" />
-                    <asp:LinkButton ID="btnDone" runat="server" Text="Done" OnClick="btnDone_Click" />
+                    <asp:LinkButton ID="btnDone" runat="server" Text="Done" CausesValidation="false" OnClick="btnDone_Click" />
                 </div>
             </div>
 
