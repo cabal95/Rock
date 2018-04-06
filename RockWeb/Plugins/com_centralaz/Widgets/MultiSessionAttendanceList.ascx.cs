@@ -50,14 +50,38 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
 
         #region Properties
 
+        /// <summary>
+        /// Gets or sets the first attributecache.
+        /// </summary>
+        /// <value>
+        /// The AttributeCache object for the Date attribute representing when the person attended the first session.
+        /// </value>
         public AttributeCache FirstAttributeCache { get; set; }
+
+        /// <summary>
+        /// Gets or sets the second attribute cache.
+        /// </summary>
+        /// <value>
+        /// The AttributeCache object for the Date attribute representing when the person attended the second session.
+        /// </value>
         public AttributeCache SecondAttributeCache { get; set; }
+
+        /// <summary>
+        /// Gets or sets the third attribute cache.
+        /// </summary>
+        /// <value>
+        /// The AttributeCache object for the Date attribute representing when the person attended the third session.
+        /// </value>
         public AttributeCache ThirdAttributeCache { get; set; }
 
         #endregion
 
         #region Base Control Methods
 
+        /// <summary>
+        /// Restores the view-state information from a previous user control request that was saved by the <see cref="M:System.Web.UI.UserControl.SaveViewState" /> method.
+        /// </summary>
+        /// <param name="savedState">An <see cref="T:System.Object" /> that represents the user control state to be restored.</param>
         protected override void LoadViewState( object savedState )
         {
             base.LoadViewState( savedState );
@@ -114,6 +138,12 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             }
         }
 
+        /// <summary>
+        /// Saves any user control view-state changes that have occurred since the last page postback.
+        /// </summary>
+        /// <returns>
+        /// Returns the user control's current view state. If there is no view state associated with the control, it returns null.
+        /// </returns>
         protected override object SaveViewState()
         {
             ViewState["FirstAttributeCache"] = FirstAttributeCache;
@@ -127,18 +157,6 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
 
         #region Events
 
-        // handlers called by the controls on your block
-
-        /// <summary>
-        /// Handles the BlockUpdated event of the control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        protected void Block_BlockUpdated( object sender, EventArgs e )
-        {
-
-        }
-
         /// <summary>
         /// Handles the GridRebind event of the gPledges control.
         /// </summary>
@@ -149,8 +167,14 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             BindGrid();
         }
 
+        /// <summary>
+        /// Handles the RowDataBound event of the gList control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="GridViewRowEventArgs"/> instance containing the event data.</param>
         protected void gList_RowDataBound( object sender, GridViewRowEventArgs e )
         {
+            // If a person has already attended a session, this code prevents the admin from unchecking the checkbox for it.
             PersonAttendanceDataRow personAttendanceDataRow = e.Row.DataItem as PersonAttendanceDataRow;
             if ( personAttendanceDataRow != null )
             {
@@ -174,6 +198,11 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             }
         }
 
+        /// <summary>
+        /// Gives the settings display filter value.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         protected void gfSettings_DisplayFilterValue( object sender, GridFilter.DisplayFilterValueArgs e )
         {
             switch ( e.Key )
@@ -207,6 +236,11 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             }
         }
 
+        /// <summary>
+        /// Handles the ApplyFilterClick event of the gfSettings control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void gfSettings_ApplyFilterClick( object sender, EventArgs e )
         {
             gfSettings.SaveUserPreference( FilterSetting.DATE_RANGE, sdrpRegistrationDateRange.DelimitedValues );
@@ -214,6 +248,11 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             BindGrid();
         }
 
+        /// <summary>
+        /// Handles the Click event of the lbSave control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void lbSave_Click( object sender, EventArgs e )
         {
             var date = RockDateTime.Now.Date;
@@ -227,25 +266,27 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                 foreach ( GridViewRow row in gList.Rows )
                 {
                     var checkCount = 0;
-
+                    // For each row, grab the valid person object associated with it
                     int personId = int.Parse( gList.DataKeys[row.RowIndex].Value.ToString() );
                     Person person = personService.Get( personId );
                     if ( person != null )
                     {
                         person.LoadAttributes();
 
+                        // For each checked checkbox in the row, get the attribute key from the header text. Grab the person attribute
+                        // value for that key. If empty, save the current date to that attribute value.
                         foreach ( var fieldCell in row.Cells.OfType<DataControlFieldCell>() )
                         {
                             CheckBoxEditableField checkBoxTemplateField = fieldCell.ContainingField as CheckBoxEditableField;
                             if ( checkBoxTemplateField != null )
                             {
-                                string attributeKey = GetAttributeKey( checkBoxTemplateField.HeaderText );
-
                                 CheckBox checkBox = fieldCell.Controls[0] as CheckBox;
 
                                 if ( checkBox.Checked )
                                 {
                                     checkCount++;
+
+                                    string attributeKey = GetAttributeKey( checkBoxTemplateField.HeaderText );
                                     var attributeDate = person.GetAttributeValue( attributeKey );
                                     if ( attributeDate == null || attributeDate.AsDateTime() == null )
                                     {
@@ -278,11 +319,13 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             BindGrid();
         }
 
-
         #endregion
 
         #region Methods
 
+        /// <summary>
+        /// Shows the detail.
+        /// </summary>
         private void ShowDetail()
         {
             using ( var rockContext = new RockContext() )
@@ -307,6 +350,9 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             }
         }
 
+        /// <summary>
+        /// Binds the filter.
+        /// </summary>
         private void BindFilter()
         {
             var rockContext = new RockContext();
@@ -377,13 +423,13 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                             r.CreatedDateTime.Value < dateRange.End.Value );
                     }
 
+                    // Build nice neat PersonAttendanceDataRow qry
                     var qry = qryRegistrations
                         .SelectMany( r => r.Registrants )
                         .Select( rr => new PersonAttendanceDataRow
                         {
                             Id = rr.PersonId.Value,
                             FullName = rr.Person.FullName,
-                            // Person = rr.Person,
                             RegisteredDateTime = rr.Registration.CreatedDateTime.Value,
                             AttendedFirstSession = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == FirstAttributeCache.Id ).FirstOrDefault() != null ? ( qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == FirstAttributeCache.Id ).FirstOrDefault().ValueAsDateTime.HasValue ? true : false ) : false,
                             AttendedSecondSession = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == SecondAttributeCache.Id ).FirstOrDefault() != null ? ( qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == SecondAttributeCache.Id ).FirstOrDefault().ValueAsDateTime.HasValue ? true : false ) : false,
@@ -401,6 +447,13 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             }
         }
 
+        /// <summary>
+        /// Launches the workflows.
+        /// </summary>
+        /// <param name="workflowService">The workflow service.</param>
+        /// <param name="workflowTypeGuid">The workflow type unique identifier.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="entity">The entity.</param>
         private void LaunchWorkflows( WorkflowService workflowService, Guid workflowTypeGuid, string name, object entity )
         {
             var workflowType = WorkflowTypeCache.Read( workflowTypeGuid );
@@ -412,6 +465,12 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             }
         }
 
+        /// <summary>
+        /// Gets the attribute key given an attribute name. NOTE: Specifically for the three AttributeCache properties
+        /// the block uses
+        /// </summary>
+        /// <param name="columnText">The column text.</param>
+        /// <returns></returns>
         private string GetAttributeKey( string columnText )
         {
             var attributeKey = string.Empty;
@@ -434,6 +493,10 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             return attributeKey;
         }
 
+        /// <summary>
+        /// Returns a bool based on whether all three session date attributes are valid
+        /// </summary>
+        /// <returns></returns>
         private bool CheckForAttributes()
         {
             bool allAttributesPresent = false;
@@ -461,6 +524,9 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             return allAttributesPresent;
         }
 
+        /// <summary>
+        /// Adds the checkbox and person profile columns
+        /// </summary>
         private void AddColumns()
         {
             var checkBoxEditableFields = gList.Columns.OfType<CheckBoxEditableField>().ToList();
@@ -491,6 +557,7 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
         #endregion
 
         #region Helper Classes
+
         /// <summary>
         /// Constant like string-key-settings that are tied to user saved filter preferences.
         /// </summary>
@@ -500,10 +567,12 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             public const string DATE_RANGE = "DateRange";
         }
 
+        /// <summary>
+        /// Helper class that binds all the attribute data into a nice neat object
+        /// </summary>
         protected class PersonAttendanceDataRow
         {
             public int Id { get; set; }
-            //   public Person Person { get; set; }
 
             public string FullName { get; set; }
 

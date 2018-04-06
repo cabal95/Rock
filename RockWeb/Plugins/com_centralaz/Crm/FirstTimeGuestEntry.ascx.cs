@@ -76,8 +76,6 @@ namespace RockWeb.Plugins.com_centralaz.Crm
 
         #region Base Control Methods
 
-        //  overrides of the base RockBlock methods (i.e. OnInit, OnLoad)
-
         /// <summary>
         /// Raises the <see cref="E:System.Web.UI.Control.Init" /> event.
         /// </summary>
@@ -121,8 +119,6 @@ namespace RockWeb.Plugins.com_centralaz.Crm
 
         #region Events
 
-        // handlers called by the controls on your block
-
         /// <summary>
         /// Handles the BlockUpdated event of the control.
         /// </summary>
@@ -133,11 +129,21 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             ShowDetail();
         }
 
-        protected void btnDone_Click( object sender, EventArgs e )
+        /// <summary>
+        /// Handles the Click event of the btnCancel control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        protected void btnCancel_Click( object sender, EventArgs e )
         {
             NavigateToParentPage();
         }
 
+        /// <summary>
+        /// Handles the Click event of the btnSave control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void btnSave_Click( object sender, EventArgs e )
         {
             if ( Page.IsValid & _isValidSettings )
@@ -202,7 +208,6 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                     var families = person.GetFamilies( rockContext );
 
                     // If address can being entered, look for first family with a home location
-
                     foreach ( var aFamily in families )
                     {
                         homeLocation = aFamily.GroupLocations
@@ -355,6 +360,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 CreateConnectionRequest( rockContext, person );
                 CreateConnectionRequest( rockContext, spouse );
 
+                // Save the Prayer Request
                 if ( _isPrayerRequestEnabled )
                 {
                     CreatePrayerRequest( rockContext, person );
@@ -369,6 +375,9 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             }
         }
 
+        /// <summary>
+        /// Clears the controls.
+        /// </summary>
         private void ClearControls()
         {
             ppGuest.PersonId = null;
@@ -380,6 +389,11 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             pnlNewPerson.Enabled = tbFirstName.Required = tbLastName.Required = tbEmail.Required = true;
         }
 
+        /// <summary>
+        /// Handles the SelectPerson event of the ppGuest control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void ppGuest_SelectPerson( object sender, EventArgs e )
         {
             if ( ppGuest.PersonId.HasValue )
@@ -392,11 +406,21 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             }
         }
 
+        /// <summary>
+        /// Handles the SelectedIndexChanged event of the rblSource control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void rblSource_SelectedIndexChanged( object sender, EventArgs e )
         {
             SetUserPreference( SOURCE_SETTING, rblSource.SelectedValue );
         }
 
+        /// <summary>
+        /// Handles the SelectedIndexChanged event of the cpCampus control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void cpCampus_SelectedIndexChanged( object sender, EventArgs e )
         {
             SetUserPreference( CAMPUS_SETTING, cpCampus.SelectedCampusId.ToString() );
@@ -406,6 +430,9 @@ namespace RockWeb.Plugins.com_centralaz.Crm
 
         #region Methods
 
+        /// <summary>
+        /// Shows the detail.
+        /// </summary>
         private void ShowDetail()
         {
             // NOTE: Don't include Inactive Campuses for the cpCampus control
@@ -450,6 +477,10 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             tbPrayerRequests.Visible = _isPrayerRequestEnabled;
         }
 
+        /// <summary>
+        /// Checks the settings.
+        /// </summary>
+        /// <returns></returns>
         private bool CheckSettings()
         {
             _rockContext = _rockContext ?? new RockContext();
@@ -520,6 +551,15 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             return true;
         }
 
+        /// <summary>
+        /// Sets the phone number.
+        /// </summary>
+        /// <param name="rockContext">The rock context.</param>
+        /// <param name="person">The person.</param>
+        /// <param name="pnbNumber">The PNB number.</param>
+        /// <param name="cbSms">The cb SMS.</param>
+        /// <param name="phoneTypeGuid">The phone type unique identifier.</param>
+        /// <param name="changes">The changes.</param>
         private void SetPhoneNumber( RockContext rockContext, Person person, PhoneNumberBox pnbNumber, RockCheckBox cbSms, Guid phoneTypeGuid, List<string> changes )
         {
             var phoneType = DefinedValueCache.Read( phoneTypeGuid );
@@ -569,6 +609,11 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             }
         }
 
+        /// <summary>
+        /// Creates the connection request.
+        /// </summary>
+        /// <param name="rockContext">The rock context.</param>
+        /// <param name="person">The person.</param>
         private void CreateConnectionRequest( RockContext rockContext, Person person )
         {
             if ( person != null && _connectionOpportunity != null )
@@ -606,6 +651,11 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             }
         }
 
+        /// <summary>
+        /// Creates the prayer request.
+        /// </summary>
+        /// <param name="rockContext">The rock context.</param>
+        /// <param name="person">The person.</param>
         private void CreatePrayerRequest( RockContext rockContext, Person person )
         {
             if ( person != null && !tbPrayerRequests.Text.IsNullOrWhiteSpace() )

@@ -100,7 +100,7 @@
 
                 <div class="actions">
                     <asp:LinkButton ID="btnSave" runat="server" CssClass="btn btn-primary margin-r-lg" Text="Save" OnClick="btnSave_Click" />
-                    <asp:LinkButton ID="btnDone" runat="server" Text="Done" CausesValidation="false" OnClick="btnDone_Click" />
+                    <asp:LinkButton ID="btnCancel" runat="server" Text="Done" CausesValidation="false" OnClick="btnCancel_Click" />
                 </div>
             </div>
 
