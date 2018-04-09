@@ -111,7 +111,6 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
             gfSettings.DisplayFilterValue += gfSettings_DisplayFilterValue;
 
             // this event gets fired after block settings are updated. it's nice to repaint the screen if these settings would alter it
-            this.BlockUpdated += Block_BlockUpdated;
             this.AddConfigurationUpdateTrigger( upnlContent );
         }
 
