@@ -33,6 +33,11 @@
                     <asp:ValidationSummary ID="vsDetails" runat="server" HeaderText="Please Correct the Following" CssClass="alert alert-danger" />
                     <Rock:NotificationBox ID="nbMetricsSaved" runat="server" Text="Metric Values Have Been Updated" NotificationBoxType="Success" Visible="false" />
                     <Rock:NotificationBox ID="nbMetricsSkipped" runat="server" NotificationBoxType="Warning" Visible="false" />
+                    <div class="alert alert-warning" id="divLeadTeamMessage" runat="server">
+                        <div class="pull-right">
+                            <asp:LinkButton ID="lbCloseMessage" runat="server" CssClass="action" OnClick="lbCloseMessage_Click"><i class="fa fa-times"></i></asp:LinkButton></div>
+                        <p>If you need data entered for a past date, talk to your team lead and they will enter it for you.</p>
+                    </div>
 
                     <div class="form-horizontal label-xs">
                         <asp:Repeater ID="rptrMetric" runat="server" OnItemDataBound="rptrMetric_ItemDataBound">
