@@ -3,12 +3,11 @@
 <script type="text/javascript">
     function pageLoad()
     {
-
         if ($('div.alert.alert-success').length > 0)
         {
             if (document.getElementById('<%= hfShowSuccess.ClientID%>').value == "true")
             {
-                window.setTimeout("fadeAndClear()", 5000);
+                window.setTimeout("fadeAndClear()", 600000);
             }
             else
             {
@@ -19,9 +18,8 @@
 
     function fadeAndClear()
     {
-        $('div.alert.alert-success').animate({ opacity: 0 }, 2000);
+        $('div.alert.alert-success').animate({ opacity: 0 }, 15000000);
         document.getElementById('<%= hfShowSuccess.ClientID%>').value = "false";
-
     }
 </script>
 

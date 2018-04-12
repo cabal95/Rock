@@ -161,6 +161,8 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 var spouseChanges = new List<string>();
                 var familyChanges = new List<string>();
 
+                var addedPeopleNames = string.Empty;
+
                 // First try to grab the person from the picker
                 if ( ppGuest.PersonId != null )
                 {
@@ -201,6 +203,8 @@ namespace RockWeb.Plugins.com_centralaz.Crm
 
                 if ( person != null )
                 {
+                    addedPeopleNames = person.FullName;
+
                     History.EvaluateChange( changes, "Connection Status", person.ConnectionStatusValueId, _dvcConnectionStatus.Id );
                     person.ConnectionStatusValueId = _dvcConnectionStatus.Id;
 
@@ -221,7 +225,6 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                             break;
                         }
                     }
-
 
                     // If a family wasn't found with a home location, use the person's first family
                     if ( family == null )
@@ -349,7 +352,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                     Rock.SystemGuid.Category.HISTORY_PERSON_FAMILY_CHANGES.AsGuid(), person.Id, familyChanges );
                 if ( spouse != null )
                 {
-
+                    addedPeopleNames += " and " + spouse.FullName;
                     HistoryService.SaveChanges( rockContext, typeof( Person ),
                         Rock.SystemGuid.Category.HISTORY_PERSON_DEMOGRAPHIC_CHANGES.AsGuid(), spouse.Id, spouseChanges );
                     HistoryService.SaveChanges( rockContext, typeof( Person ),
@@ -367,7 +370,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 }
 
                 // Reload page
-                nbMessage.Text = "New entry saved.";
+                nbMessage.Text = string.Format( "New entry for {0} saved.", addedPeopleNames );
                 nbMessage.Visible = true;
                 hfShowSuccess.Value = "true";
                 ClearControls();
