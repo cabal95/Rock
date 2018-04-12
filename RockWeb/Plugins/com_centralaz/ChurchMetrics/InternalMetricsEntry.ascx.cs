@@ -39,11 +39,22 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
     [Category( "com_centralaz > ChurchMetrics" )]
     [Description( "Block for easily adding/editing metric values for any metric that has partitions of campus and service time." )]
 
-    [CategoryField( "Weekend Schedule Category", "The schedule category to use for list of service times. If this has category has child categories, Rock will search for one that contains the name of the currently selected campus. Otherwise, Rock will use this one.", false, "Rock.Model.Schedule", "", "", false, "", "", 0 )]
-    [CategoryField( "Event Schedule Category", "The schedule category to use for list of event times. If this has category has child categories, Rock will search for one that contains the name of the currently selected campus. Otherwise, Rock will use this one.", false, "Rock.Model.Schedule", "", "", false, "", "", 0 )]
-    [IntegerField( "Weeks Back", "The number of weeks back to display in the 'Week of' selection.", false, 8, "", 1 )]
-    [IntegerField( "Weeks Ahead", "The number of weeks ahead to display in the 'Week of' selection.", false, 0, "", 2 )]
-    [MetricCategoriesField( "Metric Categories", "Select the metric categories to display (note: only metrics in those categories with a campus and scheudle partition will displayed).", true, "", "", 3 )]
+    // Metric Categories
+    [MetricCategoriesField( "Metric Categories", "Select the metric categories to display (note: only metrics in those categories with a campus and schedule partition will displayed).", true, "", "Metric Categories", 0 )]
+
+    // Weekend Settings
+    [IntegerField( "Weeks Back", "The number of weeks back to display in the 'Week of' selection.", false, 8, "Weekend Settings", 1 )]
+    [IntegerField( "Weeks Ahead", "The number of weeks ahead to display in the 'Week of' selection.", false, 0, "Weekend Settings", 2 )]
+
+    // Schedule Categories
+    [CategoryField( "Holiday Schedule Category", "The schedule category to use for list of holiday service times. If this category has child categories, Rock will use those too.", false, "Rock.Model.Schedule", "", "", false, "", "Schedule Categories", 3 )]
+    [CategoryField( "Weekend Schedule Category", "The schedule category to use for list of service times. If this category has child categories, Rock will search for one that contains the name of the currently selected campus. Otherwise, Rock will use this one.", false, "Rock.Model.Schedule", "", "", false, "", "Schedule Categories", 4 )]
+    [CategoryField( "Event Schedule Category", "The schedule category to use for list of event times. If this category has child categories, Rock will search for one that contains the name of the currently selected campus. Otherwise, Rock will use this one.", false, "Rock.Model.Schedule", "", "", false, "", "Schedule Categories", 5 )]
+
+    // Weekend Settings
+    [IntegerField( "Weeks Back", "The number of weeks back to display in the 'Week of' selection.", false, 8, "", 6 )]
+    [IntegerField( "Weeks Ahead", "The number of weeks ahead to display in the 'Week of' selection.", false, 0, "", 7 )]
+
     public partial class InternalMetricsEntry : Rock.Web.UI.RockBlock
     {
         #region Fields
@@ -132,7 +143,11 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
             BindMetrics();
         }
 
-
+        /// <summary>
+        /// Handles the ItemCommand event of the rptrSelection control.
+        /// </summary>
+        /// <param name="source">The source of the event.</param>
+        /// <param name="e">The <see cref="RepeaterCommandEventArgs"/> instance containing the event data.</param>
         protected void rptrSelection_ItemCommand( object source, RepeaterCommandEventArgs e )
         {
             switch ( e.CommandName )
@@ -302,6 +317,10 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
 
         #region Methods
 
+        /// <summary>
+        /// Checks the selection.
+        /// </summary>
+        /// <returns></returns>
         private bool CheckSelection()
         {
             // If campus and schedule have been selected before, assume current weekend
@@ -358,6 +377,9 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
             }
         }
 
+        /// <summary>
+        /// Builds the campus selection.
+        /// </summary>
         private void BuildCampusSelection()
         {
             foreach ( var campus in CampusCache.All()
@@ -468,50 +490,64 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                 var campus = CampusCache.Read( _selectedCampusId.Value );
                 if ( campus != null )
                 {
-                    var scheduleCategory = CategoryCache.Read( GetAttributeValue( "WeekendScheduleCategory" ).AsGuid() );
-                    if ( scheduleCategory != null )
+                    using ( var rockContext = new RockContext() )
                     {
-                        using ( var rockContext = new RockContext() )
+                        var categoryIds = new List<int>();
+
+                        var scheduleService = new ScheduleService( rockContext );
+
+                        // Grab any holiday schedules that have occurred in the last 5 days
+                        var holidayScheduleCategory = CategoryCache.Read( GetAttributeValue( "HolidayScheduleCategory" ).AsGuid() );
+                        if ( holidayScheduleCategory != null )
                         {
-                            if ( scheduleCategory.Categories.Any() )
+                            var holidayCategoryIds = new List<int>();
+                            holidayCategoryIds.Add( holidayScheduleCategory.Id );
+                            if ( holidayScheduleCategory.Categories.Any() )
                             {
-                                scheduleCategory = scheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).FirstOrDefault();
+                                holidayCategoryIds.AddRange( holidayScheduleCategory.Categories.Select( c => c.Id ).ToList() );
                             }
 
-                            foreach ( var schedule in new ScheduleService( rockContext )
-                               .Queryable().AsNoTracking()
-                               .Where( s =>
-                                   s.CategoryId.HasValue &&
-                                   s.IsActive &&
-                                   s.CategoryId.Value == scheduleCategory.Id )
-                                .ToList() // Here we ToList so that we can take advantage of the NextStartDateTime property
-                               .OrderBy( s => s.Name ) )
+                            foreach ( var schedule in GetSchedulesInCategories( scheduleService, holidayCategoryIds )
+                                .Where( s =>
+                                     s.EffectiveStartDate.HasValue &&
+                                     s.EffectiveStartDate.Value.Date <= RockDateTime.Now.Date &&
+                                     s.EffectiveStartDate.Value.Date >= RockDateTime.Now.Date.AddDays( -5 ) )
+                                .ToList() )
                             {
                                 services.Add( schedule );
                             }
                         }
-                    }
 
-                    var eventScheduleCategory = CategoryCache.Read( GetAttributeValue( "EventScheduleCategory" ).AsGuid() );
-                    if ( eventScheduleCategory != null )
-                    {
-                        using ( var rockContext = new RockContext() )
+                        // Grab the weekend schedule categories
+                        var weekendScheduleCategory = CategoryCache.Read( GetAttributeValue( "WeekendScheduleCategory" ).AsGuid() );
+                        if ( weekendScheduleCategory != null )
                         {
-                            if ( eventScheduleCategory.Categories.Any() )
+                            //If there is a campus-specific schedule category underneath this one, use that instead
+                            if ( weekendScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).Any() )
+                            {
+                                weekendScheduleCategory = weekendScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).FirstOrDefault();
+                            }
+
+                            categoryIds.Add( weekendScheduleCategory.Id );
+                        }
+
+                        // grab any event schedule categories
+                        var eventScheduleCategory = CategoryCache.Read( GetAttributeValue( "EventScheduleCategory" ).AsGuid() );
+                        if ( eventScheduleCategory != null )
+                        {
+                            //If there is a campus-specific schedule category underneath this one, use that instead
+                            if ( eventScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).Any() )
                             {
                                 eventScheduleCategory = eventScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).FirstOrDefault();
                             }
 
-                            foreach ( var schedule in new ScheduleService( rockContext )
-                               .Queryable().AsNoTracking()
-                               .Where( s =>
-                                   s.CategoryId.HasValue &&
-                                   s.CategoryId.Value == eventScheduleCategory.Id )
-                                .ToList() // Here we ToList so that we can take advantage of the NextStartDateTime property
-                               .OrderBy( s => s.Name ) )
-                            {
-                                services.Add( schedule );
-                            }
+                            categoryIds.Add( eventScheduleCategory.Id );
+                        }
+
+                        // Grab any schedules that are in the provided categories
+                        foreach ( var schedule in GetSchedulesInCategories( scheduleService, categoryIds ) )
+                        {
+                            services.Add( schedule );
                         }
                     }
 
@@ -520,6 +556,24 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
             }
 
             return services;
+        }
+
+        /// <summary>
+        /// Gets the schedules in categories
+        /// </summary>
+        /// <param name="scheduleService">The schedule service.</param>
+        /// <param name="categoryIds">The category ids.</param>
+        /// <returns></returns>
+        private static List<Schedule> GetSchedulesInCategories( ScheduleService scheduleService, List<int> categoryIds )
+        {
+            var schedules = scheduleService
+                                .Queryable().AsNoTracking()
+                                .Where( s =>
+                                    s.CategoryId.HasValue &&
+                                    s.IsActive &&
+                                    categoryIds.Contains( s.CategoryId.Value ) )
+                                .ToList();
+            return schedules;
         }
 
         /// <summary>
@@ -580,7 +634,7 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
 
                             if ( metricValue != null )
                             {
-                                serviceMetric.Value = (int?)metricValue.YValue;
+                                serviceMetric.Value = ( int? ) metricValue.YValue;
 
                                 if ( !string.IsNullOrWhiteSpace( metricValue.Note ) &&
                                     !notes.Contains( metricValue.Note ) )
@@ -606,6 +660,9 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
 
     }
 
+    /// <summary>
+    /// Helper class to display campus and service options
+    /// </summary>
     public class InternalServiceMetricSelectItem
     {
         public string CommandName { get; set; }
@@ -619,6 +676,9 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
         }
     }
 
+    /// <summary>
+    /// Helper class for displaying and saving metrics
+    /// </summary>
     public class InternalServiceMetric
     {
         public int Id { get; set; }
