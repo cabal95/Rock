@@ -26,7 +26,8 @@
 <h2>Total Weekend Attendance</h2>
 {[ centralaz_attendancegrid groupingType:'Attendance Type' isNotesShown:'true' firstColumnHeader:'{{firstColumnHeader}}' secondColumnHeader:'{{secondColumnHeader}}' thirdColumnHeader:'{{thirdColumnHeader}}']}
 	{% for row in table2.rows %}
-		[[ datarow GroupingRow:'{{row.GroupingRow}}' FirstColumnAttendance:'{{row.FirstColumnAttendance}}' SecondColumnAttendance:'{{row.SecondColumnAttendance}}' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}}' Growth:'{{row.Growth}}' FirstColumnNotes:'{{row.FirstColumnNotes}}' SecondColumnNotes:'{{row.SecondColumnNotes}}' ThirdColumnNotes:'{{row.ThirdColumnNotes}}' ]][[enddatarow]]
+		[[ datarow GroupingRow:'{{row.GroupingRow}} ' FirstColumnAttendance:'{{row.FirstColumnAttendance}} ' SecondColumnAttendance:'{{row.SecondColumnAttendance}} ' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}} ' Growth:'{{row.Growth}} '
+		 FirstColumnNotes:'{{row.FirstColumnNotes}} ' SecondColumnNotes:'{{row.SecondColumnNotes}} ' ThirdColumnNotes:'{{row.ThirdColumnNotes}} ' ]][[enddatarow]]
 	{% endfor %}
 {[ endcentralaz_attendancegrid]}
 
@@ -40,7 +41,7 @@
 {% endif %}
 {[ centralaz_attendancegrid groupingType:'Service' isNotesShown:'false' firstColumnHeader:'{{firstColumnHeader}}' secondColumnHeader:'{{secondColumnHeader}}' thirdColumnHeader:'{{thirdColumnHeader}}']}
 	{% for row in table3.rows %}
-		[[ datarow GroupingRow:'{{row.GroupingRow}}' FirstColumnAttendance:'{{row.FirstColumnAttendance}}' SecondColumnAttendance:'{{row.SecondColumnAttendance}}' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}}' Growth:'{{row.Growth}}' ]][[enddatarow]]
+		[[ datarow GroupingRow:'{{row.GroupingRow}} ' FirstColumnAttendance:'{{row.FirstColumnAttendance}} ' SecondColumnAttendance:'{{row.SecondColumnAttendance}} ' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}} ' Growth:'{{row.Growth}} ' ]][[enddatarow]]
 	{% endfor %}
 {[ endcentralaz_attendancegrid]}
 
@@ -48,7 +49,7 @@
 <h2>Campus Rollup</h2>
 {[ centralaz_attendancegrid groupingType:'Campus' isNotesShown:'false' firstColumnHeader:'{{firstColumnHeader}}' secondColumnHeader:'{{secondColumnHeader}}' thirdColumnHeader:'{{thirdColumnHeader}}']}
 	{% for row in table4.rows %}
-		[[ datarow GroupingRow:'{{row.GroupingRow}}' FirstColumnAttendance:'{{row.FirstColumnAttendance}}' SecondColumnAttendance:'{{row.SecondColumnAttendance}}' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}}' Growth:'{{row.Growth}}' ]][[enddatarow]]
+		[[ datarow GroupingRow:'{{row.GroupingRow}} ' FirstColumnAttendance:'{{row.FirstColumnAttendance}} ' SecondColumnAttendance:'{{row.SecondColumnAttendance}} ' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}} ' Growth:'{{row.Growth}} ' ]][[enddatarow]]
 	{% endfor %}
 {[ endcentralaz_attendancegrid]}
 {% endif %}
@@ -58,7 +59,7 @@
 		<h2>Worship Center</h2>
 		{[ centralaz_attendancegrid groupingType:'{{groupingType}}' isNotesShown:'false' firstColumnHeader:'{{firstColumnHeader}}' secondColumnHeader:'{{secondColumnHeader}}' thirdColumnHeader:'{{thirdColumnHeader}}']}
 			{% for row in table5.rows %}
-				[[ datarow GroupingRow:'{{row.GroupingRow}}' FirstColumnAttendance:'{{row.FirstColumnAttendance}}' SecondColumnAttendance:'{{row.SecondColumnAttendance}}' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}}' Growth:'{{row.Growth}}' ]][[enddatarow]]
+				[[ datarow GroupingRow:'{{row.GroupingRow}} ' FirstColumnAttendance:'{{row.FirstColumnAttendance}} ' SecondColumnAttendance:'{{row.SecondColumnAttendance}} ' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}} ' Growth:'{{row.Growth}} ' ]][[enddatarow]]
 			{% endfor %}
 		{[ endcentralaz_attendancegrid]}
 	</div>
@@ -66,7 +67,7 @@
 		<h2>Children</h2>
 		{[ centralaz_attendancegrid groupingType:'{{groupingType}}' isNotesShown:'false' firstColumnHeader:'{{firstColumnHeader}}' secondColumnHeader:'{{secondColumnHeader}}' thirdColumnHeader:'{{thirdColumnHeader}}']}
 			{% for row in table6.rows %}
-				[[ datarow GroupingRow:'{{row.GroupingRow}}' FirstColumnAttendance:'{{row.FirstColumnAttendance}}' SecondColumnAttendance:'{{row.SecondColumnAttendance}}' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}}' Growth:'{{row.Growth}}' ]][[enddatarow]]
+				[[ datarow GroupingRow:'{{row.GroupingRow}} ' FirstColumnAttendance:'{{row.FirstColumnAttendance}} ' SecondColumnAttendance:'{{row.SecondColumnAttendance}} ' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}} ' Growth:'{{row.Growth}} ' ]][[enddatarow]]
 			{% endfor %}
 		{[ endcentralaz_attendancegrid]}
 	</div>
@@ -75,7 +76,7 @@
 		<h2>Students</h2>
 		{[ centralaz_attendancegrid groupingType:'{{groupingType}}' isNotesShown:'false' firstColumnHeader:'{{firstColumnHeader}}' secondColumnHeader:'{{secondColumnHeader}}' thirdColumnHeader:'{{thirdColumnHeader}}']}
 			{% for row in table7.rows %}
-				[[ datarow GroupingRow:'{{row.GroupingRow}}' FirstColumnAttendance:'{{row.FirstColumnAttendance}}' SecondColumnAttendance:'{{row.SecondColumnAttendance}}' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}}' Growth:'{{row.Growth}}' ]][[enddatarow]]
+				[[ datarow GroupingRow:'{{row.GroupingRow}} ' FirstColumnAttendance:'{{row.FirstColumnAttendance}} ' SecondColumnAttendance:'{{row.SecondColumnAttendance}} ' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}} ' Growth:'{{row.Growth}} ' ]][[enddatarow]]
 			{% endfor %}
 		{[ endcentralaz_attendancegrid]}
 	</div>
@@ -89,7 +90,7 @@
 		<h2>Baptism</h2>
 		{[ centralaz_attendancegrid groupingType:'{{groupingType}}' isNotesShown:'false' firstColumnHeader:'{{firstColumnHeader}}' secondColumnHeader:'This YTD' thirdColumnHeader:'Last YTD']}
 			{% for row in table8.rows %}
-				[[ datarow GroupingRow:'{{row.GroupingRow}}' FirstColumnAttendance:'{{row.FirstColumnAttendance}}' SecondColumnAttendance:'{{row.SecondColumnAttendance}}' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}}' Growth:'{{row.Growth}}' ]][[enddatarow]]
+				[[ datarow GroupingRow:'{{row.GroupingRow}} ' FirstColumnAttendance:'{{row.FirstColumnAttendance}} ' SecondColumnAttendance:'{{row.SecondColumnAttendance}} ' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}} ' Growth:'{{row.Growth}} ' ]][[enddatarow]]
 			{% endfor %}
 		{[ endcentralaz_attendancegrid]}
 	</div>
@@ -98,7 +99,7 @@
 		<h2>Baptism</h2>
 		{[ centralaz_attendancegrid groupingType:'{{groupingType}}' isNotesShown:'false' firstColumnHeader:'{{firstColumnHeader}}' secondColumnHeader:'{{secondColumnHeader}}' thirdColumnHeader:'{{thirdColumnHeader}}']}
 			{% for row in table8.rows %}
-				[[ datarow GroupingRow:'{{row.GroupingRow}}' FirstColumnAttendance:'{{row.FirstColumnAttendance}}' SecondColumnAttendance:'{{row.SecondColumnAttendance}}' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}}' Growth:'{{row.Growth}}' ]][[enddatarow]]
+				[[ datarow GroupingRow:'{{row.GroupingRow}} ' FirstColumnAttendance:'{{row.FirstColumnAttendance}} ' SecondColumnAttendance:'{{row.SecondColumnAttendance}} ' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}} ' Growth:'{{row.Growth}} ' ]][[enddatarow]]
 			{% endfor %}
 		{[ endcentralaz_attendancegrid]}
 	</div>
@@ -106,7 +107,7 @@
 		<h2>Discover Central</h2>
 		{[ centralaz_attendancegrid groupingType:'{{groupingType}}' isNotesShown:'false' firstColumnHeader:'This Month' secondColumnHeader:'Last Month' thirdColumnHeader:'{{thirdColumnHeader}}']}
 			{% for row in table9.rows %}
-				[[ datarow GroupingRow:'{{row.GroupingRow}}' FirstColumnAttendance:'{{row.FirstColumnAttendance}}' SecondColumnAttendance:'{{row.SecondColumnAttendance}}' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}}' Growth:'{{row.Growth}}' ]][[enddatarow]]
+				[[ datarow GroupingRow:'{{row.GroupingRow}} ' FirstColumnAttendance:'{{row.FirstColumnAttendance}} ' SecondColumnAttendance:'{{row.SecondColumnAttendance}} ' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}} ' Growth:'{{row.Growth}} ' ]][[enddatarow]]
 			{% endfor %}
 		{[ endcentralaz_attendancegrid]}
 	</div>
@@ -114,7 +115,7 @@
 		<h2>First-Time Guests</h2>
 		{[ centralaz_attendancegrid groupingType:'{{groupingType}}' isNotesShown:'false' firstColumnHeader:'{{firstColumnHeader}}' secondColumnHeader:'{{secondColumnHeader}}' thirdColumnHeader:'{{thirdColumnHeader}}']}
 			{% for row in table10.rows %}
-				[[ datarow GroupingRow:'{{row.GroupingRow}}' FirstColumnAttendance:'{{row.FirstColumnAttendance}}' SecondColumnAttendance:'{{row.SecondColumnAttendance}}' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}}' Growth:'{{row.Growth}}' ]][[enddatarow]]
+				[[ datarow GroupingRow:'{{row.GroupingRow}} ' FirstColumnAttendance:'{{row.FirstColumnAttendance}} ' SecondColumnAttendance:'{{row.SecondColumnAttendance}} ' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}} ' Growth:'{{row.Growth}} ' ]][[enddatarow]]
 			{% endfor %}
 		{[ endcentralaz_attendancegrid]}
 	</div>
