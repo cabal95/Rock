@@ -1,7 +1,7 @@
 USE [RockDB_Test]
 GO
 
-/****** Object:  StoredProcedure [dbo].[_com_centralaz_Metrics_GetAttendanceMetricData]    Script Date: 4/18/2018 3:05:13 PM ******/
+/****** Object:  StoredProcedure [dbo].[_com_centralaz_Metrics_GetAttendanceMetricData]    Script Date: 4/18/2018 3:17:39 PM ******/
 SET ANSI_NULLS ON
 GO
 
@@ -12,7 +12,7 @@ GO
     <doc>
 	    <summary>
  		    This stored procedure returns the following tables of metrics:
-			Table 1: Reference data (e.g. IsCampus, IsHoliday, IsServicesOngoing.
+			Table 1: Reference data (e.g. IsCampus, IsHoliday, IsServicesOngoing).
 			Table 2: Returns attendance totals sorted by attendance type.
 			Table 3: Returns attendance totals sorted by service time.			
 			Table 4: Returns attendance totals sorted by campus.
@@ -420,7 +420,9 @@ WHERE MetricValueDateTime >= @ThisWeekStart AND MetricValueDateTime <= @ThisWeek
 -- This returns a reference table with the parameters and years so that the lava template has access to them.
 Select	@IsHoliday as 'IsHoliday',
 		@IsCampus as 'IsCampus', 
-		@IsServicesOngoing as 'IsServicesOngoing',		
+		@IsServicesOngoing as 'IsServicesOngoing',
+		( Select Top 1 Name From Campus Where Id = @CampusId) AS 'CampusName',	
+		@Holiday as 'Holiday',	
 		DATEPART(YEAR, @ThisYearStart ) AS 'ThisYear',
 		DATEPART(YEAR, @LastYearStart ) AS 'LastYear',
 		DATEPART(YEAR, @TwoYearStart ) AS 'TwoYear'
