@@ -1,12 +1,13 @@
-USE [RockDB_Test]
+USE [RockDB_Sync]
 GO
 
-/****** Object:  StoredProcedure [dbo].[_com_centralaz_Metrics_GetAttendanceMetricData]    Script Date: 4/18/2018 3:17:39 PM ******/
+/****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData]    Script Date: 4/18/2018 3:37:27 PM ******/
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER ON
 GO
+
 
 /*
     <doc>
@@ -24,7 +25,7 @@ GO
 			Table 10: Returns baptism totals sorted by schedule. 
 	    </summary>
 	    <code>
-		    EXEC [dbo].[spCrm_FamilyAnalyticsGiving]
+		    EXEC [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData]
 			 @IsHoliday
 			,@IsCampus
 			,@Holiday
@@ -33,7 +34,7 @@ GO
 	    </code>
     </doc>
     */
-ALTER PROCEDURE [dbo].[_com_centralaz_Metrics_GetAttendanceMetricData]
+ALTER PROCEDURE [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData]
 	 @IsHoliday BIT = 0,
 	 @IsCampus BIT = 0,
 	 @Holiday NVARCHAR(50) = 'Christmas',
@@ -71,36 +72,24 @@ END CATCH
 ----------------------------------------------------------------------------
 -- GET THE METRIC CATEGORY IDS
 ----------------------------------------------------------------------------
----- These are the root category Ids of the metrics included in the total attendance counts
---DECLARE @RootAttendanceMetricCategoryId INT = 540;
-
---DECLARE @WorshipMetricCategoryId INT = 543;
---DECLARE @ChildrenMetricCategoryId INT = 541;
---DECLARE @StudentsMetricCategoryId INT = 542;
---DECLARE @WorshipNightMetricCategoryId INT = 544;
-
----- This holds any metrics that are not included in total attendance counts but are still displayed.
----- Currently includes Baptisms and First Time Guests
---DECLARE @UncountedMetricCategoryId INT = 545 
-
 -- These are the root category Ids of the metrics included in the total attendance counts
-DECLARE @RootAttendanceMetricCategoryId INT = 435;
+DECLARE @RootAttendanceMetricCategoryId INT = 540;
 
-DECLARE @WorshipMetricCategoryId INT = 443;
-DECLARE @ChildrenMetricCategoryId INT = 440;
-DECLARE @StudentsMetricCategoryId INT = 444;
-DECLARE @WorshipNightMetricCategoryId INT = 513;
+DECLARE @WorshipMetricCategoryId INT = 543;
+DECLARE @ChildrenMetricCategoryId INT = 541;
+DECLARE @StudentsMetricCategoryId INT = 542;
+DECLARE @WorshipNightMetricCategoryId INT = 544;
 
 -- This holds any metrics that are not included in total attendance counts but are still displayed.
 -- Currently includes Baptisms and First Time Guests
-DECLARE @UncountedMetricCategoryId INT = 446 
+DECLARE @UncountedMetricCategoryId INT = 545 
 
 -- Here we build a table that contains all the categories for the metrics we'll be displaying on the page
 DECLARE @MetricCategoryIds TABLE(
 MetricCategoryId INT
 );
 
-INSERT INTO @MetricCategoryIds SELECT Id FROM dbo._com_centralaz_Metrics_GetDescendantCategoriesFromRoot(@RootAttendanceMetricCategoryId);
+INSERT INTO @MetricCategoryIds SELECT Id FROM dbo._com_centralaz_unfMetrics_GetDescendantCategoriesFromRoot(@RootAttendanceMetricCategoryId);
 
 ----------------------------------------------------------------------------
 -- GET THE SCHEDULE CATEGORY IDS
@@ -127,17 +116,17 @@ ScheduleCategoryId INT
 
 IF @IsHoliday = 1
 	-- This holds the correct holiday schedules
-	INSERT INTO @ScheduleCategoryIds SELECT Id FROM dbo._com_centralaz_Metrics_GetDescendantCategoriesFromRoot(@HolidayScheduleCategoryId) 
+	INSERT INTO @ScheduleCategoryIds SELECT Id FROM dbo._com_centralaz_unfMetrics_GetDescendantCategoriesFromRoot(@HolidayScheduleCategoryId) 
 ELSE
 BEGIN
 	-- These are normal weekend schedules
-	INSERT INTO @ScheduleCategoryIds SELECT Id FROM dbo._com_centralaz_Metrics_GetDescendantCategoriesFromRoot(@WeekendScheduleCategoryId)
+	INSERT INTO @ScheduleCategoryIds SELECT Id FROM dbo._com_centralaz_unfMetrics_GetDescendantCategoriesFromRoot(@WeekendScheduleCategoryId)
 
 	-- These are the student's schedules ( Including Wed Night Bible Study )
-	INSERT INTO @ScheduleCategoryIds SELECT Id FROM dbo._com_centralaz_Metrics_GetDescendantCategoriesFromRoot(@StudentsScheduleCategoryId) 
+	INSERT INTO @ScheduleCategoryIds SELECT Id FROM dbo._com_centralaz_unfMetrics_GetDescendantCategoriesFromRoot(@StudentsScheduleCategoryId) 
 
 	-- These are schedules for events we want to track attendance for, like Worship Night
-	INSERT INTO @ScheduleCategoryIds SELECT Id FROM dbo._com_centralaz_Metrics_GetDescendantCategoriesFromRoot(@SpecialEventsCategoryId) 
+	INSERT INTO @ScheduleCategoryIds SELECT Id FROM dbo._com_centralaz_unfMetrics_GetDescendantCategoriesFromRoot(@SpecialEventsCategoryId) 
 END
 
 ----------------------------------------------------------------------------
@@ -435,7 +424,7 @@ SET GroupingData = MetricCategoryName
 
 SELECT dataTable.GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 		,FirstColumnNotes, SecondColumnNotes, ThirdColumnNotes
-FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@FirstColumnStart,
 	@FirstColumnEnd,
 	@SecondColumnStart,
@@ -447,7 +436,7 @@ FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
 	@CurrentMetrics,
 	@MetricValues,
 	@MetricValues) dataTable
-LEFT JOIN [dbo].[_com_centralaz_Metrics_GetAttendanceNotes](
+LEFT JOIN [dbo].[_com_centralaz_unfMetrics_GetAttendanceNotes](
 	@FirstColumnStart,
 	@FirstColumnEnd,
 	@SecondColumnStart,
@@ -471,7 +460,7 @@ SET GroupingData = ScheduleName
 SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
 	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'
-FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 @FirstColumnStart,
 @FirstColumnEnd,
 @SecondColumnStart,
@@ -492,7 +481,7 @@ UPDATE @MetricValues
 SET GroupingData = CampusName
 
 SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
-FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 @FirstColumnStart,
 @FirstColumnEnd,
 @SecondColumnStart,
@@ -518,7 +507,7 @@ BEGIN
 	SET GroupingData = CampusName
 
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
-	FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@FirstColumnStart,
 	@FirstColumnEnd,
 	@SecondColumnStart,
@@ -544,7 +533,7 @@ BEGIN
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'
-	FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@FirstColumnStart,
 	@FirstColumnEnd,
 	@SecondColumnStart,
@@ -571,7 +560,7 @@ BEGIN
 	SET GroupingData = CampusName
 
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
-	FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@FirstColumnStart,
 	@FirstColumnEnd,
 	@SecondColumnStart,
@@ -597,7 +586,7 @@ BEGIN
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'
-	FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@FirstColumnStart,
 	@FirstColumnEnd,
 	@SecondColumnStart,
@@ -624,7 +613,7 @@ BEGIN
 	SET GroupingData = CampusName
 
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
-	FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@FirstColumnStart,
 	@FirstColumnEnd,
 	@SecondColumnStart,
@@ -650,7 +639,7 @@ BEGIN
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'
-	FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@FirstColumnStart,
 	@FirstColumnEnd,
 	@SecondColumnStart,
@@ -677,7 +666,7 @@ BEGIN
 	SET GroupingData = CampusName
 
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, YtdGrowth AS 'Growth'
-	FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@ThisWeekStart,
 	@ThisWeekEnd,
 	@ThisMinistryYearStart,
@@ -703,7 +692,7 @@ BEGIN
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'		
-	FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@ThisWeekStart,
 	@ThisWeekEnd,
 	@LastWeekStart,
@@ -731,7 +720,7 @@ SET GroupingData = ScheduleName
 SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
 	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'		
-FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 @ThisMonthStart,
 @ThisMonthEnd,
 @LastMonthStart,
@@ -758,7 +747,7 @@ SET GroupingData = ScheduleName
 SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
 	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'		
-FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 @ThisWeekStart,
 @ThisWeekEnd,
 @LastWeekStart,
@@ -773,6 +762,7 @@ FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
 ORDER BY [Date], [Time], iCalendarContent
 
 END
+
 
 GO
 

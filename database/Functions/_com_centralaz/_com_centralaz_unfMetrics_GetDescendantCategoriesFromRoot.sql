@@ -1,12 +1,13 @@
-USE [RockDB_Test]
+USE [RockDB_Sync]
 GO
 
-/****** Object:  UserDefinedFunction [dbo].[_com_centralaz_Metrics_GetDescendantCategoriesFromRoot]    Script Date: 4/18/2018 3:01:18 PM ******/
+/****** Object:  UserDefinedFunction [dbo].[_com_centralaz_unfMetrics_GetDescendantCategoriesFromRoot]    Script Date: 4/18/2018 3:36:08 PM ******/
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER ON
 GO
+
 
 
 
@@ -21,14 +22,14 @@ GO
 		* id
 	</returns>
 	<remarks>
-		Used by the [dbo].[_com_centralaz_Metrics_GetAttendanceMetricData] stored procedure 
+		Used by the [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData] stored procedure 
 	</remarks>
 	<code>
-		SELECT * FROM [dbo].[_com_centralaz_Metrics_GetDescendantCategoriesFromRoot](435) 
+		SELECT * FROM [dbo].[_com_centralaz_unfMetrics_GetDescendantCategoriesFromRoot](435) 
 	</code>
 </doc>
 */
-ALTER FUNCTION [dbo].[_com_centralaz_Metrics_GetDescendantCategoriesFromRoot] 
+ALTER FUNCTION [dbo].[_com_centralaz_unfMetrics_GetDescendantCategoriesFromRoot] 
 ( 
     @Input int
 )
@@ -49,6 +50,7 @@ BEGIN
     
     RETURN
 END
+
 
 
 

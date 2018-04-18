@@ -1,12 +1,13 @@
-USE [RockDB_Test]
+USE [RockDB_Sync]
 GO
 
-/****** Object:  UserDefinedFunction [dbo].[_com_centralaz_Metrics_GetAttendanceData]    Script Date: 4/18/2018 3:02:38 PM ******/
+/****** Object:  UserDefinedFunction [dbo].[_com_centralaz_unfMetrics_GetAttendanceData]    Script Date: 4/18/2018 3:36:48 PM ******/
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER ON
 GO
+
 
 /*
 <doc>
@@ -37,7 +38,7 @@ GO
 	<param name="SourceTable" datatype="AttendanceMetricValueTableType">A table containing metric data used to get attendance data/param>
 	<code>
 		SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
-			FROM [dbo].[_com_centralaz_Metrics_GetAttendanceData](
+			FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 			@FirstColumnStart,
 			@FirstColumnEnd,
 			@SecondColumnStart,
@@ -52,7 +53,7 @@ GO
 	</code>
 </doc>
 */
-ALTER FUNCTION [dbo].[_com_centralaz_Metrics_GetAttendanceData] 
+ALTER FUNCTION [dbo].[_com_centralaz_unfMetrics_GetAttendanceData] 
 ( 
     @FirstColumnStartDate datetime,
 	@FirstColumnEndDate datetime,
@@ -163,6 +164,7 @@ BEGIN
     
     RETURN
 END
+
 
 
 
