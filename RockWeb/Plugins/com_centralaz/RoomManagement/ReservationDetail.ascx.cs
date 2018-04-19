@@ -245,7 +245,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             base.OnLoad( e );
             if ( !Page.IsPostBack )
             {
-                ShowDetail();
+                ShowEditDetails();
             }
             else
             {
@@ -286,7 +286,13 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         {
             var breadCrumbs = new List<BreadCrumb>();
 
-            int? reservationId = PageParameter( pageReference, "ReservationId" ).AsIntegerOrNull();
+            // get from hidden parameter first, otherwise use page parameter.
+            int? reservationId = hfReservationId.Value.AsIntegerOrNull();
+            if ( reservationId == null )
+            {
+                reservationId = PageParameter( pageReference, "ReservationId" ).AsIntegerOrNull();
+            }
+
             if ( reservationId != null )
             {
                 Reservation reservation = new ReservationService( new RockContext() ).Get( reservationId.Value );
@@ -324,6 +330,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         protected void btnSave_OnClick( object sender, EventArgs e )
         {
             nbErrorWarning.Visible = false;
+
             if ( Page.IsValid )
             {
                 RockContext rockContext = new RockContext();
@@ -335,9 +342,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
                 Reservation reservation = null;
 
-                if ( PageParameter( "ReservationId" ).AsIntegerOrNull() != null )
+                if ( hfReservationId.Value.AsIntegerOrNull() != null )
                 {
-                    reservation = reservationService.Get( PageParameter( "ReservationId" ).AsInteger() );
+                    reservation = reservationService.Get( hfReservationId.Value.AsInteger() );
                 }
 
                 if ( reservation == null )
@@ -604,31 +611,60 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         protected void btnDelete_OnClick( object sender, EventArgs e )
         {
-            if ( PageParameter( "ReservationId" ).AsIntegerOrNull() != null )
+            var rockContext = new RockContext();
+            var reservationService = new ReservationService( rockContext );
+            var reservation = reservationService.Get( int.Parse( hfReservationId.Value ) );
+
+            if ( reservation != null )
             {
-                RockContext rockContext = new RockContext();
-                ReservationService reservationService = new ReservationService( rockContext );
                 ReservationResourceService reservationResourceService = new ReservationResourceService( rockContext );
                 ReservationLocationService reservationLocationService = new ReservationLocationService( rockContext );
-                var reservation = reservationService.Get( PageParameter( "ReservationId" ).AsInteger() );
-                if ( reservation != null )
+
+                if ( reservation.ReservationResources != null )
                 {
-                    if ( reservation.ReservationResources != null )
-                    {
-                        reservationResourceService.DeleteRange( reservation.ReservationResources );
-                    }
-
-                    if ( reservation.ReservationLocations != null )
-                    {
-                        reservationLocationService.DeleteRange( reservation.ReservationLocations );
-                    }
-
-                    reservationService.Delete( reservation );
-                    rockContext.SaveChanges();
+                    reservationResourceService.DeleteRange( reservation.ReservationResources );
                 }
+
+                if ( reservation.ReservationLocations != null )
+                {
+                    reservationLocationService.DeleteRange( reservation.ReservationLocations );
+                }
+
+                reservationService.Delete( reservation );
+                rockContext.SaveChanges();
             }
 
             ReturnToParentPage();
+        }
+
+
+        /// <summary>
+        /// Handles the Click event of the Copy button control and creates a copy of the reservation 
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        protected void btnCopy_Click( object sender, EventArgs e )
+        {
+            // Create a new Data View using the current item as a template.
+            var id = int.Parse( hfReservationId.Value );
+
+            var reservationService = new ReservationService( new RockContext() );
+
+            var newItem = reservationService.GetNewFromTemplate( id );
+
+            if ( newItem == null )
+            {
+                return;
+            }
+
+            newItem.Name += " (Copy)";
+
+            // Reset the stored identifier for the active Reservation.
+            hfReservationId.Value = "0";
+
+            btnCopy.Visible = false;
+            btnDelete.Visible = false;
+            ShowEditDetails( newItem );
         }
 
         /// <summary>
@@ -638,6 +674,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void sbSchedule_SaveSchedule( object sender, EventArgs e )
         {
+            nbErrorWarning.Visible = false;
+
             var schedule = new Schedule { iCalendarContent = sbSchedule.iCalendarContent };
             lScheduleText.Text = schedule.FriendlyScheduleText;
             LoadPickers();
@@ -665,9 +703,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
         protected void hfApprovalState_ValueChanged( object sender, EventArgs e )
         {
-            if ( PageParameter( "ReservationId" ).AsIntegerOrNull() != null )
+            if ( hfReservationId.Value.AsIntegerOrNull() != null )
             {
-                var reservation = new ReservationService( new RockContext() ).Get( PageParameter( "ReservationId" ).AsInteger() );
+                var reservation = new ReservationService( new RockContext() ).Get( hfReservationId.Value.AsInteger() );
                 if ( reservation != null )
                 {
                     ReservationApprovalState? newApprovalState = hfApprovalState.Value.ConvertToEnum<ReservationApprovalState>();
@@ -702,7 +740,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             var resource = new ResourceService( rockContext ).Get( srpResource.SelectedValueAsId() ?? 0 );
             if ( resource != null )
             {
-                var newReservation = new Reservation() { Id = PageParameter( "ReservationId" ).AsIntegerOrNull() ?? 0, Schedule = new Schedule() { iCalendarContent = sbSchedule.iCalendarContent }, SetupTime = nbSetupTime.Text.AsInteger(), CleanupTime = nbCleanupTime.Text.AsInteger() };
+                var newReservation = new Reservation() { Id = hfReservationId.Value.AsInteger(), Schedule = new Schedule() { iCalendarContent = sbSchedule.iCalendarContent }, SetupTime = nbSetupTime.Text.AsInteger(), CleanupTime = nbCleanupTime.Text.AsInteger() };
                 var availableQuantity = new ReservationService( rockContext ).GetAvailableResourceQuantity( resource, newReservation );
                 nbQuantity.MaximumValue = availableQuantity.ToString();
                 nbQuantity.Label = String.Format( "Quantity ({0} of {1} Available)", availableQuantity, resource.Quantity );
@@ -825,6 +863,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="reservationResourceGuid">The reservation resource unique identifier.</param>
         protected void gResources_ShowEdit( Guid reservationResourceGuid )
         {
+            nbErrorWarning.Visible = false;
             nbQuantity.Label = "Quantity";
 
             ReservationResource reservationResource = ResourcesState.FirstOrDefault( l => l.Guid.Equals( reservationResourceGuid ) );
@@ -1123,6 +1162,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="reservationLocationGuid">The reservation location unique identifier.</param>
         protected void gLocations_ShowEdit( Guid reservationLocationGuid )
         {
+            nbErrorWarning.Visible = false;
             ReservationLocation reservationLocation = LocationsState.FirstOrDefault( l => l.Guid.Equals( reservationLocationGuid ) );
             if ( reservationLocation != null )
             {
@@ -1294,9 +1334,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         #region Methods
 
         /// <summary>
-        /// Shows the detail.
+        /// Shows the detail for a reservation given via the PageParameter or create a new, empty reservation.
         /// </summary>
-        private void ShowDetail()
+        private void ShowEditDetails()
         {
             RockContext rockContext = new RockContext();
             ReservationService roomReservationService = new ReservationService( rockContext );
@@ -1319,10 +1359,12 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             if ( PageParameter( "ReservationId" ).AsIntegerOrNull() != null )
             {
                 reservation = roomReservationService.Get( PageParameter( "ReservationId" ).AsInteger() );
+                hfReservationId.Value = reservation.Id.ToString();
             }
 
             if ( reservation == null )
             {
+                btnCopy.Visible = false;
                 pdAuditDetails.Visible = false;
                 reservation = new Reservation { Id = 0 };
 
@@ -1391,6 +1433,19 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 pdAuditDetails.SetEntity( reservation, ResolveRockUrl( "~" ) );
             }
+
+            hfReservationId.SetValue( reservation.Id );
+
+            ShowEditDetails( reservation );
+        }
+
+        /// <summary>
+        /// Shows the detail of the given reservation
+        /// </summary>
+        /// <param name="reservation">The reservation.</param>
+        private void ShowEditDetails( Reservation reservation )
+        {
+            RockContext rockContext = new RockContext();
 
             sbSchedule.iCalendarContent = string.Empty;
             if ( reservation.Schedule != null )
@@ -1541,7 +1596,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
 
             hfApprovalState.Value = reservation.ApprovalState.ConvertToString();
-
         }
 
         private void LoadQuestionsAndAnswers( List<Guid> locationList, List<Guid> resourceList )
@@ -1782,7 +1836,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         }
 
         /// <summary>
-        /// Returns the user to the schedule page
+        /// Returns the user to the parent page
         /// </summary>
         protected void ReturnToParentPage()
         {
@@ -1798,7 +1852,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         {
             srpResource.Enabled = true;
             slpLocation.Enabled = true;
-            int reservationId = PageParameter( "ReservationId" ).AsInteger();
+            int reservationId = hfReservationId.Value.AsInteger();
 
             // Get the selected locations and pass them as extra params to the Resource rest call so
             // we don't get any resources that are attached to other/non-selected locations.
@@ -1870,7 +1924,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <returns>an HTML List if conflicts exists; null otherwise.</returns>
         private string BuildLocationConflictHtmlListMessage( int locationId, RockContext rockContext )
         {
-            int reservationId = PageParameter( "ReservationId" ).AsInteger();
+            int reservationId = hfReservationId.Value.AsInteger();
             var newReservation = new Reservation() { Id = reservationId, Schedule = new Schedule() { iCalendarContent = sbSchedule.iCalendarContent }, SetupTime = nbSetupTime.Text.AsInteger(), CleanupTime = nbCleanupTime.Text.AsInteger() };
             var conflicts = new ReservationService( rockContext ).GetConflictsForLocationId( locationId, newReservation );
 
@@ -1882,11 +1936,16 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
                 foreach ( var conflict in conflicts )
                 {
-                    sb.AppendFormat( "<li>{0} [on {1} via <a href='{4}?ReservationId={2}' target='_blank'>'{3}'</a>]</li>",
+                    var duration = conflict.Reservation.Schedule.GetCalenderEvent().Duration;
+                    int hours = duration.Hours;
+                    int minutes = duration.Minutes;
+
+                    sb.AppendFormat( "<li>{0} [on {1} {4} via <a href='{5}?ReservationId={2}' target='_blank'>'{3}'</a>]</li>",
                         conflict.Location.Name,
                         conflict.Reservation.Schedule.ToFriendlyScheduleText(),
                         conflict.ReservationId,
                         conflict.Reservation.Name,
+                        ( ( hours <= 0 ) ? string.Empty : hours + ( ( hours == 1 ) ? " hr " : " hrs " ) ) + ( ( minutes == 0 ) ? string.Empty : minutes + " min " ),
                         route
                         );
                 }
@@ -1909,7 +1968,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 var resourceId = srpResource.SelectedValueAsId().Value;
                 var resource = new ResourceService( rockContext ).Get( resourceId );
 
-                int reservationId = PageParameter( "ReservationId" ).AsInteger();
+                int reservationId = hfReservationId.Value.AsInteger();
                 var newReservation = new Reservation() { Id = reservationId, Schedule = new Schedule() { iCalendarContent = sbSchedule.iCalendarContent }, SetupTime = nbSetupTime.Text.AsInteger(), CleanupTime = nbCleanupTime.Text.AsInteger() };
 
                 var conflicts = new ReservationService( rockContext ).GetConflictsForResourceId( resource.Id, newReservation );
@@ -1922,11 +1981,16 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     sb.AppendFormat( "{0} is already reserved for the scheduled times by the following reservations:<ul>", resource.Name );
                     foreach ( var conflict in conflicts )
                     {
-                        sb.AppendFormat( "<li>{0} reserved on {1} via <a href='{4}?ReservationId={2}' target='_blank'>'{3}'</a></li>",
+                        var duration = conflict.Reservation.Schedule.GetCalenderEvent().Duration;
+                        int hours = duration.Hours;
+                        int minutes = duration.Minutes;
+
+                        sb.AppendFormat( "<li>{0} reserved on {1} {4} via <a href='{5}?ReservationId={2}' target='_blank'>'{3}'</a></li>",
                             conflict.ResourceQuantity,
                             conflict.Reservation.Schedule.ToFriendlyScheduleText(),
                             conflict.ReservationId,
                             conflict.Reservation.Name,
+                            ( ( hours <= 0 ) ? string.Empty : hours + ( ( hours == 1 ) ? " hr " : " hrs " ) ) + ( ( minutes == 0 ) ? string.Empty : minutes + " min " ),
                             route
                             );
                     }

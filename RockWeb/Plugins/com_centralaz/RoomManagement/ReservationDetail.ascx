@@ -10,6 +10,7 @@
         <asp:ValidationSummary ID="ValidationSummary1" runat="server" HeaderText="Please Correct the Following" CssClass="alert alert-danger" />
         <Rock:NotificationBox ID="nbErrorWarning" runat="server" NotificationBoxType="Danger" />
         <asp:Panel ID="pnlView" runat="server" CssClass="panel panel-block">
+            <asp:HiddenField ID="hfReservationId" runat="server" />
 
             <div class="panel-heading">
                 <h1 class="panel-title">
@@ -133,6 +134,11 @@
                     <asp:LinkButton ID="btnSave" runat="server" Text="Save" CssClass="btn btn-primary" OnClick="btnSave_OnClick" />
                     <asp:LinkButton ID="btnCancel" runat="server" Text="Cancel" CssClass="btn btn-link" OnClick="btnCancel_OnClick" CausesValidation="false" />
                     <asp:LinkButton ID="btnDelete" runat="server" Visible="false" Text="<i class='fa fa-trash-o'></i> Delete" CssClass="btn btn-link text-danger" OnClick="btnDelete_OnClick" CausesValidation="false" />
+
+                    <div class="pull-right">
+                        <asp:LinkButton ID="btnCopy" runat="server" Tooltip="Copy Reservation" CssClass="btn btn-default btn-sm fa fa-clone" OnClick="btnCopy_Click" CausesValidation="false" />
+                    </div>                           
+
                 </div>
             </div>
         </asp:Panel>

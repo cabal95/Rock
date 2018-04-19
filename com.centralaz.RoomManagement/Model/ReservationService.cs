@@ -271,6 +271,53 @@ namespace com.centralaz.RoomManagement.Model
 
         #endregion
 
+        /// <summary>
+        /// Create a new non-persisted reservation using an existing reservation as a template. 
+        /// </summary>
+        /// <param name="reservationId">The identifier of a reservation to use as a template for the new reservation.</param>
+        /// <returns></returns>
+        public Reservation GetNewFromTemplate( int reservationId )
+        {
+            var item = this.Queryable()
+                           .AsNoTracking()
+                           .FirstOrDefault( x => x.Id == reservationId );
+
+            if ( item == null )
+            {
+                throw new Exception( string.Format( "GetNewFromTemplate method failed. Reservation ID \"{0}\" could not be found.", reservationId ) );
+            }
+
+            // Deep-clone the Reservation and reset the properties that connect it to the permanent store.
+            var newItem = item.Clone( false );
+
+            newItem.Id = 0;
+            newItem.Guid = Guid.NewGuid();
+            newItem.ForeignId = null;
+            newItem.ForeignGuid = null;
+            newItem.ForeignKey = null;
+
+            newItem.CreatedByPersonAlias = null;
+            newItem.CreatedByPersonAliasId = null;
+            newItem.CreatedDateTime = RockDateTime.Now;
+            newItem.ModifiedByPersonAlias = null;
+            newItem.ModifiedByPersonAliasId = null;
+            newItem.ModifiedDateTime = RockDateTime.Now;
+
+            // Clear the approval state since that would not be fair otherwise...
+            newItem.ApprovalState = ReservationApprovalState.Unapproved;
+            foreach ( var rl in newItem.ReservationLocations )
+            {
+                rl.ApprovalState = ReservationLocationApprovalState.Unapproved;
+            }
+
+            foreach ( var rr in newItem.ReservationResources )
+            {
+                rr.ApprovalState = ReservationResourceApprovalState.Unapproved;
+            }
+
+            return newItem;
+        }
+
         #region Helper Classes
 
         public class ReservationSummary
@@ -320,5 +367,77 @@ namespace com.centralaz.RoomManagement.Model
         }
 
         #endregion
+    }
+
+    /// <summary>
+    /// Extension Methods
+    /// </summary>
+    public static partial class ReservationExtensionMethods
+    {
+        /// <summary>
+        /// Clones this Reservation object to a new Reservation object
+        /// </summary>
+        /// <param name="source">The source.</param>
+        /// <param name="deepCopy">if set to <c>true</c> a deep copy is made. If false, only the basic entity properties are copied.</param>
+        /// <returns></returns>
+        public static Reservation Clone( this Reservation source, bool deepCopy )
+        {
+            if ( deepCopy )
+            {
+                return source.Clone() as Reservation;
+            }
+            else
+            {
+                var target = new Reservation();
+                target.CopyPropertiesFrom( source );
+                return target;
+            }
+        }
+
+        /// <summary>
+        /// Copies the properties from another Reservation object to this Reservation object
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <param name="source">The source.</param>
+        public static void CopyPropertiesFrom( this Reservation target, Reservation source )
+        {
+            target.Id = source.Id;
+            target.Name = source.Name;
+
+            target.Schedule = source.Schedule;
+            target.ScheduleId = source.ScheduleId;
+
+            target.CampusId = source.CampusId;
+            target.ReservationMinistryId = source.ReservationMinistryId;
+            
+            //target.ApprovalState = source.ApprovalState;
+            target.RequesterAliasId = source.RequesterAliasId;
+            //target.ApproverAliasId = source.ApproverAliasId;
+            target.SetupTime = source.SetupTime;
+            target.CleanupTime = source.CleanupTime;
+            target.NumberAttending = source.NumberAttending;
+            target.Note = source.Note;
+            target.SetupPhotoId = source.SetupPhotoId;
+            target.EventContactPersonAlias = source.EventContactPersonAlias;
+            target.EventContactPersonAliasId = source.EventContactPersonAliasId;
+            target.EventContactPhone = source.EventContactPhone;
+            target.EventContactEmail = source.EventContactEmail;
+            target.AdministrativeContactPersonAlias = source.AdministrativeContactPersonAlias;
+            target.AdministrativeContactPersonAliasId = source.AdministrativeContactPersonAliasId;
+            target.AdministrativeContactPhone = source.AdministrativeContactPhone;
+            target.AdministrativeContactEmail = source.AdministrativeContactEmail;
+
+            target.ReservationLocations = source.ReservationLocations;
+            target.ReservationResources = source.ReservationResources;
+
+            target.CreatedDateTime = source.CreatedDateTime;
+            target.ModifiedDateTime = source.ModifiedDateTime;
+            target.CreatedByPersonAliasId = source.CreatedByPersonAliasId;
+            target.ModifiedByPersonAliasId = source.ModifiedByPersonAliasId;
+            target.Guid = source.Guid;
+            target.ForeignId = source.ForeignId;
+            target.ForeignGuid = source.ForeignGuid;
+            target.ForeignKey = source.ForeignKey;
+        }
     }
 }
