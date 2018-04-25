@@ -1,40 +1,53 @@
-USE [RockDB_Sync]
+/*
+<doc>
+	<summary>
+ 		This stored procedure returns the following tables of metrics for the given parameters:
+
+		Table 1: Reference data (e.g. IsCampus, IsHoliday, IsServicesOngoing).
+		Table 2: Returns attendance totals sorted by attendance type.
+		Table 3: Returns attendance totals sorted by service time.			
+		Table 4: Returns attendance totals sorted by campus.
+		Table 5: Returns worship center totals sorted by either campus or schedule based off of the IsCampus parameter.
+		Table 6: Returns children totals sorted by either campus or schedule based off of the IsCampus parameter.
+		Table 7: Returns students totals sorted by either campus or schedule based off of the IsCampus parameter.
+		Table 8: Returns baptism totals sorted by either campus or schedule based off of the IsCampus parameter.
+		Table 9: Returns baptism totals sorted by schedule. 
+		Table 10: Returns baptism totals sorted by schedule.
+		Table 11: The full metric values table with modified datetime and modified by (for auditing purposes)
+	</summary>
+
+	<param name="IsHoliday" datatype="bit">Boolean to indicate if the weekend is a holiday (special rules apply in that case)</param>
+	<param name="IsCampus" datatype="bit">Boolean to indicate if a single campus should be used (0 for all campuses)</param>
+	<param name="Holiday" datatype="NVARCHAR(50)">The name of the holiday: Christmas, Easter, Thanksgiving (ignored if IsHoliday = 0)</param>
+	<param name="CampusId" datatype="int">The id of a campus (ignored if IsCampus = 0)</param>
+	<param name="SundayDate" datatype="datetime">The date of a Sunday to target (optional, use NULL for last data weekend)</param>
+
+	<code>
+		EXEC [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData] @IsHoliday, @IsCampus, @Holiday, @CampusId, @SundayDate
+
+		-- Example getting metrics for Easter holiday for Gilbert campus
+		EXEC [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData] 1, 1, 'Easter', 2, '4/1/2018'
+
+		-- Example getting all campus metrics for non-holiday weekend 4/22/2018
+		EXEC [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData] 0, 0, '', 0, '4/22/2018'
+
+		-- Example getting all campus metrics for the last weekend that has data
+		EXEC [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData] 0, 0, '', 0, 'NULL'
+	</code>
+</doc>
+*/
+
+IF EXISTS (select * from dbo.sysobjects where id = object_id(N'[dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData]') and OBJECTPROPERTY(id, N'IsProcedure') = 1)
+	DROP PROCEDURE [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData]
 GO
 
-/****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData]    Script Date: 4/18/2018 3:37:27 PM ******/
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER ON
 GO
 
-
-/*
-    <doc>
-	    <summary>
- 		    This stored procedure returns the following tables of metrics:
-			Table 1: Reference data (e.g. IsCampus, IsHoliday, IsServicesOngoing).
-			Table 2: Returns attendance totals sorted by attendance type.
-			Table 3: Returns attendance totals sorted by service time.			
-			Table 4: Returns attendance totals sorted by campus.
-			Table 5: Returns worship center totals sorted by either campus or schedule based off of the IsCampus parameter.
-			Table 6: Returns children totals sorted by either campus or schedule based off of the IsCampus parameter.
-			Table 7: Returns students totals sorted by either campus or schedule based off of the IsCampus parameter.
-			Table 8: Returns baptism totals sorted by either campus or schedule based off of the IsCampus parameter.
-			Table 9: Returns baptism totals sorted by schedule. 
-			Table 10: Returns baptism totals sorted by schedule. 
-	    </summary>
-	    <code>
-		    EXEC [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData]
-			 @IsHoliday
-			,@IsCampus
-			,@Holiday
-			,@CampusId
-			,@SundayDate
-	    </code>
-    </doc>
-    */
-ALTER PROCEDURE [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData]
+CREATE PROCEDURE [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData]
 	 @IsHoliday BIT = 0,
 	 @IsCampus BIT = 0,
 	 @Holiday NVARCHAR(50) = 'Christmas',
@@ -133,27 +146,29 @@ END
 -- GET THE GENERIC METRICVALUE JOINED TABLE
 ----------------------------------------------------------------------------
 
-Declare @MetricValues as AttendanceMetricValueTableType;
--- Columns in this type:
-	--[Id] [int] NULL,
-	--[MetricId] [int] NULL,
-	--[MetricCategoryId] [int] NULL,
-	--[MetricCategoryName] [nvarchar](50) NULL,
-	--[MetricCategoryOrder] [int] NULL,
-	--[Attendance] [float] NULL,
-	--[MetricValueDateTime] [datetime] NULL,
-	--[ScheduleId] [int] NULL,
-	--[ScheduleName] [nvarchar](50) NULL,
-	--[ScheduleICalendarContent] [nvarchar](max) NULL,
-	--[CampusId] [int] NULL,
-	--[CampusName] [nvarchar](50) NULL,
-	--[Note] [nvarchar](max) NULL,
-	--[MetricKeyString] [nvarchar](max) NULL,
-	--[GroupingData] [nvarchar](50) NULL
+DECLARE @MetricValuesTEMP table(
+	[Id] [int] NULL,
+	[MetricId] [int] NULL,
+	[MetricCategoryId] [int] NULL,
+	[MetricCategoryName] [nvarchar](50) NULL,
+	[MetricCategoryOrder] [int] NULL,
+	[Attendance] [float] NULL,
+	[MetricValueDateTime] [datetime] NULL,
+	[ModifiedBy] varchar(75),
+	[ModifiedDateTime] datetime,
+	[ScheduleId] [int] NULL,
+	[ScheduleName] [nvarchar](50) NULL,
+	[ScheduleICalendarContent] [nvarchar](max) NULL,
+	[CampusId] [int] NULL,
+	[CampusName] [nvarchar](50) NULL,
+	[Note] [nvarchar](max) NULL,
+	[MetricKeyString] [nvarchar](max) NULL,
+	[GroupingData] [nvarchar](50) NULL
+);
 
 -- Here we dump all the relevant metrics and their accessory information into a custom table that 
 -- we'll work off of from here on out
-INSERT INTO @MetricValues
+INSERT INTO @MetricValuesTEMP
 SELECT mv.Id
 	,m.Id
 	,mc.CategoryId
@@ -166,6 +181,8 @@ SELECT mv.Id
 	END
 	,mv.YValue
 	,mv.MetricValueDateTime
+	,dbo.fGetPersonName( mv.ModifiedByPersonAliasId ) as 'Modified By'
+	,mv.ModifiedDateTime
 	,s.Id
 	,s.Name
 	,s.iCalendarContent
@@ -188,6 +205,27 @@ WHERE  mc.CategoryId IN (SELECT * FROM @MetricCategoryIds )
 AND s.CategoryId IN (SELECT * FROM @ScheduleCategoryIds)
 AND mv.YValue IS NOT NULL
 AND ( @IsCampus = 0 OR c.id = @CampusId)
+
+-- Select everything except the ModifiedBy and ModifiedDateTime data into the @MetricValues AttendanceMetricValueTableType
+DECLARE @MetricValues as AttendanceMetricValueTableType;
+INSERT INTO @MetricValues
+SELECT
+	[Id],
+	[MetricId],
+	[MetricCategoryId],
+	[MetricCategoryName],
+	[MetricCategoryOrder],
+	[Attendance],
+	[MetricValueDateTime],
+	[ScheduleId],
+	[ScheduleName],
+	[ScheduleICalendarContent],
+	[CampusId],
+	[CampusName],
+	[Note],
+	[MetricKeyString],
+	[GroupingData]
+FROM @MetricValuesTEMP
 
 ----------------------------------------------------------------------------
 -- GET THE DATE RANGES
@@ -761,8 +799,22 @@ FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 @FirstTimeGuestMetricValues) 
 ORDER BY [Date], [Time], iCalendarContent
 
+----------------------------------------------------------------------------
+-- TABLE 11: GRAB THE AUDIT OF THE TOTAL WEEKEND ATTENDANCE
+----------------------------------------------------------------------------
+
+IF @IsCampus = 0
+	SELECT MetricValueDateTime, mv.ModifiedDateTime, ModifiedBy, ScheduleName as 'Schedule', CampusName as 'Campus', Attendance, m.Title as 'Area', m.ScheduleId, MetricId from @MetricValuesTEMP mv 
+	INNER JOIN Metric m on m.Id = mv.MetricId
+	WHERE MetricValueDateTime = '1/1/1900'
+ELSE
+	SELECT MetricValueDateTime, mv.ModifiedDateTime, ModifiedBy, ScheduleName as 'Schedule', CampusName as 'Campus', Attendance, m.Title as 'Area', m.ScheduleId, MetricId from @MetricValuesTEMP mv 
+	INNER JOIN Metric m on m.Id = mv.MetricId
+	WHERE MetricValueDateTime >= @FirstColumnStart and MetricValueDateTime <= @FirstColumnEnd
+	ORDER BY mv.CampusName, mv.ModifiedDateTime desc
+
 END
 
 
-GO
 
+GO
