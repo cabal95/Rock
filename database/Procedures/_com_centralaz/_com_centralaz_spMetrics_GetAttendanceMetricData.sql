@@ -15,13 +15,16 @@
 		Table 10: Returns baptism totals sorted by schedule.
 		Table 11: The full metric values table with modified datetime and modified by (for auditing purposes)
 	</summary>
-
+	<returns>
+		Returns 11 tables of data as described above.
+	</returns>
 	<param name="IsHoliday" datatype="bit">Boolean to indicate if the weekend is a holiday (special rules apply in that case)</param>
 	<param name="IsCampus" datatype="bit">Boolean to indicate if a single campus should be used (0 for all campuses)</param>
 	<param name="Holiday" datatype="NVARCHAR(50)">The name of the holiday: Christmas, Easter, Thanksgiving (ignored if IsHoliday = 0)</param>
 	<param name="CampusId" datatype="int">The id of a campus (ignored if IsCampus = 0)</param>
 	<param name="SundayDate" datatype="datetime">The date of a Sunday to target (optional, use NULL for last data weekend)</param>
-
+	<remarks>	
+	</remarks>
 	<code>
 		EXEC [dbo].[_com_centralaz_spMetrics_GetAttendanceMetricData] @IsHoliday, @IsCampus, @Holiday, @CampusId, @SundayDate
 
