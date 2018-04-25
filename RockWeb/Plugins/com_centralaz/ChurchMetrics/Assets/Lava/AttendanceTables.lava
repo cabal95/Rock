@@ -24,6 +24,7 @@
 {% endif %}
 
 <h2>Total Weekend Attendance</h2>
+
 {[ centralaz_attendancegrid groupingType:'Attendance Type' isNotesShown:'true' firstColumnHeader:'{{firstColumnHeader}}' secondColumnHeader:'{{secondColumnHeader}}' thirdColumnHeader:'{{thirdColumnHeader}}']}
 	{% for row in table2.rows %}
 		[[ datarow GroupingRow:'{{row.GroupingRow}} ' FirstColumnAttendance:'{{row.FirstColumnAttendance}} ' SecondColumnAttendance:'{{row.SecondColumnAttendance}} ' ThirdColumnAttendance:'{{row.ThirdColumnAttendance}} ' Growth:'{{row.Growth}} '
@@ -121,4 +122,37 @@
 	</div>
 	{% endif %}
 </div>
+{% endif %}
+
+<!-- Audit Log feature -->
+{% if isCampus == true %}
+    <button type='button' class='btn btn-xs btn-default' data-toggle='collapse' data-target='#auditLogDiv'>show audit log</button>
+    <div id='auditLogDiv' class='collapse'>
+        <table class='table table-striped table-condensed table-hover'>
+            <thead>
+                <tr>
+                    <th>Updated</th>
+                    <th>By</th>
+                    <th>Schedule</th>
+                    <th>Area</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+			{% for row in table11.rows %}
+			    {%- assign nameParts = row.ModifiedBy | Split:'(' -%}
+			    {%- assign name = nameParts[0] -%}
+			    {%- assign idParts = nameParts[1] | Split:')' -%}
+			    {%- assign id = idParts[0] -%}
+                <tr>
+                    <td>{{ row.ModifiedDateTime | Date:'MM/dd/yy hh:mm tt' }}</td>
+                    <td><a href='/Person/{{id}}'>{{ name }}</a></td>
+                    <td>{{ row.Schedule }}</td>
+                    <td>{{ row.Area }}</td>
+                    <td>{{ row.Attendance }}</td>
+                </tr>
+			{% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% endif %}
