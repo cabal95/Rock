@@ -1,15 +1,3 @@
-USE [RockDB_Sync]
-GO
-
-/****** Object:  UserDefinedFunction [dbo].[_com_centralaz_unfMetrics_GetAttendanceNotes]    Script Date: 4/18/2018 3:36:34 PM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-
-
 /*
 <doc>
 	<summary>

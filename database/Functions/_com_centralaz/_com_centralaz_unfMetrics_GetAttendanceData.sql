@@ -1,18 +1,7 @@
-USE [RockDB_Sync]
-GO
-
-/****** Object:  UserDefinedFunction [dbo].[_com_centralaz_unfMetrics_GetAttendanceData]    Script Date: 4/18/2018 3:36:48 PM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-
 /*
 <doc>
 	<summary>
- 		This function returns a table of notes tied to attendance metrics
+ 		This function returns a table of attendance data tied to attendance metrics
 	</summary>
 
 	<returns>
