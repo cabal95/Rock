@@ -140,10 +140,15 @@
             </thead>
             <tbody>
 			{% for row in table11.rows %}
-			    {%- assign nameParts = row.ModifiedBy | Split:'(' -%}
-			    {%- assign name = nameParts[0] -%}
-			    {%- assign idParts = nameParts[1] | Split:')' -%}
-			    {%- assign id = idParts[0] -%}
+					{%- if row.ModifiedBy != null and row.ModifiedBy != '' -%}
+			        {%- assign nameParts = row.ModifiedBy | Split:'(' -%}
+			        {%- assign name = nameParts[0] -%}
+			        {%- assign idParts = nameParts[1] | Split:')' -%}
+			        {%- assign id = idParts[0] -%}
+			    {%- else -%}
+			        {%- assign name = '' -%}
+			        {%- assign id = '' -%}
+			    {%- endif -%}
                 <tr>
                     <td>{{ row.ModifiedDateTime | Date:'MM/dd/yy hh:mm tt' }}</td>
                     <td><a href='/Person/{{id}}'>{{ name }}</a></td>
