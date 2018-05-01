@@ -1,0 +1,50 @@
+{% assign currentCampus = "None" %}
+{% assign currentSchedule = "None" %}
+{%for row in table2.rows %}
+		{% if currentCampus != row.CampusName %}
+			{% if currentCampus != "None" %}
+							</tbody>
+								<tfoot>
+								</tfoot>
+						</table>
+				</div>
+				<br />
+			{% endif %}
+
+			{% assign currentCampus = row.CampusName %}
+			{% assign currentSchedule = row.ScheduleName %}
+				<h2 style="font-weight:900;">{{row.CampusName}}</h2>
+				<div class="grid">
+					<table class="grid-table table table-bordered table-striped table-hover">
+						<thead>
+							<tr data-original-title="" title="">
+								<th data-priority="1" scope="col"><div style="text-align:center;"></div</th>
+			          {% for headerRow in table1.rows %}
+								<th data-priority="1" scope="col"><div style="text-align:center;">{{headerRow.ColumnName}}</div></th>
+								{% endfor %}
+							</tr>
+						</thead>
+						<tbody>
+							<tr align="left" data-original-title="" title="">
+								<td width="16%" class="grid-select-cell" data-priority="1"><p style="text-align:right;{% if row.IsCampusTotal == 1%}font-weight:bold;{% endif%}">{{row.ScheduleName }}</p></td>
+		{% endif %}
+
+		{% if currentSchedule != row.ScheduleName %}
+			{% if currentSchedule != "None" %}
+						</tr>
+			{% endif %}
+			{% assign currentSchedule = row.ScheduleName %}
+			<tr align="left" data-original-title="" title="">
+				<td width="16%" class="grid-select-cell" data-priority="1"><p style="text-align:right;{% if row.IsCampusTotal == 1%}font-weight:bold;{% endif%}">{{row.ScheduleName }}</p></td>
+		{% endif %}
+
+		<td class="grid-select-cell" data-priority="1"><p style="text-align:right;{% if row.IsCampusTotal == 1%}font-weight:bold;{% endif%}">{{row.Attendance }}</p></td>
+
+{% endfor %}
+</tr>
+			</tbody>
+		<tfoot>
+        </tfoot>
+    </table>
+</div>
+<br />
