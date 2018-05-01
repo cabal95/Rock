@@ -500,7 +500,7 @@ SET GroupingData = ScheduleName
 
 SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
-	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'
+	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN [dbo].[_com_centralaz_unfMetrics_GetServiceDayOrder](SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))) ELSE 8 END AS 'Date'
 FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 @FirstColumnStart,
 @FirstColumnEnd,
@@ -573,8 +573,8 @@ BEGIN
 
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
-		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'
-	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
+	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN [dbo].[_com_centralaz_unfMetrics_GetServiceDayOrder](SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))) ELSE 8 END AS 'Date'
+FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@FirstColumnStart,
 	@FirstColumnEnd,
 	@SecondColumnStart,
@@ -626,8 +626,8 @@ BEGIN
 
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
-		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'
-	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
+	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN [dbo].[_com_centralaz_unfMetrics_GetServiceDayOrder](SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))) ELSE 8 END AS 'Date'
+FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@FirstColumnStart,
 	@FirstColumnEnd,
 	@SecondColumnStart,
@@ -679,8 +679,8 @@ BEGIN
 
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
-		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'
-	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
+	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN [dbo].[_com_centralaz_unfMetrics_GetServiceDayOrder](SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))) ELSE 8 END AS 'Date'
+FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@FirstColumnStart,
 	@FirstColumnEnd,
 	@SecondColumnStart,
@@ -732,8 +732,8 @@ BEGIN
 
 	SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
-		,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'		
-	FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
+	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN [dbo].[_com_centralaz_unfMetrics_GetServiceDayOrder](SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))) ELSE 8 END AS 'Date'
+FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 	@ThisWeekStart,
 	@ThisWeekEnd,
 	@LastWeekStart,
@@ -760,7 +760,7 @@ SET GroupingData = ScheduleName
 
 SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
-	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'		
+,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN [dbo].[_com_centralaz_unfMetrics_GetServiceDayOrder](SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))) ELSE 8 END AS 'Date'
 FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 @ThisMonthStart,
 @ThisMonthEnd,
@@ -787,7 +787,7 @@ SET GroupingData = ScheduleName
 
 SELECT GroupingRow, FirstColumnAttendance, SecondColumnAttendance, ThirdColumnAttendance, Growth
 	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('DTSTART:', iCalendarContent) + 16, (CHARINDEX('RRULE:', iCalendarContent)-(CHARINDEX('DTSTART:', iCalendarContent)+16))) ELSE '' END AS 'Time'
-	,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))ELSE '' END AS 'Date'		
+,CASE WHEN iCalendarContent LIKE '%RRULE%' THEN [dbo].[_com_centralaz_unfMetrics_GetServiceDayOrder](SUBSTRING(iCalendarContent, CHARINDEX('BYDAY=', iCalendarContent) + 6, (CHARINDEX('SEQUENCE:', iCalendarContent)-(CHARINDEX('BYDAY=', iCalendarContent)+6)))) ELSE 8 END AS 'Date'
 FROM [dbo].[_com_centralaz_unfMetrics_GetAttendanceData](
 @ThisWeekStart,
 @ThisWeekEnd,
@@ -820,4 +820,3 @@ END
 
 
 
-GO
