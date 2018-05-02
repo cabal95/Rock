@@ -36,18 +36,16 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
     /// </summary>
     [DisplayName( "Metric Date Picker" )]
     [Category( "com_centralaz > ChurchMetrics" )]
-    [Description( "Allows users to select a week to view metrics for" )]
-    [CategoryField( "Metric Root Category", required: true, entityTypeName: "Rock.Model.MetricCategory" )]
-    [CategoryField( "Schedule Root Category", required: true, entityTypeName: "Rock.Model.Schedule" )]
-    [CodeEditorField( "Lava Template", "The lava template to use to format the group list.", CodeEditorMode.Lava, CodeEditorTheme.Rock, 400, false, "", "", 0 )]
+    [Description( "Allows users to select a week to view metrics for. This block can use the following page parameters: Holiday, CampusId, SundayDate" )]
+    [CategoryField( "Metric Categories", "The block will look through metric values in these metric categories and their descendants to find the 'Most Recent' metric value that the time range is based off of.", true, required: true, entityTypeName: "Rock.Model.MetricCategory" )]
+    [CategoryField( "Schedule Categories", "The block will look through metric values in these schedule categories and their descendants to find the 'Most Recent' metric value that the time range is based off of.", true, required: true, entityTypeName: "Rock.Model.Schedule" )]
+    [CodeEditorField( "Lava Template", "The lava template for any additional html. This block will provide the following Lava variables: (DateTime?) SundayDate, (DateTime?) MondayDate, (Int?) WeekOfYear, (Int?) WeekOfMonth.", CodeEditorMode.Lava, CodeEditorTheme.Rock, 400, false, "", "", 0 )]
     [BooleanField( "Show Holiday Dropdown", "Whether to show the holiday dropdown list.", false )]
     [BooleanField( "Show Calendar", "Whether to show the calendar.", true )]
     public partial class MetricDatePicker : Rock.Web.UI.RockBlock
     {
 
         #region Base Control Methods
-
-        //  overrides of the base RockBlock methods (i.e. OnInit, OnLoad)
 
         /// <summary>
         /// Raises the <see cref="E:System.Web.UI.Control.Init" /> event.
@@ -94,6 +92,11 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
 
         }
 
+        /// <summary>
+        /// Handles the SelectionChanged event of the calCalendar control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void calCalendar_SelectionChanged( object sender, EventArgs e )
         {
             var qryParams = new Dictionary<string, string>();
@@ -105,6 +108,11 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
             NavigateToCurrentPage( qryParams );
         }
 
+        /// <summary>
+        /// Handles the SelectedIndexChanged event of the ddlHoliday control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void ddlHoliday_SelectedIndexChanged( object sender, EventArgs e )
         {
             var qryParams = new Dictionary<string, string>();
@@ -124,62 +132,84 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
 
         #region Methods
 
+        /// <summary>
+        /// Shows the detail.
+        /// </summary>
         private void ShowDetail()
         {
-            DateTime? sundayDate = PageParameter( "SundayDate" ).AsDateTime();
-            if ( sundayDate != null )
+            // Set the campus name variable
+            int? campusId = PageParameter( "CampusId" ).AsIntegerOrNull();
+            string campusName = "All Church";
+            if ( campusId != null )
             {
-                var mondayDate = sundayDate.Value.AddDays( -6 );
-                calCalendar.SelectedDates.SelectRange( mondayDate, sundayDate.Value );
-                calCalendar.VisibleDate = sundayDate.Value;
-
-                int? campusId = PageParameter( "CampusId" ).AsIntegerOrNull();
-                string campusName = "All Church";
-                if ( campusId != null )
-                {
-                    campusName = CampusCache.Read( campusId.Value ).Name;
-                }
-
-                if ( !PageParameter( "Holiday" ).IsNullOrWhiteSpace() )
-                {
-                    ddlHoliday.SetValue( PageParameter( "Holiday" ) );
-                }
-
-                var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
-                mergeFields.Add( "SundayDate", sundayDate );
-                mergeFields.Add( "MondayDate", mondayDate );
-                mergeFields.Add( "CampusName", campusName );
-                mergeFields.Add( "WeekOfYear", sundayDate.Value.GetWeekOfYear( System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday ) );
-                mergeFields.Add( "WeekOfMonth", sundayDate.Value.GetWeekOfMonth( DayOfWeek.Monday ) );
-                lOutput.Text = GetAttributeValue( "LavaTemplate" ).ResolveMergeFields( mergeFields );
+                campusName = CampusCache.Read( campusId.Value ).Name;
             }
-            else
-            {
-                if ( !PageParameter( "Holiday" ).IsNullOrWhiteSpace() )
-                {
-                    ddlHoliday.SetValue( PageParameter( "Holiday" ) );
-                }
 
-                var rockContext = new RockContext();
+            // Set the Holiday dropdownlist
+            if ( !PageParameter( "Holiday" ).IsNullOrWhiteSpace() )
+            {
+                ddlHoliday.SetValue( PageParameter( "Holiday" ) );
+            }
+
+            // Declare the variables for the dates displayed in the block.
+            DateTime? mondayDate = null;
+            DateTime? sundayDate = PageParameter( "SundayDate" ).AsDateTime();
+            int? weekOfYear = null;
+            int? weekOfMonth = null;
+            if ( !sundayDate.HasValue )
+            {
+                sundayDate = GetLatestSundayDate();
+            }
+
+            if ( sundayDate.HasValue )
+            {
+                mondayDate = sundayDate.Value.AddDays( -6 );
+                weekOfMonth = sundayDate.Value.GetWeekOfMonth( DayOfWeek.Monday );
+                weekOfYear = sundayDate.Value.GetWeekOfYear( System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday );
+
+                calCalendar.SelectedDates.SelectRange( mondayDate.Value, sundayDate.Value );
+                calCalendar.VisibleDate = sundayDate.Value;
+            }
+
+            var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
+            mergeFields.Add( "SundayDate", sundayDate );
+            mergeFields.Add( "MondayDate", mondayDate );
+            mergeFields.Add( "CampusName", campusName );
+            mergeFields.Add( "WeekOfYear", weekOfYear );
+            mergeFields.Add( "WeekOfMonth", weekOfMonth );
+            lOutput.Text = GetAttributeValue( "LavaTemplate" ).ResolveMergeFields( mergeFields );
+
+        }
+
+        /// <summary>
+        /// Gets the latest sunday date from the metric values.
+        /// </summary>
+        /// <param name="sundayDate">The sunday date.</param>
+        /// <returns></returns>
+        private DateTime? GetLatestSundayDate()
+        {
+            DateTime? sundayDate = null;
+            using ( var rockContext = new RockContext() )
+            {
                 var categoryService = new CategoryService( rockContext );
                 var scheduleService = new ScheduleService( rockContext );
                 var metricValuePartitionService = new MetricValuePartitionService( rockContext );
 
                 var metricCategoryList = new List<Category>();
-                var metricGuid = GetAttributeValue( "MetricRootCategory" ).AsGuidOrNull();
-                if ( metricGuid != null )
+                var metricCategoryGuidList = GetAttributeValue( "MetricCategories" ).SplitDelimitedValues().AsGuidList();
+                foreach ( var metricCategoryGuid in metricCategoryGuidList )
                 {
-                    metricCategoryList.Add( categoryService.Get( metricGuid.Value ) );
-                    metricCategoryList.AddRange( categoryService.GetAllDescendents( metricGuid.Value ) );
+                    metricCategoryList.Add( categoryService.Get( metricCategoryGuid ) );
+                    metricCategoryList.AddRange( categoryService.GetAllDescendents( metricCategoryGuid ) );
                 }
                 var metricCategoryIdList = metricCategoryList.Select( mc => mc.Id ).ToList();
 
                 var scheduleCategoryList = new List<Category>();
-                var scheduleGuid = GetAttributeValue( "ScheduleRootCategory" ).AsGuidOrNull();
-                if ( scheduleGuid != null )
+                var scheduleCategoryGuidList = GetAttributeValue( "ScheduleCategories" ).SplitDelimitedValues().AsGuidList();
+                foreach ( var scheduleGuid in scheduleCategoryGuidList )
                 {
-                    scheduleCategoryList.Add( categoryService.Get( scheduleGuid.Value ) );
-                    scheduleCategoryList.AddRange( categoryService.GetAllDescendents( scheduleGuid.Value ) );
+                    scheduleCategoryList.Add( categoryService.Get( scheduleGuid ) );
+                    scheduleCategoryList.AddRange( categoryService.GetAllDescendents( scheduleGuid ) );
                 }
                 var scheduleCategoryIdList = scheduleCategoryList.Select( sc => sc.Id ).ToList();
 
@@ -202,36 +232,10 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                 if ( latestMetricDateTime.HasValue )
                 {
                     sundayDate = latestMetricDateTime.Value.SundayDate();
-
-                    var mondayDate = sundayDate.Value.AddDays( -6 );
-                    calCalendar.SelectedDates.SelectRange( mondayDate, sundayDate.Value );
-                    calCalendar.VisibleDate = sundayDate.Value;
-
-                    int? campusId = PageParameter( "CampusId" ).AsIntegerOrNull();
-                    string campusName = "All Church";
-                    if ( campusId != null )
-                    {
-                        campusName = CampusCache.Read( campusId.Value ).Name;
-                    }
-
-                    var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
-                    mergeFields.Add( "SundayDate", sundayDate );
-                    mergeFields.Add( "MondayDate", mondayDate );
-                    mergeFields.Add( "CampusName", campusName );
-                    mergeFields.Add( "WeekOfYear", sundayDate.Value.GetWeekOfYear( System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday ) );
-                    mergeFields.Add( "WeekOfMonth", sundayDate.Value.GetWeekOfMonth( DayOfWeek.Monday ) );
-                    lOutput.Text = GetAttributeValue( "LavaTemplate" ).ResolveMergeFields( mergeFields );
                 }
-                else
-                {
-                    var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
-                    mergeFields.Add( "SundayDate", null );
-                    mergeFields.Add( "MondayDate", null );
-                    mergeFields.Add( "CampusName", null );
-                    lOutput.Text = GetAttributeValue( "LavaTemplate" ).ResolveMergeFields( mergeFields );
-                }
-
             }
+
+            return sundayDate;
         }
 
         #endregion
