@@ -483,7 +483,7 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
         /// <returns></returns>
         private List<Schedule> GetServices()
         {
-            var services = new List<Schedule>();
+            var scheduleSummaryList = new List<ScheduleSummary>();
 
             if ( _selectedCampusId.HasValue )
             {
@@ -492,9 +492,51 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                 {
                     using ( var rockContext = new RockContext() )
                     {
-                        var categoryIds = new List<int>();
-
                         var scheduleService = new ScheduleService( rockContext );
+
+                        // Grab the weekend schedule categories
+                        var weekendScheduleCategory = CategoryCache.Read( GetAttributeValue( "WeekendScheduleCategory" ).AsGuid() );
+                        if ( weekendScheduleCategory != null )
+                        {
+                            //If there is a campus-specific schedule category underneath this one, use that instead
+                            if ( weekendScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).Any() )
+                            {
+                                weekendScheduleCategory = weekendScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).FirstOrDefault();
+                            }
+
+                            foreach ( var schedule in GetSchedulesInCategory( scheduleService, weekendScheduleCategory.Id ) )
+                            {
+                                scheduleSummaryList.Add( new ScheduleSummary()
+                                {
+                                    Schedule = schedule,
+                                    Date = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.Date : schedule.EffectiveStartDate.Value.Date,
+                                    Time = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.TimeOfDay : schedule.EffectiveStartDate.Value.TimeOfDay,
+                                    ScheduleType = 0
+                                } );
+                            }
+                        }
+
+                        // grab any event schedule categories
+                        var eventScheduleCategory = CategoryCache.Read( GetAttributeValue( "EventScheduleCategory" ).AsGuid() );
+                        if ( eventScheduleCategory != null )
+                        {
+                            //If there is a campus-specific schedule category underneath this one, use that instead
+                            if ( eventScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).Any() )
+                            {
+                                eventScheduleCategory = eventScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).FirstOrDefault();
+                            }
+
+                            foreach ( var schedule in GetSchedulesInCategory( scheduleService, eventScheduleCategory.Id ) )
+                            {
+                                scheduleSummaryList.Add( new ScheduleSummary()
+                                {
+                                    Schedule = schedule,
+                                    Date = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.Date : schedule.EffectiveStartDate.Value.Date,
+                                    Time = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.TimeOfDay : schedule.EffectiveStartDate.Value.TimeOfDay,
+                                    ScheduleType = 1
+                                } );
+                            }
+                        }
 
                         // Grab any holiday schedules that have occurred in the last 5 days
                         var holidayScheduleCategory = CategoryCache.Read( GetAttributeValue( "HolidayScheduleCategory" ).AsGuid() );
@@ -514,48 +556,38 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                                      s.EffectiveStartDate.Value.Date >= RockDateTime.Now.Date.AddDays( -5 ) )
                                 .ToList() )
                             {
-                                services.Add( schedule );
+                                scheduleSummaryList.Add( new ScheduleSummary()
+                                {
+                                    Schedule = schedule,
+                                    Date = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.Date : schedule.EffectiveStartDate.Value.Date,
+                                    Time = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.TimeOfDay : schedule.EffectiveStartDate.Value.TimeOfDay,
+                                    ScheduleType = 2
+                                } );
                             }
-                        }
-
-                        // Grab the weekend schedule categories
-                        var weekendScheduleCategory = CategoryCache.Read( GetAttributeValue( "WeekendScheduleCategory" ).AsGuid() );
-                        if ( weekendScheduleCategory != null )
-                        {
-                            //If there is a campus-specific schedule category underneath this one, use that instead
-                            if ( weekendScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).Any() )
-                            {
-                                weekendScheduleCategory = weekendScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).FirstOrDefault();
-                            }
-
-                            categoryIds.Add( weekendScheduleCategory.Id );
-                        }
-
-                        // grab any event schedule categories
-                        var eventScheduleCategory = CategoryCache.Read( GetAttributeValue( "EventScheduleCategory" ).AsGuid() );
-                        if ( eventScheduleCategory != null )
-                        {
-                            //If there is a campus-specific schedule category underneath this one, use that instead
-                            if ( eventScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).Any() )
-                            {
-                                eventScheduleCategory = eventScheduleCategory.Categories.Where( c => c.Name.Contains( campus.Name ) ).FirstOrDefault();
-                            }
-
-                            categoryIds.Add( eventScheduleCategory.Id );
-                        }
-
-                        // Grab any schedules that are in the provided categories
-                        foreach ( var schedule in GetSchedulesInCategories( scheduleService, categoryIds ) )
-                        {
-                            services.Add( schedule );
                         }
                     }
 
-                    services = services.Distinct().OrderBy( s => s.Name ).ToList();
+                    scheduleSummaryList = scheduleSummaryList.Distinct().OrderBy( s => s.ScheduleType )
+                        .ThenByDescending( s => s.Date.SundayDate() - s.Date )
+                        .ThenBy( s => s.Time ).ToList();
+
                 }
             }
 
-            return services;
+            return scheduleSummaryList.Select( s => s.Schedule ).ToList();
+        }
+
+        /// <summary>
+        /// Gets the schedules in category.
+        /// </summary>
+        /// <param name="scheduleService">The schedule service.</param>
+        /// <param name="categoryId">The category identifier.</param>
+        /// <returns></returns>
+        private static List<Schedule> GetSchedulesInCategory( ScheduleService scheduleService, int categoryId )
+        {
+            var categoryIds = new List<int>();
+            categoryIds.Add( categoryId );
+            return GetSchedulesInCategories( scheduleService, categoryIds );
         }
 
         /// <summary>
@@ -690,5 +722,19 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
             Id = id;
             Name = name;
         }
+    }
+
+    /// <summary>
+    /// Helper class for storing information about schedules
+    /// </summary>
+    public class ScheduleSummary
+    {
+        public Schedule Schedule { get; set; }
+
+        public DateTime Date { get; set; }
+
+        public TimeSpan Time { get; set; }
+
+        public int ScheduleType { get; set; }
     }
 }
