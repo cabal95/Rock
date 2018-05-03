@@ -1,0 +1,126 @@
+{%for row in rows %}
+{% if row.Order == 0 %}
+<h2 style="font-weight:900;">{{row.Campus}}</h2>
+<div class="grid">
+    <table class="grid-table table table-bordered table-striped table-hover">
+        <thead>
+            <tr data-original-title="" title="">
+                <th data-priority="1" scope="col"> </th>
+                <th data-priority="1" scope="col"><div style="text-align:center;">TW</div></th>
+                <th data-priority="1" scope="col"><div style="text-align:center;">LW</div></th>
+                <th data-priority="1" scope="col"><div style="text-align:center;">LY</div></th>
+                <th data-priority="1" scope="col"><div style="text-align:center;">YoY%</div></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr align="left" data-original-title="" title="">
+                <td width="60%" class="grid-select-cell" data-priority="1">Online Giving</td>
+                <td width="10%" class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.OnlineThisWeek | FormatAsCurrency }}</p></td>
+                <td width="10%" class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.OnlineLastWeek | FormatAsCurrency }}</p></td>
+                <td width="10%" class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.OnlineLastYear | FormatAsCurrency }}</p></td>
+                {% if row.OnlineGrowth < 0.00 %}
+                {% assign color = "#ff6666" %}
+                {% else %}
+                {% assign color = "#66ff66" %}
+                {% endif %}
+                <td width="10%" class="grid-select-cell" data-priority="1" {% if row.OnlineGrowth> 0.00 or row.OnlineGrowth < 0.00 %}style="background-color:{{color}}; white-space:nowrap;"{% endif %}><p style="text-align:right;color:black">{{row.OnlineGrowth | Format:'p1' }}</p></td>
+            </tr>
+            <tr align="left" data-original-title="" title="" style="background-color:#edeae6">
+                <td class="grid-select-cell" data-priority="1">Undesignated</td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.UndesignatedThisWeek | FormatAsCurrency }}</p></td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.UndesignatedLastWeek | FormatAsCurrency }}</p></td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.UndesignatedLastYear | FormatAsCurrency }}</p></td>
+                {% if row.UndesignatedGrowth < 0.00 %}
+                {% assign color = "#ff6666" %}
+                {% else %}
+                {% assign color = "#66ff66" %}
+                {% endif %}
+                <td class="grid-select-cell" data-priority="1" {% if row.UndesignatedGrowth> 0.00 or row.UndesignatedGrowth < 0.00 %}style="background-color:{{color}}; white-space:nowrap;"{% endif %}><p style="text-align:right;color:black">{{row.UndesignatedGrowth | Format:'p1' }}</p></td>
+            </tr>
+            <tr align="left" data-original-title="" title="" style="font-weight:bold;">
+                <td class="grid-select-cell" data-priority="1">Subtotal</td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.SubtotalThisWeek | FormatAsCurrency }}</p></td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.SubtotalLastWeek | FormatAsCurrency }}</p></td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.SubtotalLastYear | FormatAsCurrency }}</p></td>
+                {% if row.SubtotalGrowth < 0.00 %}
+                {% assign color = "#ff6666" %}
+                {% else %}
+                {% assign color = "#66ff66" %}
+                {% endif %}
+                <td class="grid-select-cell" data-priority="1" {% if row.SubtotalGrowth> 0.00 or row.SubtotalGrowth < 0.00 %}style="background-color:{{color}}; white-space:nowrap;"{% endif %}><p style="text-align:right;color:black">{{row.SubtotalGrowth | Format:'p1' }}</p></td>
+            </tr>
+            <tr align="left" data-original-title="" title="" style="background-color:#edeae6">
+                <td class="grid-select-cell" data-priority="1">Building Fund</td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.BuildingThisWeek | FormatAsCurrency }}</p></td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.BuildingLastWeek | FormatAsCurrency }}</p></td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.BuildingLastYear | FormatAsCurrency }}</p></td>
+                {% if row.BuildingGrowth < 0.00 %}
+                {% assign color = "#ff6666" %}
+                {% else %}
+                {% assign color = "#66ff66" %}
+                {% endif %}
+                <td class="grid-select-cell" data-priority="1" {% if row.BuildingGrowth> 0.00 or row.BuildingGrowth < 0.00 %}style="background-color:{{color}}; white-space:nowrap;"{% endif %}><p style="text-align:right;color:black">{{row.BuildingGrowth | Format:'p1' }}</p></td>
+            </tr>
+            <tr align="left" data-original-title="" title="">
+                <td class="grid-select-cell" data-priority="1">Global Outreach</td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.GlobalOutreachThisWeek | FormatAsCurrency }}</p></td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.GlobalOutreachLastWeek | FormatAsCurrency }}</p></td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.GlobalOutreachLastYear | FormatAsCurrency }}</p></td>
+                {% if row.GlobalOutreachGrowth < 0.00 %}
+                {% assign color = "#ff6666" %}
+                {% else %}
+                {% assign color = "#66ff66" %}
+                {% endif %}
+                <td class="grid-select-cell" data-priority="1" {% if row.GlobalOutreachGrowth> 0.00 or row.GlobalOutreachGrowth < 0.00 %}style="background-color:{{color}}; white-space:nowrap;"{% endif %}><p style="text-align:right;color:black">{{row.GlobalOutreachGrowth | Format:'p1' }}</p></td>
+            </tr>
+            <tr align="left" data-original-title="" title="" style="font-weight:900;font-size:large;background-color:#edeae6">
+                <td class="grid-select-cell" data-priority="1">Total {{row.Campus}}</td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.TotalThisWeek | FormatAsCurrency }}</p></td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.TotalLastWeek | FormatAsCurrency }}</p></td>
+                <td class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.TotalLastYear | FormatAsCurrency }}</p></td>
+                {% if row.TotalGrowth < 0.00 %}
+                {% assign color = "#ff6666" %}
+                {% else %}
+                {% assign color = "#66ff66" %}
+                {% endif %}
+                <td class="grid-select-cell" data-priority="1" {% if row.TotalGrowth> 0.00 or row.TotalGrowth < 0.00 %}style="background-color:{{color}}; white-space:nowrap;"{% endif %}><p style="text-align:right;color:black">{{row.TotalGrowth | Format:'p1' }}</p></td>
+            </tr>
+        </tbody>
+        <tfoot>
+        </tfoot>
+    </table>
+</div>
+<br />
+  {% else %}
+<div class="grid">
+    <table class="grid-table table table-bordered table-striped table-hover">
+        <thead>
+            <tr data-original-title="" title="">
+                <th data-priority="1" scope="col"> </th>
+                <th data-priority="1" scope="col"><div style="text-align:center;">TW</div></th>
+                <th data-priority="1" scope="col"><div style="text-align:center;">LW</div></th>
+                <th data-priority="1" scope="col"><div style="text-align:center;">LY</div></th>
+                <th data-priority="1" scope="col"><div style="text-align:center;">YoY%</div></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr align="left" data-original-title="" title="" style="font-weight:900;font-size:large">
+                <td width="60%" class="grid-select-cell" data-priority="1">TOTAL ALL CAMPUSES</td>
+                <td width="10%" class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.TotalThisWeek | FormatAsCurrency }}</p></td>
+                <td width="10%" class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.TotalLastWeek | FormatAsCurrency }}</p></td>
+                <td width="10%" class="grid-select-cell" data-priority="1"><p style="text-align:right;">{{row.TotalLastYear | FormatAsCurrency }}</p></td>
+                {% if row.TotalGrowth < 0.00 %}
+                {% assign color = "#ff6666" %}
+                {% else %}
+                {% assign color = "#66ff66" %}
+                {% endif %}
+                <td width="10%" class="grid-select-cell" data-priority="1" {% if row.TotalGrowth> 0.00 or row.TotalGrowth < 0.00 %}style="background-color:{{color}}; white-space:nowrap;"{% endif %}><p style="text-align:right;color:black">{{row.TotalGrowth | Format:'p1' }}</p></td>
+            </tr>
+        </tbody>
+        <tfoot>
+        </tfoot>
+    </table>
+</div>
+<br />
+  {% endif %}
+{% endfor %}
