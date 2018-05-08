@@ -49,22 +49,23 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
     [CustomRadioListField( "Campus Filter Display Mode", "", "1^Hidden, 2^Plain, 3^Panel Open, 4^Panel Closed", true, "1", order: 3 )]
     [CustomRadioListField( "Ministry Filter Display Mode", "", "1^Hidden, 2^Plain, 3^Panel Open, 4^Panel Closed", true, "1", key: "MinistryFilterDisplayMode", order: 4 )]
-    [CustomRadioListField( "Approval Filter Display Mode", "", "1^Hidden, 2^Plain, 3^Panel Open, 4^Panel Closed", true, "1", key: "ApprovalFilterDisplayMode", order: 4 )]
-    [BooleanField( "Show Date Range Filter", "Determines whether the date range filters are shown", false, order: 6 )]
+    [CustomRadioListField( "Approval Filter Display Mode", "", "1^Hidden, 2^Plain, 3^Panel Open, 4^Panel Closed", true, "1", key: "ApprovalFilterDisplayMode", order: 5 )]
+    [CustomRadioListField( "Reservation Type Filter Display Mode", "", "1^Hidden, 2^Plain, 3^Panel Open, 4^Panel Closed", true, "1", key: "ReservationTypeFilterDisplayMode", order: 6 )]
+    [BooleanField( "Show Date Range Filter", "Determines whether the date range filters are shown", false, order: 7 )]
 
-    [BooleanField( "Show Small Calendar", "Determines whether the calendar widget is shown", true, order: 7 )]
-    [BooleanField( "Show Day View", "Determines whether the day view option is shown", false, order: 8 )]
-    [BooleanField( "Show Week View", "Determines whether the week view option is shown", true, order: 9 )]
-    [BooleanField( "Show Month View", "Determines whether the month view option is shown", true, order: 10 )]
+    [BooleanField( "Show Small Calendar", "Determines whether the calendar widget is shown", true, order: 8 )]
+    [BooleanField( "Show Day View", "Determines whether the day view option is shown", false, order: 9 )]
+    [BooleanField( "Show Week View", "Determines whether the week view option is shown", true, order: 10 )]
+    [BooleanField( "Show Month View", "Determines whether the month view option is shown", true, order: 11 )]
 
     [CodeEditorField( "Lava Template", "Lava template to use to display the list of events.", CodeEditorMode.Lava, CodeEditorTheme.Rock, 400, true, @"{% include '~/Themes/Stark/Assets/Lava/CalendarGroupedOccurrence.lava' %}", "", 12 )]
 
     [DayOfWeekField( "Start of Week Day", "Determines what day is the start of a week.", true, DayOfWeek.Sunday, order: 13 )]
 
-    [TextField( "Report Font", "", true, "Gotham", "", 0 )]
-    [TextField( "Report Logo", "URL to the logo (PNG) to display in the printed report.", true, "~/Plugins/com_centralaz/RoomManagement/Assets/Icons/Central_Logo_Black_rgb_165_90.png", "", 0 )]
+    [TextField( "Report Font", "", true, "Gotham", "", 14 )]
+    [TextField( "Report Logo", "URL to the logo (PNG) to display in the printed report.", true, "~/Plugins/com_centralaz/RoomManagement/Assets/Icons/Central_Logo_Black_rgb_165_90.png", "", 15 )]
 
-    [BooleanField( "Enable Debug", "Display a list of merge fields available for lava.", false, "", 14 )]
+    [BooleanField( "Enable Debug", "Display a list of merge fields available for lava.", false, "", 16 )]
     public partial class ReservationLava : Rock.Web.UI.RockBlock
     {
         #region Fields
@@ -77,6 +78,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         protected bool MinistryPanelClosed { get; set; }
         protected bool ApprovalPanelOpen { get; set; }
         protected bool ApprovalPanelClosed { get; set; }
+        protected bool ReservationTypePanelOpen { get; set; }
+        protected bool ReservationTypePanelClosed { get; set; }
 
         #endregion
 
@@ -123,6 +126,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             MinistryPanelClosed = GetAttributeValue( "MinistryFilterDisplayMode" ) == "4";
             ApprovalPanelOpen = GetAttributeValue( "ApprovalFilterDisplayMode" ) == "3";
             ApprovalPanelClosed = GetAttributeValue( "ApprovalFilterDisplayMode" ) == "4";
+            ReservationTypePanelOpen = GetAttributeValue( "ReservationTypeFilterDisplayMode" ) == "3";
+            ReservationTypePanelClosed = GetAttributeValue( "ReservationTypeFilterDisplayMode" ) == "4";
 
             // this event gets fired after block settings are updated. it's nice to repaint the screen if these settings would alter it
             this.BlockUpdated += Block_BlockUpdated;
@@ -278,6 +283,17 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             BindData();
         }
 
+        /// <summary>
+        /// Handles the SelectedIndexChanged event of the cblReservationType control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        protected void cblReservationType_SelectedIndexChanged( object sender, EventArgs e )
+        {
+            this.SetUserPreference( "Reservation Type", cblReservationType.Items.OfType<System.Web.UI.WebControls.ListItem>().Where( l => l.Selected ).Select( a => a.Value.AsInteger() ).ToList().AsDelimited( "," ) );
+            BindData();
+        }
+
         protected void lbDateRangeRefresh_Click( object sender, EventArgs e )
         {
             FilterStartDate = drpDateRange.LowerValue;
@@ -316,6 +332,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 Id = r.Id,
                 ReservationName = r.ReservationName,
+                ReservationType = r.ReservationType,
                 ApprovalState = r.ApprovalState.ConvertToString(),
                 Locations = r.ReservationLocations.ToList(),
                 Resources = r.ReservationResources.ToList(),
@@ -509,6 +526,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 Id = r.Id,
                 ReservationName = r.ReservationName,
+                ReservationType = r.ReservationType,
                 ApprovalState = r.ApprovalState.ConvertToString(),
                 Locations = r.ReservationLocations.ToList(),
                 Resources = r.ReservationResources.ToList(),
@@ -584,6 +602,14 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                         approvalValues.Contains( r.ApprovalState ) );
             }
 
+            // Filter by Reservation Type
+            List<int> reservationTypeIds = cblReservationType.Items.OfType<System.Web.UI.WebControls.ListItem>().Where( l => l.Selected ).Select( a => a.Value.AsInteger() ).ToList();
+            if ( reservationTypeIds.Any() )
+            {
+                qry = qry
+                    .Where( r => reservationTypeIds.Contains( r.ReservationTypeId ) );
+            }
+
             // Filter by Time
             var today = RockDateTime.Today;
             var filterStartDateTime = FilterStartDate.HasValue ? FilterStartDate.Value : today;
@@ -619,7 +645,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             // Use the CalendarVisibleDate if it's in session.
             if ( Session["CalendarVisibleDate"] != null )
             {
-                today = (DateTime)Session["CalendarVisibleDate"];
+                today = ( DateTime ) Session["CalendarVisibleDate"];
                 calReservationCalendar.VisibleDate = today;
             }
 
@@ -680,6 +706,16 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 cblApproval.SetValues( this.GetUserPreference( "Approval State" ).SplitDelimitedValues() );
             }
 
+            // Setup Reservation Type Filter
+            rcwReservationType.Visible = GetAttributeValue( "ReservationTypeFilterDisplayMode" ).AsInteger() > 1;
+            cblReservationType.DataSource = new ReservationTypeService( new RockContext() ).Queryable().ToList();
+            cblReservationType.DataBind();
+
+            if ( !string.IsNullOrWhiteSpace( this.GetUserPreference( "Reservation Type" ) ) )
+            {
+                cblReservationType.SetValues( this.GetUserPreference( "Reservation Type" ).SplitDelimitedValues() );
+            }
+
             // Date Range Filter
             drpDateRange.Visible = GetAttributeValue( "ShowDateRangeFilter" ).AsBoolean();
             lbDateRangeRefresh.Visible = drpDateRange.Visible;
@@ -734,8 +770,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
         private void SetCalendarFilterDates()
         {
-            FilterStartDate = calReservationCalendar.SelectedDates.Count > 0 ? calReservationCalendar.SelectedDates[0] : (DateTime?)null;
-            FilterEndDate = calReservationCalendar.SelectedDates.Count > 0 ? calReservationCalendar.SelectedDates[calReservationCalendar.SelectedDates.Count - 1] : (DateTime?)null;
+            FilterStartDate = calReservationCalendar.SelectedDates.Count > 0 ? calReservationCalendar.SelectedDates[0] : ( DateTime? ) null;
+            FilterEndDate = calReservationCalendar.SelectedDates.Count > 0 ? calReservationCalendar.SelectedDates[calReservationCalendar.SelectedDates.Count - 1] : ( DateTime? ) null;
         }
 
         /// <summary>

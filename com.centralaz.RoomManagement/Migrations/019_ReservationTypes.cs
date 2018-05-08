@@ -270,11 +270,11 @@ VALUES
                     {8},
                     {9},
                     'E443F926-0882-41D5-91EF-480EA366F660')"
-                    , "Default Reservation Type" // Name
+                    , "Standard Reservation Type" // Name
                     , "The default reservation type." // Description
-                    , finalApprovalGroupValue ?? Guid.Empty.ToString() //Final Approval Group Id
-                    , superAdminGroupValue ?? Guid.Empty.ToString() // SuperAdminGroupId
-                    , notificationEmailValue ?? Guid.Empty.ToString() //NotificationEmailId
+                    , !String.IsNullOrWhiteSpace( finalApprovalGroupValue ) ? finalApprovalGroupValue : Guid.Empty.ToString() //Final Approval Group Id
+                    , !String.IsNullOrWhiteSpace( superAdminGroupValue ) ? superAdminGroupValue : Guid.Empty.ToString() // SuperAdminGroupId
+                    , !String.IsNullOrWhiteSpace( notificationEmailValue ) ? notificationEmailValue : Guid.Empty.ToString() //NotificationEmailId
                     , defaultSetupTime.HasValue ? defaultSetupTime.ToString() : "NULL" //DefaultSetupTime
                     , isCommunicationHistorySaved ? 1 : 0 // Is Communication History Saved
                     , isNumberAttendingRequired ? 1 : 0 // Is Number Attending Required

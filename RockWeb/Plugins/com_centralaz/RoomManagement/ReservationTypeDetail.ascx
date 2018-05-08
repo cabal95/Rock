@@ -25,7 +25,6 @@
             <Rock:PanelDrawer ID="pdAuditDetails" runat="server"></Rock:PanelDrawer>
             <div class="panel-body">
                 <Rock:NotificationBox ID="nbEditModeMessage" runat="server" NotificationBoxType="Info" />
-                <Rock:NotificationBox ID="nbRequired" runat="server" NotificationBoxType="Danger" Text="A default reservation status and at least one activity are required." Visible="false" />
                 <asp:ValidationSummary ID="valReservationTypeDetail" runat="server" HeaderText="Please Correct the Following" CssClass="alert alert-danger" />
 
                 <div id="pnlViewDetails" runat="server">

@@ -267,124 +267,118 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             ReservationType reservationType;
             using ( var rockContext = new RockContext() )
             {
-                if ( ReservationMinistriesState.Any() )
+
+                ReservationTypeService reservationTypeService = new ReservationTypeService( rockContext );
+                ReservationMinistryService reservationMinistryService = new ReservationMinistryService( rockContext );
+                ReservationWorkflowTriggerService reservationWorkflowTriggerService = new ReservationWorkflowTriggerService( rockContext );
+                AttributeService attributeService = new AttributeService( rockContext );
+                AttributeQualifierService qualifierService = new AttributeQualifierService( rockContext );
+
+                int reservationTypeId = int.Parse( hfReservationTypeId.Value );
+
+                if ( reservationTypeId == 0 )
                 {
-                    ReservationTypeService reservationTypeService = new ReservationTypeService( rockContext );
-                    ReservationMinistryService reservationMinistryService = new ReservationMinistryService( rockContext );
-                    ReservationWorkflowTriggerService reservationWorkflowTriggerService = new ReservationWorkflowTriggerService( rockContext );
-                    AttributeService attributeService = new AttributeService( rockContext );
-                    AttributeQualifierService qualifierService = new AttributeQualifierService( rockContext );
-
-                    int reservationTypeId = int.Parse( hfReservationTypeId.Value );
-
-                    if ( reservationTypeId == 0 )
-                    {
-                        reservationType = new ReservationType();
-                        reservationTypeService.Add( reservationType );
-                    }
-                    else
-                    {
-                        reservationType = reservationTypeService.Queryable( "ReservationMinistries, ReservationWorkflowTriggers" ).Where( c => c.Id == reservationTypeId ).FirstOrDefault();
-
-                        var uiMinistries = ReservationMinistriesState.Select( r => r.Guid );
-                        foreach ( var reservationMinistry in reservationType.ReservationMinistries.Where( r => !uiMinistries.Contains( r.Guid ) ).ToList() )
-                        {
-                            reservationType.ReservationMinistries.Remove( reservationMinistry );
-                            reservationMinistryService.Delete( reservationMinistry );
-                        }
-
-                        var uiTriggers = ReservationWorkflowTriggersState.Select( r => r.Guid );
-                        foreach ( var reservationWorkflowTrigger in reservationType.ReservationWorkflowTriggers.Where( r => !uiTriggers.Contains( r.Guid ) ).ToList() )
-                        {
-                            reservationType.ReservationWorkflowTriggers.Remove( reservationWorkflowTrigger );
-                            reservationWorkflowTriggerService.Delete( reservationWorkflowTrigger );
-                        }
-                    }
-
-                    reservationType.Name = tbName.Text;
-                    reservationType.Description = tbDescription.Text;
-                    reservationType.IconCssClass = tbIconCssClass.Text;
-                    reservationType.FinalApprovalGroupId = ddlFinalApprovalGroup.SelectedValueAsId();
-                    reservationType.SuperAdminGroupId = ddlSuperAdminGroup.SelectedValueAsId();
-                    reservationType.NotificationEmailId = ddlNotificationEmail.SelectedValueAsId();
-                    reservationType.IsCommunicationHistorySaved = cbIsCommunicationHistorySaved.Checked;
-                    reservationType.IsContactDetailsRequired = cbIsContactDetailsRequired.Checked;
-                    reservationType.IsNumberAttendingRequired = cbIsNumberAttendingRequired.Checked;
-                    reservationType.IsSetupTimeRequired = cbIsSetupTimeRequired.Checked;
-
-                    foreach ( var reservationMinistryState in ReservationMinistriesState )
-                    {
-                        ReservationMinistry reservationMinistry = reservationType.ReservationMinistries.Where( a => a.Guid == reservationMinistryState.Guid ).FirstOrDefault();
-                        if ( reservationMinistry == null )
-                        {
-                            reservationMinistry = new ReservationMinistry();
-                            reservationType.ReservationMinistries.Add( reservationMinistry );
-                        }
-
-                        reservationMinistry.CopyPropertiesFrom( reservationMinistryState );
-                        reservationMinistry.ReservationTypeId = reservationType.Id;
-                    }
-
-                    foreach ( var reservationWorkflowTriggerState in ReservationWorkflowTriggersState )
-                    {
-                        ReservationWorkflowTrigger reservationWorkflowTrigger = reservationType.ReservationWorkflowTriggers.Where( a => a.Guid == reservationWorkflowTriggerState.Guid ).FirstOrDefault();
-                        if ( reservationWorkflowTrigger == null )
-                        {
-                            reservationWorkflowTrigger = new ReservationWorkflowTrigger();
-                            reservationType.ReservationWorkflowTriggers.Add( reservationWorkflowTrigger );
-                        }
-                        else
-                        {
-                            reservationWorkflowTriggerState.Id = reservationWorkflowTrigger.Id;
-                            reservationWorkflowTriggerState.Guid = reservationWorkflowTrigger.Guid;
-                        }
-
-                        reservationWorkflowTrigger.CopyPropertiesFrom( reservationWorkflowTriggerState );
-                        reservationWorkflowTrigger.ReservationTypeId = reservationTypeId;
-                    }
-
-                    if ( !reservationType.IsValid )
-                    {
-                        // Controls will render the error messages
-                        return;
-                    }
-
-                    // need WrapTransaction due to Attribute saves
-                    rockContext.WrapTransaction( () =>
-                    {
-                        rockContext.SaveChanges();
-
-                        reservationType = reservationTypeService.Get( reservationType.Id );
-                        if ( reservationType != null )
-                        {
-                            if ( !reservationType.IsAuthorized( Authorization.VIEW, CurrentPerson ) )
-                            {
-                                reservationType.AllowPerson( Authorization.VIEW, CurrentPerson, rockContext );
-                            }
-
-                            if ( !reservationType.IsAuthorized( Authorization.EDIT, CurrentPerson ) )
-                            {
-                                reservationType.AllowPerson( Authorization.EDIT, CurrentPerson, rockContext );
-                            }
-
-                            if ( !reservationType.IsAuthorized( Authorization.ADMINISTRATE, CurrentPerson ) )
-                            {
-                                reservationType.AllowPerson( Authorization.ADMINISTRATE, CurrentPerson, rockContext );
-                            }
-                        }
-                    } );
-
-                    ReservationWorkflowService.FlushCachedTriggers();
-
-                    var qryParams = new Dictionary<string, string>();
-                    qryParams["ReservationTypeId"] = reservationType.Id.ToString();
-
-                    NavigateToPage( RockPage.Guid, qryParams );
+                    reservationType = new ReservationType();
+                    reservationTypeService.Add( reservationType );
                 }
                 else
                 {
-                    nbRequired.Visible = true;
+                    reservationType = reservationTypeService.Queryable( "ReservationMinistries, ReservationWorkflowTriggers" ).Where( c => c.Id == reservationTypeId ).FirstOrDefault();
+
+                    var uiMinistries = ReservationMinistriesState.Select( r => r.Guid );
+                    foreach ( var reservationMinistry in reservationType.ReservationMinistries.Where( r => !uiMinistries.Contains( r.Guid ) ).ToList() )
+                    {
+                        reservationType.ReservationMinistries.Remove( reservationMinistry );
+                        reservationMinistryService.Delete( reservationMinistry );
+                    }
+
+                    var uiTriggers = ReservationWorkflowTriggersState.Select( r => r.Guid );
+                    foreach ( var reservationWorkflowTrigger in reservationType.ReservationWorkflowTriggers.Where( r => !uiTriggers.Contains( r.Guid ) ).ToList() )
+                    {
+                        reservationType.ReservationWorkflowTriggers.Remove( reservationWorkflowTrigger );
+                        reservationWorkflowTriggerService.Delete( reservationWorkflowTrigger );
+                    }
                 }
+
+                reservationType.Name = tbName.Text;
+                reservationType.Description = tbDescription.Text;
+                reservationType.IconCssClass = tbIconCssClass.Text;
+                reservationType.FinalApprovalGroupId = ddlFinalApprovalGroup.SelectedValueAsId();
+                reservationType.SuperAdminGroupId = ddlSuperAdminGroup.SelectedValueAsId();
+                reservationType.NotificationEmailId = ddlNotificationEmail.SelectedValueAsId();
+                reservationType.IsCommunicationHistorySaved = cbIsCommunicationHistorySaved.Checked;
+                reservationType.IsContactDetailsRequired = cbIsContactDetailsRequired.Checked;
+                reservationType.IsNumberAttendingRequired = cbIsNumberAttendingRequired.Checked;
+                reservationType.IsSetupTimeRequired = cbIsSetupTimeRequired.Checked;
+
+                foreach ( var reservationMinistryState in ReservationMinistriesState )
+                {
+                    ReservationMinistry reservationMinistry = reservationType.ReservationMinistries.Where( a => a.Guid == reservationMinistryState.Guid ).FirstOrDefault();
+                    if ( reservationMinistry == null )
+                    {
+                        reservationMinistry = new ReservationMinistry();
+                        reservationType.ReservationMinistries.Add( reservationMinistry );
+                    }
+
+                    reservationMinistry.CopyPropertiesFrom( reservationMinistryState );
+                    reservationMinistry.ReservationTypeId = reservationType.Id;
+                }
+
+                foreach ( var reservationWorkflowTriggerState in ReservationWorkflowTriggersState )
+                {
+                    ReservationWorkflowTrigger reservationWorkflowTrigger = reservationType.ReservationWorkflowTriggers.Where( a => a.Guid == reservationWorkflowTriggerState.Guid ).FirstOrDefault();
+                    if ( reservationWorkflowTrigger == null )
+                    {
+                        reservationWorkflowTrigger = new ReservationWorkflowTrigger();
+                        reservationType.ReservationWorkflowTriggers.Add( reservationWorkflowTrigger );
+                    }
+                    else
+                    {
+                        reservationWorkflowTriggerState.Id = reservationWorkflowTrigger.Id;
+                        reservationWorkflowTriggerState.Guid = reservationWorkflowTrigger.Guid;
+                    }
+
+                    reservationWorkflowTrigger.CopyPropertiesFrom( reservationWorkflowTriggerState );
+                    reservationWorkflowTrigger.ReservationTypeId = reservationTypeId;
+                }
+
+                if ( !reservationType.IsValid )
+                {
+                    // Controls will render the error messages
+                    return;
+                }
+
+                // need WrapTransaction due to Attribute saves
+                rockContext.WrapTransaction( () =>
+                {
+                    rockContext.SaveChanges();
+
+                    reservationType = reservationTypeService.Get( reservationType.Id );
+                    if ( reservationType != null )
+                    {
+                        if ( !reservationType.IsAuthorized( Authorization.VIEW, CurrentPerson ) )
+                        {
+                            reservationType.AllowPerson( Authorization.VIEW, CurrentPerson, rockContext );
+                        }
+
+                        if ( !reservationType.IsAuthorized( Authorization.EDIT, CurrentPerson ) )
+                        {
+                            reservationType.AllowPerson( Authorization.EDIT, CurrentPerson, rockContext );
+                        }
+
+                        if ( !reservationType.IsAuthorized( Authorization.ADMINISTRATE, CurrentPerson ) )
+                        {
+                            reservationType.AllowPerson( Authorization.ADMINISTRATE, CurrentPerson, rockContext );
+                        }
+                    }
+                } );
+
+                ReservationWorkflowService.FlushCachedTriggers();
+
+                var qryParams = new Dictionary<string, string>();
+                qryParams["ReservationTypeId"] = reservationType.Id.ToString();
+
+                NavigateToPage( RockPage.Guid, qryParams );
             }
         }
 
