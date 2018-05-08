@@ -116,7 +116,7 @@
                             <% } %>
 
                             <%-- Note: RockControlWrapper/Div/CheckboxList is being used instead of just a RockCheckBoxList, because autopostback does not currently work for RockControlCheckbox--%>
-                            <Rock:RockControlWrapper ID="rcwReservationType" runat="server" Label="Filter by Reservation type">
+                            <Rock:RockControlWrapper ID="rcwReservationType" runat="server" Label="Filter by Reservation Type">
                                 <div class="controls">
                                     <asp:CheckBoxList ID="cblReservationType" RepeatDirection="Vertical" runat="server" DataTextField="Name" DataValueField="Id"
                                         OnSelectedIndexChanged="cblReservationType_SelectedIndexChanged" AutoPostBack="true" />
