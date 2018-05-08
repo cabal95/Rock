@@ -165,6 +165,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             var reservationSummaries = reservationSummaryList.Select( r => new
             {
                 Id = r.Id,
+                ReservationType = r.ReservationType,
                 ReservationName = r.ReservationName,
                 ApprovalState = r.ApprovalState.ConvertToString(),
                 Locations = r.ReservationLocations.ToList(),
