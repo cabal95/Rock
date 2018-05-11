@@ -55,6 +55,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Action\CheckIn\FilterGroupsByDataView.cs" />
+    <Compile Include="Action\CheckIn\LoadChildGroupsWhereGroupMember.cs" />
     <Compile Include="Action\Communications\SendEmail.cs" />
     <Compile Include="Action\Person\SetAddressFromPerson.cs" />
     <Compile Include="Action\Group\GroupGetChildGroupForCampus.cs" />
