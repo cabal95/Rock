@@ -39,6 +39,7 @@ namespace RockWeb.Plugins.com_centralaz.Utility
     [DisplayName( "Lava Tester" )]
     [Category( "com_centralaz > Utility" )]
     [Description( "Allows you to pick a person, group, workflow instance, or registration entity and test your lava." )]
+    [LavaCommandsField( "Enabled Lava Commands", "The Lava commands that should be enabled.", false, order: 0 )]
     public partial class LavaTester : Rock.Web.UI.RockBlock
     {
         #region Fields
@@ -721,7 +722,7 @@ namespace RockWeb.Plugins.com_centralaz.Utility
         protected void ResolveLava()
         {
             string lava = ceLava.Text;
-            litOutput.Text = lava.ResolveMergeFields( mergeFields );
+            litOutput.Text = lava.ResolveMergeFields( mergeFields, GetAttributeValue( "EnabledLavaCommands" ) );
             if ( cbEnableDebug.Checked )
             {
                 litDebug.Text = mergeFields.lavaDebugInfo();
