@@ -31,13 +31,13 @@ using Rock.Attribute;
 using Rock.Web.UI;
 using System.Data;
 
-namespace RockWeb.Plugins.com_centralaz.Widgets
+namespace RockWeb.Plugins.com_centralaz.Crm
 {
     /// <summary>
     /// Template block for developers to use to start a new block.
     /// </summary>
     [DisplayName( "Multi-Session Attendance List" )]
-    [Category( "com_centralaz > Widgets" )]
+    [Category( "com_centralaz > CRM" )]
     [Description( "Block used to record attendance for a multi-sessioned event" )]
     [LinkedPage( "Person Profile Page", "Page used for viewing a person's profile. If set a view profile button will show for each group member.", false, "", "", 2, "PersonProfilePage" )]
     [EventItemField( "Event Item", "The event item used to populate the list of people" )]

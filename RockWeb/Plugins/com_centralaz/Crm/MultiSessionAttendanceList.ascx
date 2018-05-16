@@ -1,4 +1,4 @@
-﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="MultiSessionAttendanceList.ascx.cs" Inherits="RockWeb.Plugins.com_centralaz.Widgets.MultiSessionAttendanceList" %>
+﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="MultiSessionAttendanceList.ascx.cs" Inherits="RockWeb.Plugins.com_centralaz.Crm.MultiSessionAttendanceList" %>
 
 <asp:UpdatePanel ID="upnlContent" runat="server">
     <ContentTemplate>
