@@ -37,7 +37,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
     /// request which can launch a workflow to perform additional processing.
     /// </summary>
     [DisplayName( "First Time Guest Entry" )]
-    [Category( "com_centralaz > Crm" )]
+    [Category( "com_centralaz > CRM" )]
     [Description( "A block for rapidly adding new people (First Time Guests) and adding them to a connection request which can launch a workflow to perform additional processing." )]
 
     // Connection Request Settings
