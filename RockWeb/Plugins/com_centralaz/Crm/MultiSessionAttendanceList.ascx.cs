@@ -34,11 +34,14 @@ using System.Data;
 namespace RockWeb.Plugins.com_centralaz.Crm
 {
     /// <summary>
-    /// Template block for developers to use to start a new block.
+    /// A block for rapidly adding taking 'attribute attendance' (that is, attendance that
+    /// is recorded on a set of datetime attributes). The block lists all people
+    /// registered for the configured event item who have not yet completed attendance
+    /// for all three attributes in the set.
     /// </summary>
     [DisplayName( "Multi-Session Attendance List" )]
     [Category( "com_centralaz > CRM" )]
-    [Description( "Block used to record attendance for a multi-sessioned event" )]
+    [Description( "Block used to record attendance (via a set of DateTime attributes) for a multi-sessioned event.  The block lists all people registered for the configured event item who have not yet completed attendance for all attributes in the set." )]
     [LinkedPage( "Person Profile Page", "Page used for viewing a person's profile. If set a view profile button will show for each group member.", false, "", "", 2, "PersonProfilePage" )]
     [EventItemField( "Event Item", "The event item used to populate the list of people" )]
     [AttributeField( Rock.SystemGuid.EntityType.PERSON, "Attended First Session Attribute", "", false, false, "" )]
@@ -47,7 +50,6 @@ namespace RockWeb.Plugins.com_centralaz.Crm
     [WorkflowTypeField( "Workflow Types", "The workflow types to be fired whenever someone completes all three sessions.", true )]
     public partial class MultiSessionAttendanceList : RockBlock
     {
-
         #region Properties
 
         /// <summary>
@@ -111,6 +113,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             gfSettings.DisplayFilterValue += gfSettings_DisplayFilterValue;
 
             // this event gets fired after block settings are updated. it's nice to repaint the screen if these settings would alter it
+            this.BlockUpdated += Block_BlockUpdated;
             this.AddConfigurationUpdateTrigger( upnlContent );
         }
 
@@ -122,6 +125,8 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         {
             base.OnLoad( e );
 
+            nbMessage.Visible = false;
+
             if ( !Page.IsPostBack )
             {
                 if ( CheckForAttributes() )
@@ -130,11 +135,19 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 }
                 else
                 {
-                    pnlPersonList.Visible = false;
-                    pnlNotification.Visible = true;
-                    nbConfigError.Text = "Please set up all session attributes.";
+                    ShowConfigurationError();
                 }
             }
+        }
+
+        /// <summary>
+        /// Shows the configuration error message.
+        /// </summary>
+        private void ShowConfigurationError()
+        {
+            pnlPersonList.Visible = false;
+            pnlNotification.Visible = true;
+            nbConfigError.Text = "Please configure the block settings by selecting a value for all session attributes.";
         }
 
         /// <summary>
@@ -157,7 +170,28 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         #region Events
 
         /// <summary>
-        /// Handles the GridRebind event of the gPledges control.
+        /// Handles the BlockUpdated event of the control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        protected void Block_BlockUpdated( object sender, EventArgs e )
+        {
+            FirstAttributeCache = null;
+            SecondAttributeCache = null;
+            ThirdAttributeCache = null;
+
+            if ( CheckForAttributes() )
+            {
+                ShowDetail();
+            }
+            else
+            {
+                ShowConfigurationError();
+            }
+        }
+
+        /// <summary>
+        /// Handles the GridRebind event of the grid list.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
@@ -167,7 +201,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         }
 
         /// <summary>
-        /// Handles the RowDataBound event of the gList control.
+        /// Handles the RowDataBound event of the grid list.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="GridViewRowEventArgs"/> instance containing the event data.</param>
@@ -178,21 +212,27 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             if ( personAttendanceDataRow != null )
             {
                 CheckBox checkBox_AttendedFirstSession = e.Row.FindControl( "checkBox_AttendedFirstSession" ) as CheckBox;
-                if ( checkBox_AttendedFirstSession != null )
+                if ( checkBox_AttendedFirstSession != null && personAttendanceDataRow.AttendedFirstSession )
                 {
-                    checkBox_AttendedFirstSession.Enabled = !personAttendanceDataRow.AttendedFirstSession;
+                    checkBox_AttendedFirstSession.Enabled = false;
+                    checkBox_AttendedFirstSession.AddCssClass( "disabled" );
+                    checkBox_AttendedFirstSession.Attributes.Add( "disabled", "true" );
                 }
 
                 CheckBox checkBox_AttendedSecondSession = e.Row.FindControl( "checkBox_AttendedSecondSession" ) as CheckBox;
-                if ( checkBox_AttendedSecondSession != null )
+                if ( checkBox_AttendedSecondSession != null && personAttendanceDataRow.AttendedSecondSession )
                 {
-                    checkBox_AttendedSecondSession.Enabled = !personAttendanceDataRow.AttendedSecondSession;
+                    checkBox_AttendedSecondSession.Enabled = false;
+                    checkBox_AttendedSecondSession.AddCssClass( "disabled" );
+                    checkBox_AttendedSecondSession.Attributes.Add( "disabled", "true" );
                 }
 
                 CheckBox checkBox_AttendedThirdSession = e.Row.FindControl( "checkBox_AttendedThirdSession" ) as CheckBox;
-                if ( checkBox_AttendedThirdSession != null )
+                if ( checkBox_AttendedThirdSession != null && personAttendanceDataRow.AttendedThirdSession )
                 {
-                    checkBox_AttendedThirdSession.Enabled = !personAttendanceDataRow.AttendedThirdSession;
+                    checkBox_AttendedThirdSession.Enabled = false;
+                    checkBox_AttendedThirdSession.AddCssClass( "disabled" );
+                    checkBox_AttendedThirdSession.Attributes.Add( "disabled", "true" );
                 }
             }
         }
@@ -211,6 +251,18 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                         e.Value = SlidingDateRangePicker.FormatDelimitedValues( e.Value );
                         break;
                     }
+
+                case FilterSetting.NOT_ATTENDED_SESSIONS:
+                    {
+                        List<string> allChecked = cblSessions.Items.Cast<ListItem>()
+                          .Where( i => i.Selected )
+                          .Select( i => "<br>"+i.Text )
+                          .ToList();
+
+                        e.Value = String.Join( ", ", allChecked );
+                        break;
+                    }
+
                 case FilterSetting.CAMPUS:
                     {
                         var resolvedValues = new List<string>();
@@ -227,6 +279,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                         e.Value = resolvedValues.AsDelimited( ", " );
                         break;
                     }
+
                 default:
                     {
                         e.Value = string.Empty;
@@ -244,6 +297,10 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         {
             gfSettings.SaveUserPreference( FilterSetting.DATE_RANGE, sdrpRegistrationDateRange.DelimitedValues );
             gfSettings.SaveUserPreference( FilterSetting.CAMPUS, cpCampus.SelectedValues.AsDelimited( ";" ) );
+
+            // WE ARE PURPOSELY NOT saving what the user checked since it is a temporary selection they are making.
+            gfSettings.SaveUserPreference( FilterSetting.NOT_ATTENDED_SESSIONS, "0" );
+
             BindGrid();
         }
 
@@ -255,6 +312,8 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         protected void lbSave_Click( object sender, EventArgs e )
         {
             var date = RockDateTime.Now.Date;
+            int changedPeople = 0;
+
             using ( var rockContext = new RockContext() )
             {
                 PersonService personService = new PersonService( rockContext );
@@ -265,6 +324,8 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 foreach ( GridViewRow row in gList.Rows )
                 {
                     var checkCount = 0;
+                    bool setDateValue = false;
+
                     // For each row, grab the valid person object associated with it
                     int personId = int.Parse( gList.DataKeys[row.RowIndex].Value.ToString() );
                     Person person = personService.Get( personId );
@@ -289,6 +350,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                                     var attributeDate = person.GetAttributeValue( attributeKey );
                                     if ( attributeDate == null || attributeDate.AsDateTime() == null )
                                     {
+                                        setDateValue = true;
                                         person.SetAttributeValue( attributeKey, date.ToString() );
                                         person.SaveAttributeValue( attributeKey, rockContext );
                                     }
@@ -311,9 +373,19 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                                 }
                             }
                         }
+
+                        // increment the person change count
+                        if ( setDateValue )
+                        {
+                            changedPeople++;
+                        }
                     }
                 }
             }
+
+            nbMessage.Visible = true;
+            nbMessage.Title = "Attendance Saved";
+            nbMessage.Text = string.Format( "<p>updated attendance for {0} people</p>", changedPeople );
 
             BindGrid();
         }
@@ -327,6 +399,9 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         /// </summary>
         private void ShowDetail()
         {
+            pnlPersonList.Visible = true;
+            pnlNotification.Visible = false;
+
             using ( var rockContext = new RockContext() )
             {
                 EventItemService eventItemService = new EventItemService( rockContext );
@@ -344,7 +419,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 {
                     pnlPersonList.Visible = false;
                     pnlNotification.Visible = true;
-                    nbConfigError.Text = "Please set the Event Item block setting to a valid Event Item.";
+                    nbConfigError.Text = "Please set the event item block setting to a valid item.";
                 }
             }
         }
@@ -361,6 +436,14 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             cpCampus.SetValues( gfSettings.GetUserPreference( FilterSetting.CAMPUS ).SplitDelimitedValues().AsIntegerList() );
 
             sdrpRegistrationDateRange.DelimitedValues = gfSettings.GetUserPreference( FilterSetting.DATE_RANGE );
+
+            // Bind the attributes that represent the sessions for the class.
+            var attributeList = new List<AttributeCache>();
+            attributeList.Add( FirstAttributeCache );
+            attributeList.Add( SecondAttributeCache );
+            attributeList.Add( ThirdAttributeCache );
+            cblSessions.DataSource = attributeList;
+            cblSessions.DataBind();
         }
 
         /// <summary>
@@ -434,6 +517,18 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                             AttendedSecondSession = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == SecondAttributeCache.Id ).FirstOrDefault() != null ? ( qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == SecondAttributeCache.Id ).FirstOrDefault().ValueAsDateTime.HasValue ? true : false ) : false,
                             AttendedThirdSession = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == ThirdAttributeCache.Id ).FirstOrDefault() != null ? ( qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == ThirdAttributeCache.Id ).FirstOrDefault().ValueAsDateTime.HasValue ? true : false ) : false
                         } );
+
+                    // Filter by Sessions (if the user is filtering by them)
+                    List<int> allChecked = cblSessions.Items.Cast<ListItem>()
+                              .Where( i => i.Selected )
+                              .Select( i => int.Parse( i.Value ) )
+                              .ToList();
+                    if ( allChecked.Count() > 0 )
+                    {
+                        qry = qry.Where( p => !allChecked.Contains( FirstAttributeCache.Id ) || !p.AttendedFirstSession )
+                            .Where( p => !allChecked.Contains( SecondAttributeCache.Id ) || !p.AttendedSecondSession )
+                            .Where( p => !allChecked.Contains( ThirdAttributeCache.Id ) || !p.AttendedThirdSession );
+                    }
 
                     // Filter out registrants who completed all sessions
                     qry = qry.Where( p => !( p.AttendedFirstSession && p.AttendedSecondSession && p.AttendedThirdSession ) );
@@ -563,7 +658,8 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         public static class FilterSetting
         {
             public const string CAMPUS = "Campus";
-            public const string DATE_RANGE = "DateRange";
+            public const string DATE_RANGE = "Registration Date Range";
+            public const string NOT_ATTENDED_SESSIONS = "Showing people who haven't completed session(s)";
         }
 
         /// <summary>

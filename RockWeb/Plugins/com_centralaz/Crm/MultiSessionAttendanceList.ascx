@@ -1,5 +1,22 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="MultiSessionAttendanceList.ascx.cs" Inherits="RockWeb.Plugins.com_centralaz.Crm.MultiSessionAttendanceList" %>
 
+<script type="text/javascript">
+
+    function pageLoad() {
+        if ($('div.alert.alert-success').length > 0) {
+    	        window.setTimeout("fadeAndClear()", 5000);
+        }
+
+        // This was needed because setting the Checkbox .Enabled property to false in C# was not doing it.
+        $("input:checkbox.disabled").prop("disabled", true);
+    }
+
+    function fadeAndClear() {
+    	$('div.alert.alert-success').animate({ opacity: 0 }, 2000 );
+    }
+
+</script>
+
 <asp:UpdatePanel ID="upnlContent" runat="server">
     <ContentTemplate>
 
@@ -15,10 +32,14 @@
                 </asp:Panel>
                 <asp:Panel ID="pnlPersonList" runat="server">
                     <div class="grid grid-panel">
+                        <!-- Filter -->
                         <Rock:GridFilter ID="gfSettings" runat="server">
                             <Rock:CampusesPicker ID="cpCampus" runat="server" Label="Campuses" />
                             <Rock:SlidingDateRangePicker ID="sdrpRegistrationDateRange" runat="server" Label="Registration Date Range" />
+                            <Rock:RockCheckBoxList ID="cblSessions" runat="server" Label="Only show people who haven't taken these sessions" DataTextField="Name" DataValueField="Id"
+                            Help="Choose one or more sessions to only show people who have NOT taken that session. Leave all unchecked to show all matching people." />
                         </Rock:GridFilter>
+                        <!-- Data/Grid -->
                         <Rock:Grid ID="gList" runat="server" AllowSorting="true">
                             <Columns>
                                 <Rock:SelectField></Rock:SelectField>
@@ -27,7 +48,10 @@
                         </Rock:Grid>
                     </div>
                     <br />
-                    <div class="actions pull-right">
+            
+                    <Rock:NotificationBox ID="nbMessage" runat="server" NotificationBoxType="Success" Title="Success" Visible="false" Text=""></Rock:NotificationBox>
+
+                    <div class="actions margin-t-sm">
                         <asp:LinkButton ID="lbSave" runat="server" Text="Save" CssClass="btn btn-primary" OnClick="lbSave_Click" />
                     </div>
                 </asp:Panel>
