@@ -58,7 +58,7 @@ namespace RockWeb.Plugins.com_centralaz.Utility
         private readonly string _EMPTY_SAVED_SLOT = "empty saved slot";
         private readonly string _TEXT_MUTED = "text-muted";
 
-        private readonly int MAX_SAVE_SLOTS = 20;
+        private readonly int MAX_SAVE_SLOTS = 25;
         #endregion
 
         #region Properties
@@ -175,20 +175,25 @@ namespace RockWeb.Plugins.com_centralaz.Utility
             {
                 string title = ceLava.Text.TrimStart();
 
-                string commentPattern = @"<!--(.*)-->";
-                Regex r = new Regex( commentPattern, RegexOptions.IgnoreCase );
-                Match m = r.Match( title );
-                if ( m.Success )
-                {
-                    item.Text = m.Groups[1].Value;
-                }
-                else
-                {
-                    item.Text = title.Truncate( 150 );
-                }
+                SetSavedSlotItemName( item, title );
 
                 RemoveCssClass( item, _TEXT_MUTED );
                 SetUserPreference( string.Format( "{0}:{1}", _USER_PREF_KEY, item.Value ), ceLava.Text );
+            }
+        }
+
+        private static void SetSavedSlotItemName( ListItem item, string title )
+        {
+            string commentPattern = @"<!--(.*)-->";
+            Regex r = new Regex( commentPattern, RegexOptions.IgnoreCase );
+            Match m = r.Match( title );
+            if ( m.Success )
+            {
+                item.Text = m.Groups[1].Value;
+            }
+            else
+            {
+                item.Text = title.Truncate( 150 );
             }
         }
 
@@ -237,13 +242,13 @@ namespace RockWeb.Plugins.com_centralaz.Utility
                 {
                     AddCssClass( ddlSaveSlot.Items[i], _TEXT_MUTED );
                     savedLava = string.Format( "{0} {1}", _EMPTY_SAVED_SLOT, i+1 );
+                    ddlSaveSlot.Items[i].Text = savedLava;
                 }
                 else
                 {
-                    savedLava = savedLava.TrimStart().Truncate( 100 );
+                    SetSavedSlotItemName( ddlSaveSlot.Items[i], savedLava.TrimStart() );
                 }
 
-                ddlSaveSlot.Items[i].Text = savedLava;
             }
 
             using ( var rockContext = new RockContext() )

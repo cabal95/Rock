@@ -1,5 +1,22 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="LavaTester.ascx.cs" Inherits="RockWeb.Plugins.com_centralaz.Utility.LavaTester" %>
 
+<script>
+
+    function pageLoad()
+    {
+        EnableTooltips();
+    }
+
+    function EnableTooltips()
+    {
+        $(document).ready(function ()
+        {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    }
+
+</script>
+
 <asp:UpdatePanel ID="upnlContent" runat="server">
     <ContentTemplate>
 
@@ -47,12 +64,12 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-4"></div>
+                        <div class="col-md-2"></div>
                         <div class="col-md-2 text-right">
-                            <asp:LinkButton ToolTip="Load your saved Lava from the selected slot into the editor." ID="lbLoadLava" runat="server" CssClass="btn btn-sm btn-default pull-right" Text="Load" OnClick="lbLoadLava_Click"></asp:LinkButton>
+                            <asp:LinkButton data-toggle="tooltip" data-html="true" title="Loads your saved Lava from the selected slot into the editor." ID="lbLoadLava" runat="server" CssClass="btn btn-sm btn-default pull-right" Text="Load" OnClick="lbLoadLava_Click"></asp:LinkButton>
                         </div>
-                        <div class="col-md-4">
-                            <asp:DropDownList ID="ddlSaveSlot" runat="server" CssClass="form-control input-sm">
+                        <div class="col-md-6">
+                            <Rock:RockDropDownList ID="ddlSaveSlot" runat="server" CssClass="form-control input-sm" EnhanceForLongLists="true">
                                 <asp:ListItem Text="empty save slot 1" Value="0"></asp:ListItem>
                                 <asp:ListItem Text="empty save slot 2" Value="1"></asp:ListItem>
                                 <asp:ListItem Text="empty save slot 3" Value="2"></asp:ListItem>
@@ -73,13 +90,18 @@
                                 <asp:ListItem Text="empty save slot 18" Value="17"></asp:ListItem>
                                 <asp:ListItem Text="empty save slot 19" Value="18"></asp:ListItem>
                                 <asp:ListItem Text="empty save slot 20" Value="19"></asp:ListItem>
-                            </asp:DropDownList>
+                                <asp:ListItem Text="empty save slot 21" Value="20"></asp:ListItem>
+                                <asp:ListItem Text="empty save slot 22" Value="21"></asp:ListItem>
+                                <asp:ListItem Text="empty save slot 23" Value="22"></asp:ListItem>
+                                <asp:ListItem Text="empty save slot 24" Value="23"></asp:ListItem>
+                                <asp:ListItem Text="empty save slot 25" Value="24"></asp:ListItem>
+                            </Rock:RockDropDownList>
                         </div>
                         <div class="col-md-1">
-                            <asp:LinkButton ID="lbSave" ToolTip="Save the Lava in the editor into the selected save slot." runat="server" CssClass="btn btn-sm btn-default pull-left" Text="Save Lava" OnClick="lbSave_Click"></asp:LinkButton>
+                            <asp:LinkButton ID="lbSave" data-toggle="tooltip" data-placement="top" data-html="true" title="<p>Saves the Lava in the editor into the selected save slot.</p> <p><i>NOTE: If you put an HTML comment on the first line it will be used for the slot name.</i></p>" runat="server" CssClass="btn btn-sm btn-default pull-left" Text="Save Lava" OnClick="lbSave_Click"></asp:LinkButton>
                         </div>
                         <div class="col-md-1">
-                            <Rock:NumberBox ID="nbHeight" runat="server" CssClass="input-sm pull-right" Text="300" OnTextChanged="nbHeight_TextChanged" />
+                            <Rock:NumberBox ID="nbHeight" runat="server" CssClass="input-sm pull-right"  Placeholder="editor height" AutoPostBack="true" OnTextChanged="nbHeight_TextChanged"  data-toggle="tooltip" data-placement="top" data-html="true" title="Used to change the height of the editor" />
                         </div>
                     </div>
 
@@ -89,7 +111,7 @@
 
                     <h3>Output</h3>
                     <div class="well" style="background-color: #fff">
-                        <asp:Literal ID="litOutput" runat="server"></asp:Literal>
+                        <asp:Literal ID="litOutput" runat="server"><i class="text-muted">nothing to display yet, try pressing the Test button ;)</i></asp:Literal>
                     </div>
 
                     <h3 runat="server" id="h3DebugTitle" visible="false">Lava Reference / Debug</h3>
