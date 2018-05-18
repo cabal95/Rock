@@ -25,7 +25,7 @@
             <div class="panel-heading">
                 <h1 class="panel-title">Lava Tester <small><a href="http://rockrms.com/Lava" target="_blank">view Lava documentation</a></small></h1>
                 <div class="panel-labels">
-                    <Rock:RockCheckBox ID="cbEnableDebug" runat="server" Checked="false" Text="Enable Debug?" CssClass="pull-right" Help="If enabled, extra Lava debug information will be included at the bottom but it will slow down quite a bit. You can also use the <a href='http://www.churchitnetwork.com/ModelMap'>ModelMap block</a> to see which properties exist on various entities."/>
+                    <Rock:RockCheckBox ID="cbEnableDebug" runat="server" Checked="false" Text="Enable debug?" CssClass="pull-right" Help="If enabled, extra Lava debug information will be included at the bottom but it will slow down quite a bit. You can also use the <a href='http://www.churchitnetwork.com/ModelMap'>ModelMap block</a> to see which properties exist on various entities."/>
                 </div>
             </div>
             <div class="panel-body form-group">
@@ -45,7 +45,7 @@
                         <div class="col-md-12">
                             <div class="row">
                                 <div class="col-md-3"><Rock:WorkflowTypePicker ID="wfpWorkflowType" runat="server" Label="Workflow Type" OnSelectItem="wfpWorkflowType_SelectItem" /></div>
-                                <div class="col-md-4"><Rock:DataDropDownList ID="ddlWorkflows" runat="server" EnhanceForLongLists="true" Label="Workflow (instances)" Help="The item you choose will be set to a Lava object called 'Workflow'." SourceTypeName="Rock.Model.Workflow, Rock" DataTextField="Name" DataValueField="Id" PropertyName="Name" Visible="false" OnSelectedIndexChanged="ddlWorkflows_SelectedIndexChanged" AutoPostBack="true" /></div>
+                                <div class="col-md-4"><Rock:DataDropDownList ID="ddlWorkflows" runat="server" EnhanceForLongLists="true" Label="Workflow (instances)" Help="The item you choose will be set to a Lava object called 'Workflow'." SourceTypeName="Rock.Model.Workflow, Rock" DataTextField="Name" DataValueField="Id" PropertyName="Name" Visible="false" OnSelectedIndexChanged="ddlWorkflows_SelectedIndexChanged" AutoPostBack="true" /><Rock:RockCheckBox ID="cbIncludeInactive" runat="server" Checked="false" Text="Include inactive?" Help="If checked, inactive workflow instances will be included." AutoPostBack="true" OnCheckedChanged="cbIncludeInactive_CheckedChanged"/></div>
                                 <div class="col-md-4"><Rock:DataDropDownList ID="ddlWorkflowActivities" runat="server" EnhanceForLongLists="true" Label="Activity" Help="The item you choose will be set to a Lava object called 'Activity'." SourceTypeName="Rock.Model.WorkflowActivity, Rock" DataTextField="Name" DataValueField="Id" PropertyName="Id" Visible="false" OnSelectedIndexChanged="ddlWorkflowActivities_SelectedIndexChanged" AutoPostBack="true" CausesValidation="false" /></div>
                             </div>
                         </div>

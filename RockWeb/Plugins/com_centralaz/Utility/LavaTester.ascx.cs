@@ -505,9 +505,30 @@ namespace RockWeb.Plugins.com_centralaz.Utility
             {
                 WorkflowService workflowService = new WorkflowService( rockContext );
 
-                var workflows = workflowService.Queryable().AsNoTracking().Where( w => w.WorkflowTypeId == workflowTypeId.Value && w.CompletedDateTime == null ).ToList();
-                ddlWorkflows.DataSource = workflows;
+                var workflows = workflowService.Queryable().AsNoTracking()
+                    .Where( w => w.WorkflowTypeId == workflowTypeId.Value && ( w.CompletedDateTime == null || cbIncludeInactive.Checked ) ).ToList();
+
+                var list = workflows.Select( a => new
+                {
+                    Id = a.Id,
+                    Name = string.Format( "{0} {1}", a.Name, a.CompletedDateTime != null ? a.CompletedDateTime.Value.ToString( "(MM/dd/yy hh:mm tt)" ) : "" ),
+                    CompletedDateTime = a.CompletedDateTime,
+                    IsActive = a.IsActive
+                } );
+                ddlWorkflows.DataSource = list;
                 ddlWorkflows.DataBind();
+
+                // Style each inactive/complete workflow instance using text-muted
+                foreach ( var item in ddlWorkflows.Items )
+                {
+                    var listItem = ( ListItem ) item;
+                    var x = listItem.Value.AsInteger();
+                    if ( list.Any( a => x == a.Id && !a.IsActive ) )
+                    {
+                        AddCssClass( listItem, _TEXT_MUTED );
+                    }
+                }
+
                 ddlWorkflows.Visible = true;
                 ddlWorkflowActivities.Visible = true;
 
@@ -757,5 +778,16 @@ namespace RockWeb.Plugins.com_centralaz.Utility
             litOutput.Text = string.Empty;
         }
 
+
+        /// <summary>
+        /// Handles the CheckedChanged event of the cbIncludeInactive control and rebinds the Workflow instances
+        /// as if the Workflow Type just changed in order to include/exclude inactive workflow instances.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        protected void cbIncludeInactive_CheckedChanged( object sender, EventArgs e )
+        {
+            wfpWorkflowType_SelectItem( sender, e );
+        }
     }
 }
