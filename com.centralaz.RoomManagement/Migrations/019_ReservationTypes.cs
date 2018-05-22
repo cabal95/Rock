@@ -141,6 +141,33 @@ namespace com.centralaz.RoomManagement.Migrations
             RockMigrationHelper.UpdateBlockType( "Reservation Type Detail", "Displays the details of the given Reservation Type for editing.", "~/Plugins/com_centralaz/RoomManagement/ReservationTypeDetail.ascx", "com_centralaz > Room Management", "CBAAEC6D-9B97-4FCB-96A9-5C53FB4E030E" );
             // Add Block to Page: Reservation Type Detail, Site: Rock RMS
             RockMigrationHelper.AddBlock( true, "DC6D7ACE-E23F-4CE6-9D66-A63348A1EF4E", "", "CBAAEC6D-9B97-4FCB-96A9-5C53FB4E030E", "Reservation Type Detail", "Main", "", "", 0, "160ED605-4BC3-46FD-8C24-A1BB9AD4ECB4" );
+
+
+            // Update Approval Workflow
+            using ( var rockContext = new RockContext() )
+            {
+                var workflowActivityType = new WorkflowActivityTypeService( rockContext ).Get( "6A396018-6CC1-4C41-8EF1-FB9779C0B04D".AsGuid() );
+                if ( workflowActivityType != null )
+                {
+                    foreach ( var workflowActionType in workflowActivityType.ActionTypes )
+                    {
+                        workflowActionType.Order++;
+                    }
+
+                    rockContext.SaveChanges();
+
+                    RockMigrationHelper.UpdateWorkflowActionType( "6A396018-6CC1-4C41-8EF1-FB9779C0B04D", "Set Final Approval Group from Entity", 0, "972F19B9-598B-474B-97A4-50E56E7B59D2", true, false, "", "", 1, "", "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity
+                    RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "9392E3D7-A28B-4CD8-8B03-5E147B102EF1", @"False" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Active
+                    RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "AD4EFAC4-E687-43DF-832F-0DC3856ABABB", @"" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Order
+                    RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "61E6E1BC-E657-4F00-B2E9-769AAA25B9F7", @"653ce164-554a-4b22-a830-3e760da2023e" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Attribute
+                    RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "83E27C1E-1491-4AE2-93F1-909791D4B70A", @"True" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Entity Is Required
+                    RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "1246C53A-FD92-4E08-ABDE-9A6C37E70C7B", @"False" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Use Id instead of Guid
+                    AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "972F19B9-598B-474B-97A4-50E56E7B59D2", "1D0D3794-C210-48A8-8C68-3FBEC08A6BA5", "Lava Template", "LavaTemplate", "By default this action will set the attribute value equal to the guid (or id) of the entity that was passed in for processing. If you include a lava template here, the action will instead set the attribute value to the output of this template. The mergefield to use for the entity is 'Entity.' For example, use {{ Entity.Name }} if the entity has a Name property. <span class='tip tip-lava'></span>", 4, @"", @"{{ Entity.ReservationType.FinalApprovalGroup.Guid }}" );
+
+                }
+            }
+
+
         }
 
         public override void Down()
@@ -292,5 +319,85 @@ VALUES
                 .FirstOrDefault();
             return value;
         }
+
+        /// <summary>
+        /// Adds the action type attribute value in the situation where the attributeGuid
+        /// is not well-known.
+        /// </summary>
+        /// <param name="actionTypeGuid">The action type unique identifier.</param>
+        /// <param name="actionEntityTypeGuid">The action entity type unique identifier.</param>
+        /// <param name="fieldTypeGuid">The field type unique identifier.</param>
+        /// <param name="attributeName">Name of the attribute.</param>
+        /// <param name="attributeKey">The attribute key.</param>
+        /// <param name="attributeDescription">The attribute description.</param>
+        /// <param name="attributeOrder">The attribute order.</param>
+        /// <param name="attributeDefaultValue">The attribute default value.</param>
+        /// <param name="value">The value.</param>
+        public void AddActionTypeAttributeValue( string actionTypeGuid, string actionEntityTypeGuid, string fieldTypeGuid, string attributeName, string attributeKey, string attributeDescription, int attributeOrder, string attributeDefaultValue, string value )
+        {
+
+            Sql( string.Format( @"
+
+                DECLARE @ActionEntityTypeId int = (SELECT [Id] FROM [EntityType] WHERE [Guid] = '{0}')
+                DECLARE @FieldTypeId int = (SELECT [Id] FROM [FieldType] WHERE [Guid] = '{1}')
+                DECLARE @EntityTypeId int = (SELECT [Id] FROM [EntityType] WHERE [Name] = 'Rock.Model.WorkflowActionType')
+                DECLARE @AttributeGuid uniqueidentifier = (SELECT [Guid] FROM [Attribute] WHERE [EntityTypeId] = @EntityTypeId AND [EntityTypeQualifierColumn] = 'EntityTypeId' AND [EntityTypeQualifierValue] = CAST(@ActionEntityTypeId as varchar) AND [Key] = '{2}' )
+                DECLARE @AttributeId int
+
+                -- Find or add the action type's attribute
+                IF @AttributeGuid IS NOT NULL
+                BEGIN
+                    SET @Attributeid = (SELECT [Id] FROM [Attribute] WHERE [Guid] = @AttributeGuid)
+                END
+                ELSE
+                BEGIN
+                    INSERT INTO [Attribute] (
+                        [IsSystem],[FieldTypeId],[EntityTypeId],[EntityTypeQualifierColumn],[EntityTypeQualifierValue],
+                        [Key],[Name],[Description],
+                        [Order],[IsGridColumn],[DefaultValue],[IsMultiValue],[IsRequired],
+                        [Guid])
+                    VALUES(
+                        1,@FieldTypeId, @EntityTypeId,'EntityTypeId',CAST(@ActionEntityTypeId as varchar),
+                        '{2}','{3}','{4}',
+                        {5},0,'{6}',0,0,
+                        NEWID() )
+                    SET @AttributeId = SCOPE_IDENTITY()
+                END
+
+                -- Now set the action type's attribute value
+                DECLARE @ActionTypeId int = (SELECT [Id] FROM [WorkflowActionType] WHERE [Guid] = '{7}')
+
+                IF @ActionTypeId IS NOT NULL AND @AttributeId IS NOT NULL
+                BEGIN
+
+                    -- Delete existing attribute value
+                    DELETE [AttributeValue]
+                    WHERE [AttributeId] = @AttributeId
+                    AND [EntityId] = @ActionTypeId
+
+                    INSERT INTO [AttributeValue] (
+                        [IsSystem],[AttributeId],[EntityId],
+                        [Value],
+                        [Guid])
+                    VALUES(
+                        1,@AttributeId,@ActionTypeId,
+                        '{8}',
+                        NEWID())
+
+                END
+",
+                    actionEntityTypeGuid,
+                    fieldTypeGuid,
+                    attributeKey ?? attributeName.Replace( " ", string.Empty ),
+                    attributeName,
+                    attributeDescription.Replace( "'", "''" ),
+                    attributeOrder,
+                    attributeDefaultValue.Replace( "'", "''" ),
+                    actionTypeGuid,
+                    value.Replace( "'", "''" ) )
+            );
+
+        }
+
     }
 }
