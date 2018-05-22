@@ -949,34 +949,19 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 var canApprove = false;
 
-                if ( reservationResource.Resource.ApprovalGroupId != null )
+                if ( !canApprove )
                 {
-                    if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( reservationResource.Resource.ApprovalGroupId.Value ) )
-                    {
-                        canApprove = true;
-                    }
+                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, reservationResource.Resource.ApprovalGroupId );
                 }
-                else
+
+                if ( !canApprove )
                 {
-                    var superAdminGroup = ReservationType.SuperAdminGroup;
-                    if ( superAdminGroup != null )
-                    {
-                        if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( superAdminGroup.Id ) )
-                        {
-                            canApprove = true;
-                        }
-                        else
-                        {
-                            var finalApprovalGroup = ReservationType.FinalApprovalGroup;
-                            if ( finalApprovalGroup != null )
-                            {
-                                if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( finalApprovalGroup.Id ) )
-                                {
-                                    canApprove = true;
-                                }
-                            }
-                        }
-                    }
+                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId );
+                }
+
+                if ( !canApprove )
+                {
+                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
                 }
 
                 if ( e.Row.RowType == DataControlRowType.DataRow )
@@ -1255,34 +1240,19 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     approvalGroupGuid = location.GetAttributeValue( "ApprovalGroup" ).AsGuidOrNull();
                 }
 
-                if ( approvalGroupGuid != null )
+                if ( !canApprove )
                 {
-                    if ( CurrentPerson.Members.Select( m => m.Group.Guid ).Distinct().ToList().Contains( approvalGroupGuid.Value ) )
-                    {
-                        canApprove = true;
-                    }
+                    canApprove = ReservationTypeService.IsPersonInGroupWithGuid( CurrentPerson, approvalGroupGuid );
                 }
-                else
+
+                if ( !canApprove )
                 {
-                    var superAdminGroup = ReservationType.SuperAdminGroup;
-                    if ( superAdminGroup != null )
-                    {
-                        if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( superAdminGroup.Id ) )
-                        {
-                            canApprove = true;
-                        }
-                        else
-                        {
-                            var finalApprovalGroup = ReservationType.FinalApprovalGroup;
-                            if ( finalApprovalGroup != null )
-                            {
-                                if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( finalApprovalGroup.Id ) )
-                                {
-                                    canApprove = true;
-                                }
-                            }
-                        }
-                    }
+                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId );
+                }
+
+                if ( !canApprove )
+                {
+                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
                 }
 
                 if ( e.Row.RowType == DataControlRowType.DataRow )
@@ -1503,24 +1473,15 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             ddlReservationType.SetValue( ReservationType.Id );
 
             bool canApprove = false;
-            var superAdminGroup = ReservationType.SuperAdminGroup;
-            if ( superAdminGroup != null )
+
+            if ( !canApprove )
             {
-                if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( superAdminGroup.Id ) )
-                {
-                    canApprove = true;
-                }
-                else
-                {
-                    var finalApprovalGroup = ReservationType.FinalApprovalGroup;
-                    if ( finalApprovalGroup != null )
-                    {
-                        if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( finalApprovalGroup.Id ) )
-                        {
-                            canApprove = true;
-                        }
-                    }
-                }
+                canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId );
+            }
+
+            if ( !canApprove )
+            {
+                canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
             }
 
             if ( reservation.Id != 0 )
@@ -1991,29 +1952,19 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         {
             List<Guid> groupGuidList = new List<Guid>();
 
-            Group finalApprovalGroup = null;
+            int? finalApprovalGroupId = null;
             bool inApprovalGroups = false;
             bool isSuperAdmin = false;
-            finalApprovalGroup = ReservationType.FinalApprovalGroup;
+            finalApprovalGroupId = ReservationType.FinalApprovalGroupId;
 
-            var superAdminGroup = ReservationType.SuperAdminGroup;
-            if ( superAdminGroup != null )
+            if ( !inApprovalGroups )
             {
-                if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( superAdminGroup.Id ) )
-                {
-                    inApprovalGroups = true;
-                    isSuperAdmin = true;
-                }
-                else
-                {
-                    if ( finalApprovalGroup != null )
-                    {
-                        if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( finalApprovalGroup.Id ) )
-                        {
-                            inApprovalGroups = true;
-                        }
-                    }
-                }
+                inApprovalGroups = isSuperAdmin = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId );
+            }
+
+            if ( !inApprovalGroups )
+            {
+                inApprovalGroups = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
             }
 
             foreach ( var reservationResource in reservation.ReservationResources )
@@ -2026,7 +1977,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 }
                 else
                 {
-                    if ( CurrentPerson.Members.Select( m => m.GroupId ).Distinct().ToList().Contains( reservationResource.Resource.ApprovalGroupId.Value ) )
+                    if ( ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, reservationResource.Resource.ApprovalGroupId ) )
                     {
                         canApprove = true;
                     }
@@ -2069,7 +2020,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 }
                 else
                 {
-                    if ( CurrentPerson.Members.Select( m => m.Group.Guid ).Distinct().ToList().Contains( approvalGroupGuid.Value ) )
+                    if ( ReservationTypeService.IsPersonInGroupWithGuid( CurrentPerson, approvalGroupGuid ) )
                     {
                         canApprove = true;
                     }
@@ -2105,7 +2056,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 if ( reservation.ReservationLocations.All( rl => rl.ApprovalState == ReservationLocationApprovalState.Approved ) && reservation.ReservationResources.All( rr => rr.ApprovalState == ReservationResourceApprovalState.Approved ) )
                 {
-                    if ( finalApprovalGroup == null || isSuperAdmin )
+                    if ( finalApprovalGroupId == null || isSuperAdmin )
                     {
                         reservation.ApprovalState = ReservationApprovalState.Approved;
                     }

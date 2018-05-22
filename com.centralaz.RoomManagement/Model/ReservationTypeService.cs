@@ -48,5 +48,33 @@ namespace com.centralaz.RoomManagement.Model
             return true;
         }
 
+        public static bool IsPersonInGroupWithId( Person person, int? groupId )
+        {
+            bool isInGroup = false;
+            if ( groupId != null )
+            {
+                if ( person.Members.Where( gm => gm.GroupMemberStatus == GroupMemberStatus.Active && gm.Group.IsActive == true ).Select( m => m.GroupId ).Distinct().ToList().Contains( groupId.Value ) )
+                {
+                    isInGroup = true;
+                }
+            }
+
+            return isInGroup;
+        }
+
+        public static bool IsPersonInGroupWithGuid( Person person, Guid? groupGuid )
+        {
+            bool isInGroup = false;
+            if ( groupGuid != null )
+            {
+                if ( person.Members.Where( gm => gm.GroupMemberStatus == GroupMemberStatus.Active && gm.Group.IsActive == true ).Select( m => m.Group.Guid ).Distinct().ToList().Contains( groupGuid.Value ) )
+                {
+                    isInGroup = true;
+                }
+            }
+
+            return isInGroup;
+        }
+
     }
 }
