@@ -483,50 +483,17 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     return;
                 }
 
-                // Check to make sure that nothing has a scheduling conflict.
-                bool hasConflict = false;
-                StringBuilder sb = new StringBuilder();
-                sb.Append( "<b>The following items are already reserved for the scheduled times:<br><ul>" );
-                var reservedLocationIds = reservationService.GetReservedLocationIds( reservation );
+                // Check to make sure there's no conflicts
+                var conflictInfo = reservationService.GenerateConflictInfo( reservation, this.CurrentPageReference.Route );
 
-                // Check self
-                string message = string.Empty;
-                foreach ( var location in reservation.ReservationLocations.Where( l => reservedLocationIds.Contains( l.LocationId ) ) )
+                if ( !string.IsNullOrWhiteSpace( conflictInfo ) )
                 {
-                    //sb.AppendFormat( "<li>{0}</li>", location.Location.Name );
-                    message = BuildLocationConflictHtmlListMessage( location.Location.Id, rockContext );
-                    if ( message != null )
-                    {
-                        sb.AppendFormat( "<li>{0} due to:<ul>{1}</ul></li>", location.Location.Name, message );
-                    }
-                    else
-                    {
-                        sb.AppendFormat( "<li>{0}</li>", location.Location.Name );
-                    }
-                    hasConflict = true;
-                }
-
-                // Check resources...
-                foreach ( var resource in reservation.ReservationResources )
-                {
-                    var availableQuantity = reservationService.GetAvailableResourceQuantity( resource.Resource, reservation );
-                    if ( availableQuantity - resource.Quantity < 0 )
-                    {
-                        sb.AppendFormat( "<li>{0} [note: only {1} available]</li>", resource.Resource.Name, availableQuantity );
-                        hasConflict = true;
-                    }
-                }
-
-                if ( hasConflict )
-                {
-                    sb.Append( "</ul>" );
-                    nbErrorWarning.Text = sb.ToString();
+                    nbErrorWarning.Text = conflictInfo;
                     nbErrorWarning.Visible = true;
                     return;
                 }
 
-                reservation.ApprovalState = hfApprovalState.Value.ConvertToEnum<ReservationApprovalState>( ReservationApprovalState.Unapproved );
-                var groupGuidList = UpdateApproval( reservation, rockContext );
+                reservation = reservationService.UpdateApproval( reservation, hfApprovalState.Value.ConvertToEnum<ReservationApprovalState>( ReservationApprovalState.Unapproved ), CurrentPerson );
 
                 if ( reservation.Id.Equals( 0 ) )
                 {
@@ -553,7 +520,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 reservation = new ReservationService( new RockContext() ).Get( reservation.Id );
 
                 // We can't send emails because it won't have an ID until the request is saved.
-                SendNotifications( reservation, groupGuidList, rockContext );
+                reservationService.SendNotifications( reservation );
 
                 BinaryFileService binaryFileService = new BinaryFileService( rockContext );
                 if ( orphanedImageId.HasValue )
@@ -604,6 +571,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             BaseResourceRestUrl = srpResource.ItemRestUrlExtraParams;
             ddlCampus.Focus();
+        }
+
+        protected void ddlReservationType_SelectedIndexChanged( object sender, EventArgs e )
+        {
+            ReservationType = new ReservationTypeService( new RockContext() ).Get( ddlReservationType.SelectedValueAsId().Value );
         }
 
         /// <summary>
@@ -1537,6 +1509,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
         }
 
+        /// <summary>
+        /// Loads the questions and answers.
+        /// </summary>
+        /// <param name="locationList">The location list.</param>
+        /// <param name="resourceList">The resource list.</param>
         private void LoadQuestionsAndAnswers( List<Guid> locationList, List<Guid> resourceList )
         {
             var rockContext = new RockContext();
@@ -1806,6 +1783,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             slpLocation.ItemRestUrlExtraParams = BaseLocationRestUrl + String.Format( "?reservationId={0}&iCalendarContent={1}&setupTime={2}&cleanupTime={3}&attendeeCount={4}", reservationId, encodedCalendarContent, nbSetupTime.Text.AsInteger(), nbCleanupTime.Text.AsInteger(), nbAttending.Text.AsInteger() );
         }
 
+        /// <summary>
+        /// Loads the location image.
+        /// </summary>
         private void LoadLocationImage()
         {
             lImage.Text = string.Empty;
@@ -1840,7 +1820,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 var locationId = slpLocation.SelectedValueAsId().Value;
                 var location = new LocationService( rockContext ).Get( locationId );
 
-                var message = BuildLocationConflictHtmlListMessage( locationId, rockContext );
+                int reservationId = PageParameter( "ReservationId" ).AsInteger();
+                var newReservation = new Reservation() { Id = reservationId, Schedule = new Schedule() { iCalendarContent = sbSchedule.iCalendarContent }, SetupTime = nbSetupTime.Text.AsInteger(), CleanupTime = nbCleanupTime.Text.AsInteger() };
+                var message = new ReservationService( rockContext ).BuildLocationConflictHtmlList( newReservation, locationId, this.CurrentPageReference.Route );
 
                 if ( message != null )
                 {
@@ -1855,42 +1837,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             else
             {
                 nbLocationConflicts.Visible = false;
-            }
-        }
-
-        /// <summary>
-        /// Builds a conflict message string (as HTML List) and returns it if there are location conflicts.
-        /// </summary>
-        /// <param name="locationId">The location identifier.</param>
-        /// <param name="rockContext">The rock context.</param>
-        /// <returns>an HTML List if conflicts exists; null otherwise.</returns>
-        private string BuildLocationConflictHtmlListMessage( int locationId, RockContext rockContext )
-        {
-            int reservationId = PageParameter( "ReservationId" ).AsInteger();
-            var newReservation = new Reservation() { Id = reservationId, Schedule = new Schedule() { iCalendarContent = sbSchedule.iCalendarContent }, SetupTime = nbSetupTime.Text.AsInteger(), CleanupTime = nbCleanupTime.Text.AsInteger() };
-            var conflicts = new ReservationService( rockContext ).GetConflictsForLocationId( locationId, newReservation );
-
-            if ( conflicts.Any() )
-            {
-                StringBuilder sb = new StringBuilder();
-                var route = this.CurrentPageReference.Route; // is either "/page/123" or "ReservationDetail"
-                route = route.StartsWith( "/" ) ? route : "/" + route;
-
-                foreach ( var conflict in conflicts )
-                {
-                    sb.AppendFormat( "<li>{0} [on {1} via <a href='{4}?ReservationId={2}' target='_blank'>'{3}'</a>]</li>",
-                        conflict.Location.Name,
-                        conflict.Reservation.Schedule.ToFriendlyScheduleText(),
-                        conflict.ReservationId,
-                        conflict.Reservation.Name,
-                        route
-                        );
-                }
-                return sb.ToString();
-            }
-            else
-            {
-                return null;
             }
         }
 
@@ -1941,203 +1887,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
         }
 
-        /// <summary>
-        /// Updates the approval and returns the group guids for any groups that
-        /// need to be notified of approval.
-        /// </summary>
-        /// <param name="reservation">The reservation.</param>
-        /// <param name="rockContext">The rock context.</param>
-        /// <returns></returns>
-        private List<Guid> UpdateApproval( Reservation reservation, RockContext rockContext )
-        {
-            List<Guid> groupGuidList = new List<Guid>();
-
-            int? finalApprovalGroupId = null;
-            bool inApprovalGroups = false;
-            bool isSuperAdmin = false;
-            finalApprovalGroupId = ReservationType.FinalApprovalGroupId;
-
-            if ( !inApprovalGroups )
-            {
-                inApprovalGroups = isSuperAdmin = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId );
-            }
-
-            if ( !inApprovalGroups )
-            {
-                inApprovalGroups = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
-            }
-
-            foreach ( var reservationResource in reservation.ReservationResources )
-            {
-                bool canApprove = false;
-
-                if ( reservationResource.Resource.ApprovalGroupId == null )
-                {
-                    canApprove = true;
-                }
-                else
-                {
-                    if ( ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, reservationResource.Resource.ApprovalGroupId ) )
-                    {
-                        canApprove = true;
-                    }
-                    else
-                    {
-                        if ( inApprovalGroups )
-                        {
-                            canApprove = true;
-                        }
-                    }
-                }
-
-                if ( reservationResource.ApprovalState == ReservationResourceApprovalState.Unapproved )
-                {
-                    if ( canApprove )
-                    {
-                        reservationResource.ApprovalState = ReservationResourceApprovalState.Approved;
-                    }
-                    else
-                    {
-                        reservation.ApprovalState = ReservationApprovalState.Unapproved;
-                        groupGuidList.Add( reservationResource.Resource.ApprovalGroup.Guid );
-                    }
-                }
-                else if ( reservationResource.ApprovalState == ReservationResourceApprovalState.Denied )
-                {
-                    reservation.ApprovalState = ReservationApprovalState.ChangesNeeded;
-                }
-            }
-
-            foreach ( var reservationLocation in reservation.ReservationLocations )
-            {
-                bool canApprove = false;
-                reservationLocation.Location.LoadAttributes();
-                var approvalGroupGuid = reservationLocation.Location.GetAttributeValue( "ApprovalGroup" ).AsGuidOrNull();
-
-                if ( approvalGroupGuid == null )
-                {
-                    canApprove = true;
-                }
-                else
-                {
-                    if ( ReservationTypeService.IsPersonInGroupWithGuid( CurrentPerson, approvalGroupGuid ) )
-                    {
-                        canApprove = true;
-                    }
-                    else
-                    {
-                        if ( inApprovalGroups )
-                        {
-                            canApprove = true;
-                        }
-                    }
-                }
-
-                if ( reservationLocation.ApprovalState == ReservationLocationApprovalState.Unapproved )
-                {
-                    if ( canApprove )
-                    {
-                        reservationLocation.ApprovalState = ReservationLocationApprovalState.Approved;
-
-                    }
-                    else
-                    {
-                        reservation.ApprovalState = ReservationApprovalState.Unapproved;
-                        groupGuidList.Add( approvalGroupGuid.Value );
-                    }
-                }
-                else if ( reservationLocation.ApprovalState == ReservationLocationApprovalState.Denied )
-                {
-                    reservation.ApprovalState = ReservationApprovalState.ChangesNeeded;
-                }
-            }
-
-            if ( reservation.ApprovalState == ReservationApprovalState.Unapproved || reservation.ApprovalState == ReservationApprovalState.PendingReview || reservation.ApprovalState == ReservationApprovalState.ChangesNeeded )
-            {
-                if ( reservation.ReservationLocations.All( rl => rl.ApprovalState == ReservationLocationApprovalState.Approved ) && reservation.ReservationResources.All( rr => rr.ApprovalState == ReservationResourceApprovalState.Approved ) )
-                {
-                    if ( finalApprovalGroupId == null || isSuperAdmin )
-                    {
-                        reservation.ApprovalState = ReservationApprovalState.Approved;
-                    }
-                    else
-                    {
-                        reservation.ApprovalState = ReservationApprovalState.PendingReview;
-                    }
-                }
-                else
-                {
-                    if ( reservation.ReservationLocations.Any( rl => rl.ApprovalState == ReservationLocationApprovalState.Denied ) || reservation.ReservationResources.Any( rr => rr.ApprovalState == ReservationResourceApprovalState.Denied ) )
-                    {
-                        reservation.ApprovalState = ReservationApprovalState.ChangesNeeded;
-                    }
-                }
-            }
-
-            if ( reservation.ApprovalState == ReservationApprovalState.Denied )
-            {
-                foreach ( var reservationLocation in reservation.ReservationLocations )
-                {
-                    reservationLocation.ApprovalState = ReservationLocationApprovalState.Denied;
-                }
-
-                foreach ( var reservationResource in reservation.ReservationResources )
-                {
-                    reservationResource.ApprovalState = ReservationResourceApprovalState.Denied;
-                }
-            }
-
-            if ( reservation.ApprovalState == ReservationApprovalState.Approved )
-            {
-                reservation.ApproverAliasId = CurrentPersonAliasId;
-
-                foreach ( var reservationLocation in reservation.ReservationLocations )
-                {
-                    reservationLocation.ApprovalState = ReservationLocationApprovalState.Approved;
-                }
-
-                foreach ( var reservationResource in reservation.ReservationResources )
-                {
-                    reservationResource.ApprovalState = ReservationResourceApprovalState.Approved;
-                }
-            }
-
-            return groupGuidList;
-        }
-
-        private void SendNotifications( Reservation reservation, List<Guid> groupGuidList, RockContext rockContext )
-        {
-            if ( reservation.ApprovalState == ReservationApprovalState.Unapproved || reservation.ApprovalState == ReservationApprovalState.ChangesNeeded )
-            {
-                var groups = new GroupService( rockContext ).GetByGuids( groupGuidList.Distinct().ToList() );
-                foreach ( var group in groups )
-                {
-                    var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
-                    mergeFields.Add( "Reservation", reservation );
-                    var recipients = new List<RecipientData>();
-
-                    foreach ( var person in group.Members
-                                       .Where( m => m.GroupMemberStatus == GroupMemberStatus.Active )
-                                       .Select( m => m.Person ) )
-                    {
-                        if ( person.IsEmailActive &&
-                            person.EmailPreference != EmailPreference.DoNotEmail &&
-                            !string.IsNullOrWhiteSpace( person.Email ) )
-                        {
-                            var personDict = new Dictionary<string, object>( mergeFields );
-                            personDict.Add( "Person", person );
-                            recipients.Add( new RecipientData( person.Email, personDict ) );
-                        }
-                    }
-
-                    if ( recipients.Any() )
-                    {
-                        Email.Send( ReservationType.NotificationEmail.Guid, recipients, string.Empty, string.Empty, ReservationType.IsCommunicationHistorySaved );
-                    }
-                }
-            }
-        }
-
         private void Hydrate( List<ReservationLocation> locationsState, RockContext rockContext )
         {
             var locationService = new LocationService( rockContext );
@@ -2161,10 +1910,5 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         }
 
         #endregion
-
-        protected void ddlReservationType_SelectedIndexChanged( object sender, EventArgs e )
-        {
-            ReservationType = new ReservationTypeService( new RockContext() ).Get( ddlReservationType.SelectedValueAsId().Value );
-        }
     }
 }
