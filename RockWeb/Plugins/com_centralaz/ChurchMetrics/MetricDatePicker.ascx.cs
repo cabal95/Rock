@@ -42,6 +42,7 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
     [CodeEditorField( "Lava Template", "The lava template for any additional html. This block will provide the following Lava variables: (DateTime?) SundayDate, (DateTime?) MondayDate, (Int?) WeekOfYear, (Int?) WeekOfMonth.", CodeEditorMode.Lava, CodeEditorTheme.Rock, 400, false, "", "", 0 )]
     [BooleanField( "Show Holiday Dropdown", "Whether to show the holiday dropdown list.", false )]
     [BooleanField( "Show Calendar", "Whether to show the calendar.", true )]
+    [CustomRadioListField( "Calendar Mode", "Whether the calendar is in day, week, or month mode.", "Day,Week,Month", true, "Week" )]
     public partial class MetricDatePicker : Rock.Web.UI.RockBlock
     {
 
@@ -154,6 +155,9 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
             // Declare the variables for the dates displayed in the block.
             DateTime? mondayDate = null;
             DateTime? sundayDate = PageParameter( "SundayDate" ).AsDateTime();
+            DateTime? monthStartDate = null;
+            DateTime? monthEndDate = null;
+
             int? weekOfYear = null;
             int? weekOfMonth = null;
             if ( !sundayDate.HasValue )
@@ -167,8 +171,20 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                 weekOfMonth = sundayDate.Value.GetWeekOfMonth( DayOfWeek.Monday );
                 weekOfYear = sundayDate.Value.GetWeekOfYear( System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday );
 
-                calCalendar.SelectedDates.SelectRange( mondayDate.Value, sundayDate.Value );
-                calCalendar.VisibleDate = sundayDate.Value;
+                monthStartDate = new DateTime( sundayDate.Value.Year, sundayDate.Value.Month, 1 );
+                monthEndDate = monthStartDate.Value.AddMonths( 1 ).AddDays( -1 );
+
+                var calendarMode = GetAttributeValue( "CalendarMode" );
+                if ( calendarMode == "Month" )
+                {
+                    calCalendar.SelectedDates.SelectRange( monthStartDate.Value, monthEndDate.Value );
+                    calCalendar.VisibleDate = monthEndDate.Value;
+                }
+                else
+                {
+                    calCalendar.SelectedDates.SelectRange( mondayDate.Value, sundayDate.Value );
+                    calCalendar.VisibleDate = sundayDate.Value;
+                }
             }
 
             var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
@@ -177,8 +193,9 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
             mergeFields.Add( "CampusName", campusName );
             mergeFields.Add( "WeekOfYear", weekOfYear );
             mergeFields.Add( "WeekOfMonth", weekOfMonth );
+            mergeFields.Add( "MonthStartDate", monthStartDate );
+            mergeFields.Add( "MonthEndDate", monthEndDate );
             lOutput.Text = GetAttributeValue( "LavaTemplate" ).ResolveMergeFields( mergeFields );
-
         }
 
         /// <summary>

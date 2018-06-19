@@ -20,7 +20,7 @@
                             TitleStyle-BackColor="#ffffff" NextPrevStyle-ForeColor="#333333" FirstDayOfWeek="Sunday" Width="100%" CssClass="calendar-month" OnSelectionChanged="calCalendar_SelectionChanged">
                             <DayStyle CssClass="calendar-day" />
                             <TodayDayStyle CssClass="calendar-today" />
-                            <SelectedDayStyle CssClass="calendar-selected" BackColor="Transparent" />
+                            <SelectedDayStyle CssClass="calendar-selected calendar-day" BackColor="Transparent" />
                             <OtherMonthDayStyle CssClass="calendar-last-month" />
                             <DayHeaderStyle CssClass="calendar-day-header" />
                             <NextPrevStyle CssClass="calendar-next-prev" />
