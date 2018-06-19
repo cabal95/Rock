@@ -83,6 +83,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attribute\Helper.cs" />
+    <Compile Include="Attribute\ReportTemplateFieldAttribute.cs" />
     <Compile Include="Attribute\ReservationApprovalStateFieldAttribute.cs" />
     <Compile Include="Attribute\ReservationFieldAttribute.cs" />
     <Compile Include="Controllers\ScheduledLocationsController.Partial.cs" />
@@ -90,8 +91,13 @@
     <Compile Include="Controllers\ScheduledResourcesController.Partial.cs" />
     <Compile Include="DataFilter\Reservation\ReservationInDateRangeFilter.cs" />
     <Compile Include="Field\Types\ReservationApprovalStateFieldType.cs" />
+    <Compile Include="Field\Types\ReportTemplateFieldType.cs" />
     <Compile Include="Field\Types\ReservationFieldType.cs" />
     <Compile Include="Jobs\FireWorkflowFromReservationInDateRange.cs" />
+    <Compile Include="ReportTemplates\LavaReportTemplate.cs" />
+    <Compile Include="ReportTemplates\ReportTemplate.cs" />
+    <Compile Include="ReportTemplates\ReportTemplateContainer.cs" />
+    <Compile Include="ReportTemplates\DefaultReportTemplate.cs" />
     <Compile Include="Migrations\018_ModifyApprovalWorkflow.cs" />
     <Compile Include="Migrations\017_AddDetailPageToReservationList.cs" />
     <Compile Include="Migrations\016_UpdateWFLavaTemplateAttribute.cs" />
@@ -136,6 +142,7 @@
     <Compile Include="Transactions\ReservationChangeTransaction.cs" />
     <Compile Include="VersionInfo.cs" />
     <Compile Include="Web\Cache\ReservationMinistryCache.cs" />
+    <Compile Include="Web\UI\Controls\Pickers\ReportTemplatePicker.cs" />
     <Compile Include="Web\UI\Controls\Pickers\ReservationPicker.cs" />
     <Compile Include="Web\UI\Controls\Pickers\ScheduledLocationItemPicker.cs" />
     <Compile Include="Web\UI\Controls\Pickers\ScheduledResourcePicker.cs" />

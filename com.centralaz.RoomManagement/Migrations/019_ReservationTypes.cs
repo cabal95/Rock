@@ -167,6 +167,21 @@ namespace com.centralaz.RoomManagement.Migrations
                 }
             }
 
+            // Report Templates
+            RockMigrationHelper.UpdateEntityType( "com.centralaz.RoomManagement.ReportTemplates.DefaultReportTemplate", "Default Template", "com.centralaz.RoomManagement.ReportTemplates.DefaultReportTemplate, com.centralaz.RoomManagement, Version=1.2.1.0, Culture=neutral, PublicKeyToken=null", false, true, "9b74314a-37e0-40f2-906c-2862c93f8888" );
+            RockMigrationHelper.UpdateEntityType( "com.centralaz.RoomManagement.ReportTemplates.LavaReportTemplate", "Lava Template", "com.centralaz.RoomManagement.ReportTemplates.LavaReportTemplate, com.centralaz.RoomManagement, Version=1.2.1.0, Culture=neutral, PublicKeyToken=null", false, true, "7ef82cca-7874-4b8d-adb7-896f05095354" );
+
+            RockMigrationHelper.AddEntityAttribute( "com.centralaz.RoomManagement.ReportTemplates.DefaultReportTemplate", "1EDAFDED-DFE6-4334-B019-6EECBA89E05A", "", "", "Active", "", "Should Service be used?", 0, "True", "D4B18C56-9D42-4B4D-A0AA-CD8A9D5D3C77" );
+            RockMigrationHelper.AddAttributeValue( "D4B18C56-9D42-4B4D-A0AA-CD8A9D5D3C77", 0, "True", "9C14AD2E-596C-4768-BF60-F652F2A008B0" );
+
+            RockMigrationHelper.AddEntityAttribute( "com.centralaz.RoomManagement.ReportTemplates.LavaReportTemplate", "1EDAFDED-DFE6-4334-B019-6EECBA89E05A", "", "", "Active", "", "Should Service be used?", 0, "True", "E6827740-78CA-46C0-A3DD-9C2F4E547D26" );
+            RockMigrationHelper.AddAttributeValue( "E6827740-78CA-46C0-A3DD-9C2F4E547D26", 0, "True", "C255EDF9-6284-4F5C-B680-1C16C123A481" );
+
+            // Page: Room Management
+            // Attrib for BlockType: Reservation Lava:Report Template
+            RockMigrationHelper.UpdateBlockTypeAttribute( "D0EC5F69-5BB1-4BCA-B0F0-3FE2B9267635", "6FD93801-9E5B-48E7-A6C3-B0354A96E5E7", "Report Template", "ReportTemplate", "", "The template for the printed report", 16, @"9b74314a-37e0-40f2-906c-2862c93f8888", "B9BEAFB9-A958-45E6-86E4-7BA6904CC7B1" );
+            // Attrib for BlockType: Reservation Lava:Report Lava
+            RockMigrationHelper.UpdateBlockTypeAttribute( "D0EC5F69-5BB1-4BCA-B0F0-3FE2B9267635", "1D0D3794-C210-48A8-8C68-3FBEC08A6BA5", "Report Lava", "ReportLava", "", "If the Lava Template is selected, this is the lava that will be used in the report", 17, @"{% include '~/Plugins/com_centralaz/RoomManagement/Assets/Lava/ReservationReport.lava' %}", "69131013-4E48-468E-B2C2-CF19CEA26590" );          
 
         }
 

@@ -35,8 +35,11 @@ using Rock.Security;
 
 using com.centralaz.RoomManagement.Model;
 using com.centralaz.RoomManagement.Web.Cache;
+using com.centralaz.RoomManagement.Attribute;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
+using iTextSharp.text.html.simpleparser;
+using com.centralaz.RoomManagement.ReportTemplates;
 
 namespace RockWeb.Plugins.com_centralaz.RoomManagement
 {
@@ -58,14 +61,16 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
     [BooleanField( "Show Week View", "Determines whether the week view option is shown", true, order: 10 )]
     [BooleanField( "Show Month View", "Determines whether the month view option is shown", true, order: 11 )]
 
-    [CodeEditorField( "Lava Template", "Lava template to use to display the list of events.", CodeEditorMode.Lava, CodeEditorTheme.Rock, 400, true, @"{% include '~/Themes/Stark/Assets/Lava/CalendarGroupedOccurrence.lava' %}", "", 12 )]
+    [CodeEditorField( "Lava Template", "Lava template to use to display the list of reservations.", CodeEditorMode.Lava, CodeEditorTheme.Rock, 400, true, @"{% include '~/Plugins/com_centralaz/RoomManagement/Assets/Lava/Reservation.lava' %}", "", 12 )]
 
     [DayOfWeekField( "Start of Week Day", "Determines what day is the start of a week.", true, DayOfWeek.Sunday, order: 13 )]
 
     [TextField( "Report Font", "", true, "Gotham", "", 14 )]
     [TextField( "Report Logo", "URL to the logo (PNG) to display in the printed report.", true, "~/Plugins/com_centralaz/RoomManagement/Assets/Icons/Central_Logo_Black_rgb_165_90.png", "", 15 )]
+    [ReportTemplateField( "Report Template", "The template for the printed report", true, "9b74314a-37e0-40f2-906c-2862c93f8888", "", 16 )]
+    [CodeEditorField( "Report Lava", "If the Lava Template is selected, this is the lava that will be used in the report", CodeEditorMode.Lava, CodeEditorTheme.Rock, 400, true, @"{% include '~/Plugins/com_centralaz/RoomManagement/Assets/Lava/ReservationReport.lava' %}", "", 17 )]
 
-    [BooleanField( "Enable Debug", "Display a list of merge fields available for lava.", false, "", 16 )]
+    [BooleanField( "Enable Debug", "Display a list of merge fields available for lava.", false, "", 18 )]
     public partial class ReservationLava : Rock.Web.UI.RockBlock
     {
         #region Fields
@@ -315,199 +320,24 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
         protected void lbPrint_Click( object sender, EventArgs e )
         {
-            //Fonts
-            String font = GetAttributeValue( "ReportFont" );
-            var titleFont = FontFactory.GetFont( font, 16, Font.BOLD );
-            var listHeaderFont = FontFactory.GetFont( font, 12, Font.BOLD, Color.DARK_GRAY );
-            var listSubHeaderFont = FontFactory.GetFont( font, 10, Font.BOLD, Color.DARK_GRAY );
-            var listItemFontNormal = FontFactory.GetFont( font, 8, Font.NORMAL );
-            var listItemFontUnapproved = FontFactory.GetFont( font, 8, Font.ITALIC, Color.MAGENTA );
-            var noteFont = FontFactory.GetFont( font, 8, Font.NORMAL, Color.GRAY );
-            Font zapfdingbats = new Font( Font.ZAPFDINGBATS );
-
             List<ReservationService.ReservationSummary> reservationSummaryList = GetReservationSummaries();
 
-            // Bind to Grid
-            var reservationSummaries = reservationSummaryList.Select( r => new
+            string logoFileUrl = GetAttributeValue( "ReportLogo" );
+            if ( !logoFileUrl.ToLower().StartsWith( "http" ) )
             {
-                Id = r.Id,
-                ReservationName = r.ReservationName,
-                ReservationType = r.ReservationType,
-                ApprovalState = r.ApprovalState.ConvertToString(),
-                Locations = r.ReservationLocations.ToList(),
-                Resources = r.ReservationResources.ToList(),
-                CalendarDate = r.EventStartDateTime.ToLongDateString(),
-                EventStartDateTime = r.EventStartDateTime,
-                EventEndDateTime = r.EventEndDateTime,
-                ReservationStartDateTime = r.ReservationStartDateTime,
-                ReservationEndDateTime = r.ReservationEndDateTime,
-                EventDateTimeDescription = r.EventTimeDescription,
-                ReservationDateTimeDescription = r.ReservationTimeDescription,
-                SetupPhotoId = r.SetupPhotoId,
-                Note = r.Note
-            } )
-            .OrderBy( r => r.EventStartDateTime )
-            .GroupBy( r => r.EventStartDateTime.Date )
-            .Select( r => r.ToList() )
-            .ToList();
-
-            //Setup the document
-            var document = new Document( PageSize.A4, 25, 25, 25, 25 );
-
-            var output = new MemoryStream();
-            var writer = PdfWriter.GetInstance( document, output );
-
-            document.Open();
-
-            // Add logo
-            try
-            {
-                string logoUri = GetAttributeValue( "ReportLogo" );
-                string fileUrl = string.Empty;
-                iTextSharp.text.Image logo;
-                if ( logoUri.ToLower().StartsWith( "http" ) )
-                {
-                    logo = iTextSharp.text.Image.GetInstance( new Uri( logoUri ) );
-                }
-                else
-                {
-                    fileUrl = Server.MapPath( ResolveRockUrl( logoUri ) );
-                    logo = iTextSharp.text.Image.GetInstance( fileUrl );
-                }
-
-                logo.Alignment = iTextSharp.text.Image.RIGHT_ALIGN;
-                logo.ScaleToFit( 100, 55 );
-                document.Add( logo );
-            }
-            catch { }
-
-            // Write the document
-            var today = RockDateTime.Today;
-            var filterStartDateTime = FilterStartDate.HasValue ? FilterStartDate.Value : today;
-            var filterEndDateTime = FilterEndDate.HasValue ? FilterEndDate.Value : today.AddMonths( 1 );
-            String title = String.Format( "Reservations for: {0} - {1}", filterStartDateTime.ToString( "MMMM d" ), filterEndDateTime.ToString( "MMMM d" ) );
-            document.Add( new Paragraph( title, titleFont ) );
-
-            // Populate the Lists            
-            foreach ( var reservationDay in reservationSummaries )
-            {
-                var firstReservation = reservationDay.FirstOrDefault();
-                if ( firstReservation != null )
-                {
-                    //Build Header
-                    document.Add( Chunk.NEWLINE );
-                    String listHeader = firstReservation.CalendarDate;
-                    document.Add( new Paragraph( listHeader, listHeaderFont ) );
-
-                    //Build Subheaders
-                    var listSubHeaderTable = new PdfPTable( 7 );
-                    listSubHeaderTable.LockedWidth = true;
-                    listSubHeaderTable.TotalWidth = PageSize.A4.Width - document.LeftMargin - document.RightMargin;
-                    listSubHeaderTable.HorizontalAlignment = 0;
-                    listSubHeaderTable.SpacingBefore = 10;
-                    listSubHeaderTable.SpacingAfter = 0;
-                    listSubHeaderTable.DefaultCell.BorderWidth = 0;
-                    listSubHeaderTable.DefaultCell.BorderWidthBottom = 1;
-                    listSubHeaderTable.DefaultCell.BorderColorBottom = Color.DARK_GRAY;
-
-                    listSubHeaderTable.AddCell( new Phrase( "Name", listSubHeaderFont ) );
-                    listSubHeaderTable.AddCell( new Phrase( "Event Time", listSubHeaderFont ) );
-                    listSubHeaderTable.AddCell( new Phrase( "Reservation Time", listSubHeaderFont ) );
-                    listSubHeaderTable.AddCell( new Phrase( "Locations", listSubHeaderFont ) );
-                    listSubHeaderTable.AddCell( new Phrase( "Resources", listSubHeaderFont ) );
-                    listSubHeaderTable.AddCell( new Phrase( "Has Layout?", listSubHeaderFont ) );
-                    listSubHeaderTable.AddCell( new Phrase( "Status", listSubHeaderFont ) );
-
-                    document.Add( listSubHeaderTable );
-
-                    foreach ( var reservationSummary in reservationDay )
-                    {
-                        //Build the list item table
-                        var listItemTable = new PdfPTable( 7 );
-                        listItemTable.LockedWidth = true;
-                        listItemTable.TotalWidth = PageSize.A4.Width - document.LeftMargin - document.RightMargin;
-                        listItemTable.HorizontalAlignment = 0;
-                        listItemTable.SpacingBefore = 0;
-                        listItemTable.SpacingAfter = 1;
-                        listItemTable.DefaultCell.BorderWidth = 0;
-
-                        //Add the list items
-                        listItemTable.AddCell( new Phrase( reservationSummary.ReservationName, listItemFontNormal ) );
-
-                        listItemTable.AddCell( new Phrase( reservationSummary.EventDateTimeDescription, listItemFontNormal ) );
-
-                        listItemTable.AddCell( new Phrase( reservationSummary.ReservationDateTimeDescription, listItemFontNormal ) );
-
-                        List locationList = new List( List.UNORDERED, 8f );
-                        locationList.SetListSymbol( "\u2022" );
-
-                        foreach ( var reservationLocation in reservationSummary.Locations )
-                        {
-                            var listItem = new iTextSharp.text.ListItem( reservationLocation.Location.Name, listItemFontNormal );
-                            if ( reservationLocation.ApprovalState == ReservationLocationApprovalState.Approved )
-                            {
-                                listItem.Add( new Phrase( "\u0034", zapfdingbats ) );
-                            }
-                            locationList.Add( listItem );
-                        }
-
-                        PdfPCell locationCell = new PdfPCell();
-                        locationCell.Border = 0;
-                        locationCell.PaddingTop = -2;
-                        locationCell.AddElement( locationList );
-                        listItemTable.AddCell( locationCell );
-
-                        List resourceList = new List( List.UNORDERED, 8f );
-                        resourceList.SetListSymbol( "\u2022" );
-
-                        foreach ( var reservationResource in reservationSummary.Resources )
-                        {
-                            var listItem = new iTextSharp.text.ListItem( String.Format( "{0}({1})", reservationResource.Resource.Name, reservationResource.Quantity ), listItemFontNormal );
-                            if ( reservationResource.ApprovalState == ReservationResourceApprovalState.Approved )
-                            {
-                                listItem.Add( new Phrase( "\u0034", zapfdingbats ) );
-                            }
-                            resourceList.Add( listItem );
-                        }
-
-                        PdfPCell resourceCell = new PdfPCell();
-                        resourceCell.Border = 0;
-                        resourceCell.PaddingTop = -2;
-                        resourceCell.AddElement( resourceList );
-                        listItemTable.AddCell( resourceCell );
-
-                        listItemTable.AddCell( new Phrase( reservationSummary.SetupPhotoId.HasValue.ToYesNo(), listItemFontNormal ) );
-
-                        var listItemFont = ( reservationSummary.ApprovalState == "Unapproved" ) ? listItemFontUnapproved : listItemFontNormal;
-                        listItemTable.AddCell( new Phrase( reservationSummary.ApprovalState, listItemFont ) );
-
-                        document.Add( listItemTable );
-
-                        if ( !string.IsNullOrWhiteSpace( reservationSummary.Note ) )
-                        {
-                            //document.Add( Chunk.NEWLINE );
-                            var listNoteTable = new PdfPTable( 1 );
-                            listNoteTable.LockedWidth = true;
-                            listNoteTable.TotalWidth = PageSize.A4.Width - document.LeftMargin - document.RightMargin - 50;
-                            listNoteTable.HorizontalAlignment = 1;
-                            listNoteTable.SpacingBefore = 0;
-                            listNoteTable.SpacingAfter = 1;
-                            listNoteTable.DefaultCell.BorderWidth = 0;
-                            listNoteTable.AddCell( new Phrase( reservationSummary.Note, noteFont ) );
-                            document.Add( listNoteTable );
-                        }
-                    }
-                }
+                logoFileUrl = Server.MapPath( ResolveRockUrl( logoFileUrl ) );
             }
 
-            document.Close();
+            var reportTemplate = GetReportTemplate( GetAttributeValue( "ReportTemplate" ).AsGuidOrNull() );
+
+            var outputArray = reportTemplate.GenerateReport( reservationSummaryList, logoFileUrl, GetAttributeValue( "ReportFont" ), FilterStartDate, FilterEndDate, GetAttributeValue( "ReportLava" ) );
 
             Response.ClearHeaders();
             Response.ClearContent();
             Response.Clear();
             Response.ContentType = "application/pdf";
-            Response.AddHeader( "Content-Disposition", string.Format( "attachment;filename=Reservation Schedule for {0} - {1}.pdf", filterStartDateTime.ToString( "MMMM d" ), filterEndDateTime.ToString( "MMMM d" ) ) );
-            Response.BinaryWrite( output.ToArray() );
+            Response.AddHeader( "Content-Disposition", string.Format( "attachment;filename=Reservation Schedule for {0} - {1}.pdf", FilterStartDate.Value.ToString( "MMMM d" ), FilterEndDate.Value.ToString( "MMMM d" ) ) );
+            Response.BinaryWrite( outputArray );
             Response.Flush();
             Response.End();
             return;
@@ -798,6 +628,32 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             nbMessage.Text = string.Format( "<p>{0}</p>", message );
             nbMessage.NotificationBoxType = NotificationBoxType.Danger;
             nbMessage.Visible = true;
+        }
+
+
+        /// <summary>
+        /// Gets the report template.
+        /// </summary>
+        /// <param name="reportTemplateEntityTypeId">The report template entity type identifier.</param>
+        /// <returns></returns>
+        private ReportTemplate GetReportTemplate( Guid? reportTemplateGuid )
+        {
+            if ( reportTemplateGuid.HasValue )
+            {
+                var reportTemplateEntityType = EntityTypeCache.Read( reportTemplateGuid.Value );
+                if ( reportTemplateEntityType == null )
+                {
+                    return null;
+                }
+                else
+                {
+                    return ReportTemplateContainer.GetComponent( reportTemplateEntityType.Name );
+                }
+            }
+            else
+            {
+                return null;
+            }
         }
 
         #endregion
