@@ -1,0 +1,124 @@
+{% assign red = "#ff8888" %}
+{% assign yellow = "#ffffa3" %}
+{% assign green = "#9FFF9F" %}
+{% assign betterGreen = "#6be56b" %}
+<div class="grid">
+<table class="grid-table table table-bordered table-striped table-hover" style="background-color: #edeae6">
+		<thead>
+			<tr align="left" data-original-title="" title="">
+			    <td colspan='3'></td>
+				<th colspan='4' data-priority="1" scope="col">
+					{{table1.rows[0].ThisMonthStart | Date:'MMMM'}}
+				</th>
+			</tr>
+			<tr align="left" data-original-title="" title="">
+				<th data-priority="1" scope="col">Excellence KPI's</th>
+				<th data-priority="1" scope="col">Fiscal Year Goal</th>
+				<th data-priority="1" scope="col">Weighted Value</th>
+				<th data-priority="1" scope="col">Goal</th>
+				<th data-priority="1" scope="col">Actual</th>
+				<th data-priority="1" scope="col">% to Goal</th>
+				<th data-priority="1" scope="col">YTD % to Goal</th>
+			</tr>
+		</thead>
+		<tbody>
+        	<!-- Show row data -->
+    		{%for row in table2.rows %}
+    		{% if row.Order == 0 %}
+			    {% assign monthRating = row.MonthlyPercentToGoal | AsDecimal %}
+			    {% assign yearRating = row.YearlyPercentToGoal | AsDecimal %}
+			{% else %}
+			    {% assign monthRating = row.MonthlyRating | AsDecimal %}
+			    {% assign yearRating = row.YearlyRating | AsDecimal %}
+			{% endif %}
+
+			{% if monthRating >= 0.9 %}
+			    {% assign monthColor = betterGreen %}
+			{% elseif monthRating >= 0.8 %}
+			    {% assign monthColor = green %}
+			{% elseif monthRating >= 0.7 %}
+			    {% assign monthColor = yellow %}
+			{% else %}
+			    {% assign monthColor = red %}
+			{% endif %}
+
+			{% if yearRating >= 0.9 %}
+			    {% assign yearColor = betterGreen %}
+			{% elseif yearRating >= 0.8 %}
+			    {% assign yearColor = green %}
+			{% elseif yearRating >= 0.7 %}
+			    {% assign yearColor = yellow %}
+			{% else %}
+			    {% assign yearColor = red %}
+			{% endif %}
+
+    			<tr align="left" data-original-title="" title="">
+    				<td class="grid-select-cell" data-priority="1">{% if row.Order == 0 %}{{row.Name}}{% endif %}</td>
+    				<td class="grid-select-cell" data-priority="1">{% if row.Order == 0 %}{{row.YearlyGoal }}{% endif %}</td>
+    				<td class="grid-select-cell" data-priority="1">{{row.WeightedValue | Format:'p1' }}</td>
+    				<td class="grid-select-cell" data-priority="1">{% if row.Order == 0 %}{{row.MonthlyGoal}}{% endif %}</td>
+    				<td class="grid-select-cell" data-priority="1">{% if row.Order == 0 %}{{row.MonthlyMeasure}}{% else %}RATING{% endif %}</td>
+    				<td class="grid-select-cell" data-priority="1" style="background-color:{{monthColor}};"><p style="color:black">{{monthRating | Format:'p1' }}</p></td>
+    				<td class="grid-select-cell" data-priority="1" style="background-color:{{yearColor}};"><p style="color:black">{{yearRating | Format:'p1' }}</p></td>
+    			</tr>
+    		{% endfor %}
+		</tbody>
+		<tfoot>
+		</tfoot>
+	</table>
+</div>
+
+
+<div class="row">
+<div class="col-md-8">
+<div class="grid">
+<table class="grid-table table table-bordered table-striped table-hover" >
+		<thead>
+			<tr align="left" data-original-title="" title="">
+				<th data-priority="1" scope="col">Excellence Rating Scale</th>
+				<th data-priority="1" scope="col">Excellence Definition</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr align="left" data-original-title="" title="">
+				<td class="grid-select-cell" data-priority="1" style="background-color:{{betterGreen}};">
+				    <div class='pull-left'>Greater than >=</div>
+				    <div class='pull-right'>100%</div></td>
+				<td class="grid-select-cell" data-priority="1" style="background-color:{{betterGreen}};">Exceptional Performance</td>
+			</tr>
+
+			<tr align="left" data-original-title="" title="">
+				<td class="grid-select-cell" data-priority="1" style="background-color:{{betterGreen}};">
+				    <div class='pull-left'>90%</div>
+				    <div class='pull-right'>100%</div></td>
+				<td class="grid-select-cell" data-priority="1" style="background-color:{{betterGreen}};">Exceeding the majority of the ministry goals and expectations</td>
+			</tr>
+
+			<tr align="left" data-original-title="" title="">
+				<td class="grid-select-cell" data-priority="1" style="background-color:{{green}};">
+				    <div class='pull-left'>80%</div>
+				    <div class='pull-right'>89.9%</div></td>
+				<td class="grid-select-cell" data-priority="1" style="background-color:{{green}};">Meets some ministry goals and expectations</td>
+			</tr>
+
+			<tr align="left" data-original-title="" title="">
+				<td class="grid-select-cell" data-priority="1" style="background-color:{{yellow}};">
+				    <div class='pull-left'>70%</div>
+				    <div class='pull-right'>79.9%</div></td>
+				<td class="grid-select-cell" data-priority="1" style="background-color:{{yellow}};">Not meeting the majority of ministry goals and expectations.  Needs improvement in many areas</td>
+			</tr>
+
+			<tr align="left" data-original-title="" title="">
+				<td class="grid-select-cell" data-priority="1" style="background-color:{{red}};">
+				    <div class='pull-left'>Less than </div>
+				    <div class='pull-right'>70%</div></td>
+				<td class="grid-select-cell" data-priority="1" style="background-color:{{red}};">Performance below ministry goals and expectations.  Needs immediate improvement</td>
+			</tr>
+
+		</tbody>
+		<tfoot>
+		</tfoot>
+	</table>
+</div>
+</div>
+</div>
