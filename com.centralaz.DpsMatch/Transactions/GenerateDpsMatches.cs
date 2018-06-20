@@ -147,8 +147,14 @@ namespace com.centralaz.DpsMatch.Transactions
                                     }
                                     parameters.Add( "KeyString", String.Format( "{0}{1}{2}{3}{4}{5}{6}", parameters["LastName"], parameters["FirstName"], parameters["Race"], parameters["Sex"], parameters["Hair"], parameters["Eyes"], parameters["ResidentialZip"] ) );
 
-                                    DbService.ExecuteCommand( "_com_centralaz_spDpsMatch_Offender", System.Data.CommandType.StoredProcedure, parameters );
+                                    DbService.ExecuteCommand( "_com_centralaz_spDpsMatch_Offender", System.Data.CommandType.StoredProcedure, parameters, DatabaseTimeout.Value );
 
+                                    DbService.ExecuteCommand( "_com_centralaz_spDpsMatch_Match", System.Data.CommandType.StoredProcedure, null, DatabaseTimeout.Value );
+
+                                    if ( WorkflowTypeGuid != null )
+                                    {
+                                        LaunchWorkflow( rockContext, WorkflowTypeGuid.Value );
+                                    }
                                 }
                             }
                             catch ( Exception e )
@@ -156,13 +162,6 @@ namespace com.centralaz.DpsMatch.Transactions
                                 ExceptionLogService.LogException( e, null );
                             }
                         }
-                    }
-
-                    DbService.ExecuteCommand( "_com_centralaz_spDpsMatch_Match", System.Data.CommandType.StoredProcedure );
-
-                    if ( WorkflowTypeGuid != null )
-                    {
-                        LaunchWorkflow( rockContext, WorkflowTypeGuid.Value );
                     }
                 }
             }
