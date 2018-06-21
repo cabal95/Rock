@@ -149,12 +149,6 @@ namespace com.centralaz.DpsMatch.Transactions
 
                                     DbService.ExecuteCommand( "_com_centralaz_spDpsMatch_Offender", System.Data.CommandType.StoredProcedure, parameters, DatabaseTimeout.Value );
 
-                                    DbService.ExecuteCommand( "_com_centralaz_spDpsMatch_Match", System.Data.CommandType.StoredProcedure, null, DatabaseTimeout.Value );
-
-                                    if ( WorkflowTypeGuid != null )
-                                    {
-                                        LaunchWorkflow( rockContext, WorkflowTypeGuid.Value );
-                                    }
                                 }
                             }
                             catch ( Exception e )
@@ -162,6 +156,13 @@ namespace com.centralaz.DpsMatch.Transactions
                                 ExceptionLogService.LogException( e, null );
                             }
                         }
+                    }
+
+                    DbService.ExecuteCommand( "_com_centralaz_spDpsMatch_Match", System.Data.CommandType.StoredProcedure, null, DatabaseTimeout.Value );
+
+                    if ( WorkflowTypeGuid != null )
+                    {
+                        LaunchWorkflow( rockContext, WorkflowTypeGuid.Value );
                     }
                 }
             }
