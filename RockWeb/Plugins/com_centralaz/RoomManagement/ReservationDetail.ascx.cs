@@ -198,6 +198,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             gViewResources.DataKeyNames = new string[] { "Guid" };
             gViewResources.GridRebind += gResources_GridRebind;
 
+            rptWorkflows.ItemCommand += rptWorkflows_ItemCommand;
+
+
             // this event gets fired after block settings are updated. it's nice to repaint the screen if these settings would alter it
             this.AddConfigurationUpdateTrigger( upnlContent );
 
@@ -676,6 +679,27 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                         {
                             reservationLocation.ApprovalState = ReservationLocationApprovalState.Approved;
                         }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the ItemCommand event of the rptWorkflows control.
+        /// </summary>
+        /// <param name="source">The source of the event.</param>
+        /// <param name="e">The <see cref="RepeaterCommandEventArgs"/> instance containing the event data.</param>
+        protected void rptWorkflows_ItemCommand( object source, RepeaterCommandEventArgs e )
+        {
+            if ( e.CommandName == "LaunchWorkflow" )
+            {
+                using ( var rockContext = new RockContext() )
+                {
+                    var reservation = new ReservationService( rockContext ).Get( hfReservationId.ValueAsInt() );
+                    var reservationWorkflowTrigger = new ReservationWorkflowTriggerService( rockContext ).Get( e.CommandArgument.ToString().AsInteger() );
+                    if ( reservation != null && reservationWorkflowTrigger != null && reservationWorkflowTrigger.WorkflowType.IsAuthorized( Authorization.VIEW, CurrentPerson ) )
+                    {
+                        LaunchWorkflow( rockContext, reservation, reservationWorkflowTrigger );
                     }
                 }
             }
@@ -1387,6 +1411,37 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             gViewResources.EntityTypeId = EntityTypeCache.Read<com.centralaz.RoomManagement.Model.ReservationResource>().Id;
             gViewResources.SetLinqDataSource( ResourcesState.AsQueryable().OrderBy( r => r.Resource.Name ) );
             gViewResources.DataBind();
+
+            if ( ReservationType != null )
+            {
+                var reservationWorkflowTriggers = ReservationType.ReservationWorkflowTriggers;
+                var manualWorkflows = reservationWorkflowTriggers
+                    .Where( w =>
+                        w.TriggerType == ReservationWorkflowTriggerType.Manual &&
+                        w.WorkflowType != null )
+                    .OrderBy( w => w.WorkflowType.Name )
+                    .Distinct();
+
+                var authorizedWorkflows = new List<ReservationWorkflowTrigger>();
+                foreach ( var manualWorkflow in manualWorkflows )
+                {
+                    if ( manualWorkflow.WorkflowType.IsAuthorized( Authorization.VIEW, CurrentPerson ) )
+                    {
+                        authorizedWorkflows.Add( manualWorkflow );
+                    }
+                }
+
+                if ( authorizedWorkflows.Any() )
+                {
+                    lblWorkflows.Visible = true;
+                    rptWorkflows.DataSource = authorizedWorkflows.ToList();
+                    rptWorkflows.DataBind();
+                }
+                else
+                {
+                    lblWorkflows.Visible = false;
+                }
+            }
 
 
         }
@@ -2115,6 +2170,69 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
 
             return reservation;
+        }
+
+        /// <summary>
+        /// Launches the workflow.
+        /// </summary>
+        /// <param name="rockContext">The rock context.</param>
+        /// <param name="reservation">The reservation.</param>
+        /// <param name="reservationWorkflowTrigger">The reservation workflow trigger.</param>
+        private void LaunchWorkflow( RockContext rockContext, Reservation reservation, ReservationWorkflowTrigger reservationWorkflowTrigger )
+        {
+            if ( reservation != null && reservationWorkflowTrigger != null )
+            {
+                var workflowType = WorkflowTypeCache.Read( reservationWorkflowTrigger.WorkflowTypeId.Value );
+                if ( workflowType != null && ( workflowType.IsActive ?? true ) )
+                {
+                    var workflow = Rock.Model.Workflow.Activate( workflowType, reservationWorkflowTrigger.WorkflowType.WorkTerm, rockContext );
+                    if ( workflow != null )
+                    {
+                        var workflowService = new Rock.Model.WorkflowService( rockContext );
+
+                        List<string> workflowErrors;
+                        if ( workflowService.Process( workflow, reservation, out workflowErrors ) )
+                        {
+                            if ( workflow.Id != 0 )
+                            {
+                                ReservationWorkflow reservationWorkflow = new ReservationWorkflow();
+                                reservationWorkflow.ReservationId = reservation.Id;
+                                reservationWorkflow.WorkflowId = workflow.Id;
+                                reservationWorkflow.ReservationWorkflowTriggerId = reservationWorkflowTrigger.Id;
+                                reservationWorkflow.TriggerType = reservationWorkflowTrigger.TriggerType;
+                                reservationWorkflow.TriggerQualifier = reservationWorkflowTrigger.QualifierValue;
+                                new ReservationWorkflowService( rockContext ).Add( reservationWorkflow );
+
+                                rockContext.SaveChanges();
+
+                                if ( workflow.HasActiveEntryForm( CurrentPerson ) )
+                                {
+                                    var qryParam = new Dictionary<string, string>();
+                                    qryParam.Add( "WorkflowTypeId", workflowType.Id.ToString() );
+                                    qryParam.Add( "WorkflowId", workflow.Id.ToString() );
+                                    NavigateToLinkedPage( "WorkflowEntryPage", qryParam );
+                                }
+                                else
+                                {
+                                    mdWorkflowLaunched.Show( string.Format( "A '{0}' workflow has been started.",
+                                        workflowType.Name ), ModalAlertType.Information );
+                                }
+                                
+                            }
+                            else
+                            {
+                                mdWorkflowLaunched.Show( string.Format( "A '{0}' workflow was processed.",
+                                    workflowType.Name ), ModalAlertType.Information );
+                            }
+                        }
+                        else
+                        {
+                            mdWorkflowLaunched.Show( "Workflow Processing Error(s):<ul><li>" + workflowErrors.AsDelimited( "</li><li>" ) + "</li></ul>", ModalAlertType.Information );
+                        }
+                        ShowDetail( PageParameter( "ReservationId" ).AsInteger() );
+                    }
+                }
+            }
         }
 
         #endregion

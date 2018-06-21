@@ -122,7 +122,21 @@
                     </div>
                     <asp:PlaceHolder ID="phViewLocationAnswers" runat="server" />
                     <asp:PlaceHolder ID="phViewResourceAnswers" runat="server" />
-
+                    <div class="row">
+                        <div class="col-md-6">
+                            <Rock:ModalAlert ID="mdWorkflowLaunched" runat="server" />
+                            <asp:Label ID="lblWorkflows" Text="Available Workflows" Font-Bold="true" runat="server" />
+                            <div class="margin-b-md">
+                                <asp:Repeater ID="rptWorkflows" runat="server">
+                                    <ItemTemplate>
+                                        <asp:LinkButton ID="lbWorkflow" runat="server" CssClass="btn btn-default btn-xs" CommandArgument='<%# Eval("Id") %>' CommandName="LaunchWorkflow">
+                                        <%# Eval("WorkflowType.Name") %>
+                                        </asp:LinkButton>
+                                    </ItemTemplate>
+                                </asp:Repeater>
+                            </div>
+                        </div>
+                    </div>
                     <div class="actions">
                         <asp:LinkButton ID="btnEdit" runat="server" AccessKey="e" ToolTip="Alt+e" Text="Edit" CssClass="btn btn-primary" OnClick="btnEdit_OnClick" CausesValidation="false" />
                         <asp:LinkButton ID="btnDelete" runat="server" Text="Delete" CssClass="btn btn-link" OnClick="btnDelete_OnClick" CausesValidation="false" />
