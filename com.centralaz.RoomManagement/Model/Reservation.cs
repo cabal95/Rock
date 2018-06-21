@@ -358,6 +358,50 @@ namespace com.centralaz.RoomManagement.Model
             return string.Empty;
         }
 
+        public string GetFriendlyReservationScheduleText()
+        {
+            string result = "N/A";
+            if ( Schedule != null )
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append( Schedule.ToFriendlyScheduleText() );
+
+                var calendarEvent = Schedule.GetCalenderEvent();
+                if ( calendarEvent != null && calendarEvent.Duration != null )
+                {
+                    var duration = calendarEvent.Duration;
+                    if ( duration.Hours > 0 )
+                    {
+                        if ( duration.Hours == 1 )
+                        {
+                            sb.AppendFormat( " for {0} hr", duration.Hours );
+                        }
+                        else
+                        {
+                            sb.AppendFormat( " for {0} hrs", duration.Hours );
+                        }
+
+                        if ( duration.Minutes > 0 )
+                        {
+                            sb.AppendFormat( " and {0} min", duration.Minutes );
+                        }
+                    }
+                    else
+                    {
+                        if ( duration.Minutes > 0 )
+                        {
+                            sb.AppendFormat( " for {0} min", duration.Minutes );
+                        }
+                    }
+                }
+
+                result = sb.ToString();
+            }
+
+            return result;
+        }
+
+
 
         /// <summary>
         /// Creates a transaction to act a hook for workflow triggers before changes occur
