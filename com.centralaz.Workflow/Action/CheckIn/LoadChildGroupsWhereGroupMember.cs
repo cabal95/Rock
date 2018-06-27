@@ -32,11 +32,11 @@ namespace Rock.Workflow.Action.CheckIn
     /// Loads the child groups (of the configured parent-group) for which the person is an active member. 
     /// </summary>
     [ActionCategory( "com_centralaz: Check-In" )]
-    [Description( @"Loads the child groups (under the configured parent-group) for which the person is an active member and then attach them to the check-in group type so they can be 
+    [Description( @"Loads the child groups (under the configured parent-group) where the person is an active member. This action attaches these gruops to the check-in group type so they can be 
 selected (if there is more than one) during check-in and so that the attendance is recorded on the actual serving team. Additionally the group type's locations and those location's 
-schedules will also be attached/copied to the groups so the check-in system works correctly. This check-in action should schedules be placed after the LoadLocation action.<br/><br/>
-This action solves the problem of having hundreds of serving groups and that you don't want to manage as individual check-in groups--each with the same locations and schedules.
-You can set up ONE general 'serving' check-in group (synced to a dataview of all your 'authorized' volunteers) and then use this action to point to your real serving teams (groups)
+schedules will also be attached/copied to the groups so the check-in system works correctly. This check-in action should be placed after the LoadLocation action.<br/><br/>
+This action solves the problem of when you have hundreds of serving groups and that you don't want to manage as individual check-in groups--each with the same locations and schedules.
+You can set up ONE general 'serving' check-in group (synced to a dataview of all your 'authorized' volunteers) and then use this action pointing to your real serving teams (groups)
 so you don't have to manage hundreds of group/location/schedules." )]
     [Export( typeof( ActionComponent ) )]
     [ExportMetadata( "ComponentName", "Load Child Groups Where Group Member" )]
