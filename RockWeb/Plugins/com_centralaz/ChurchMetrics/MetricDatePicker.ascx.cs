@@ -37,8 +37,8 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
     [DisplayName( "Metric Date Picker" )]
     [Category( "com_centralaz > ChurchMetrics" )]
     [Description( "Allows users to select a week to view metrics for. This block can use the following page parameters: Holiday, CampusId, SundayDate" )]
-    [CategoryField( "Metric Categories", "The block will look through metric values in these metric categories and their descendants to find the 'Most Recent' metric value that the time range is based off of.", true, required: true, entityTypeName: "Rock.Model.MetricCategory" )]
-    [CategoryField( "Schedule Categories", "The block will look through metric values in these schedule categories and their descendants to find the 'Most Recent' metric value that the time range is based off of.", true, required: true, entityTypeName: "Rock.Model.Schedule" )]
+    [CategoryField( "Metric Categories", "The block will look through metric values in these metric categories and their descendants to find the 'Most Recent' metric value that the time range is based off of.", true, entityTypeName: "Rock.Model.MetricCategory" )]
+    [CategoryField( "Schedule Categories", "The block will look through metric values in these schedule categories and their descendants to find the 'Most Recent' metric value that the time range is based off of.", true, entityTypeName: "Rock.Model.Schedule" )]
     [CodeEditorField( "Lava Template", "The lava template for any additional html. This block will provide the following Lava variables: (DateTime?) SundayDate, (DateTime?) MondayDate, (Int?) WeekOfYear, (Int?) WeekOfMonth.", CodeEditorMode.Lava, CodeEditorTheme.Rock, 400, false, "", "", 0 )]
     [BooleanField( "Show Holiday Dropdown", "Whether to show the holiday dropdown list.", false )]
     [BooleanField( "Show Calendar", "Whether to show the calendar.", true )]
@@ -249,6 +249,10 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                 if ( latestMetricDateTime.HasValue )
                 {
                     sundayDate = latestMetricDateTime.Value.SundayDate();
+                }
+                else
+                {
+                    sundayDate = RockDateTime.Now.Date;
                 }
             }
 
