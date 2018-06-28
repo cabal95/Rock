@@ -1,11 +1,11 @@
 USE [RockDB_Test]
 GO
 
-/****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]    Script Date: 6/28/2018 8:34:57 AM ******/
+/****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]    Script Date: 6/28/2018 11:15:06 AM ******/
 DROP PROCEDURE [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]
 GO
 
-/****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]    Script Date: 6/28/2018 8:34:57 AM ******/
+/****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]    Script Date: 6/28/2018 11:15:06 AM ******/
 SET ANSI_NULLS ON
 GO
 
@@ -137,8 +137,8 @@ INSERT INTO @Attender
 SELECT personTable.Id,
 	personTable.CampusId,
 	connectionCardTable.ConnectionCardDate,
-	baptismTable.BaptismDate,
 	discoverMoreTable.DiscoverMoreDate,
+	baptismTable.BaptismDate,
 	lifeGroupTable.LifeGroupDate,
 	servingTeamTable.ServingDate
 FROM 
@@ -495,6 +495,7 @@ SELECT	 CASE GROUPING(MetricCategoryId) WHEN 1 THEN 'Total' ELSE MAX(MetricName)
 		 CASE @IsAssociate WHEN 0 THEN SUM(YearlyRating) ELSE SUM(AssociateYearlyRating) END AS 'YearlyRating',
 		 CASE When MAX(IsPercent) = 'True' Then 1 ELSE 0 END AS 'IsPercent'
 FROM @ScoreCardTable
+WHERE (@IsAssociate = 0 OR AssociateWeightedValue <> '')
 GROUP BY ROLLUP(MetricCategoryId)
 ORDER BY [Order], WeightedValue DESC
 END
