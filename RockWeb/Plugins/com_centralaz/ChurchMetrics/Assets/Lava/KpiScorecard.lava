@@ -54,12 +54,12 @@
 
     			<tr align="left" data-original-title="" title="">
     				<td class="grid-select-cell" data-priority="1">{% if row.Order == 0 %}{{row.Name}}{% endif %}</td>
-    				<td class="grid-select-cell" data-priority="1">{% if row.Order == 0 %}{{row.YearlyGoal }}{% endif %}</td>
-    				<td class="grid-select-cell" data-priority="1">{{row.WeightedValue | Format:'p1' }}</td>
-    				<td class="grid-select-cell" data-priority="1">{% if row.Order == 0 %}{{row.MonthlyGoal}}{% endif %}</td>
-    				<td class="grid-select-cell" data-priority="1">{% if row.Order == 0 %}{{row.MonthlyMeasure}}{% else %}RATING{% endif %}</td>
-    				<td class="grid-select-cell" data-priority="1" style="background-color:{{monthColor}};"><p style="color:black">{{monthRating | Format:'p1' }}</p></td>
-    				<td class="grid-select-cell" data-priority="1" style="background-color:{{yearColor}};"><p style="color:black">{{yearRating | Format:'p1' }}</p></td>
+    				<td class="grid-select-cell" data-priority="1">{% if row.Order == 0 %}{% if row.IsPercent == 1 %}{{row.YearlyGoal | Format:'p1'}}{%else%}{{row.YearlyGoal}}{% endif %}{% endif %}</td>
+    				<td class="grid-select-cell" data-priority="1">{{row.WeightedValue | Format:'p1'}}</td>
+    				<td class="grid-select-cell" data-priority="1">{% if row.Order == 0 %}{% if row.IsPercent == 1 %}{{row.MonthlyGoal | Format:'p1'}}{%else%}{{row.MonthlyGoal}}{% endif %}{% endif %}</td>
+    				<td class="grid-select-cell" data-priority="1">{% if row.Order == 0 %}{% if row.IsPercent == 1 %}{{row.MonthlyMeasure | Format:'p1'}}{%else%}{{row.MonthlyMeasure}}{% endif %}{% else %}RATING{% endif %}</td>
+    				<td class="grid-select-cell" data-priority="1" style="background-color:{{monthColor}};"><p style="color:black">{{monthRating | Format:'p1'}}</p></td>
+    				<td class="grid-select-cell" data-priority="1" style="background-color:{{yearColor}};"><p style="color:black">{{yearRating | Format:'p1'}}</p></td>
     			</tr>
     		{% endfor %}
 		</tbody>
