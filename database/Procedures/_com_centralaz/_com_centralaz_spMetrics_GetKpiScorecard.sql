@@ -1,11 +1,11 @@
 USE [RockDB_Test]
 GO
 
-/****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]    Script Date: 6/28/2018 11:15:06 AM ******/
+/****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]    Script Date: 6/28/2018 11:57:26 AM ******/
 DROP PROCEDURE [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]
 GO
 
-/****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]    Script Date: 6/28/2018 11:15:06 AM ******/
+/****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]    Script Date: 6/28/2018 11:57:26 AM ******/
 SET ANSI_NULLS ON
 GO
 
@@ -54,6 +54,8 @@ DECLARE @DiscoverCentralClassA_AttributeId INT = 16374;
 DECLARE @DiscoverCentralClassB_AttributeId INT = 16375;
 DECLARE @DiscoverCentralClassC_AttributeId INT = 16376;
 DECLARE @BaptismDate_AttributeId int = 174;
+
+DECLARE @cGROUPTYPEROLE_FAMILY_MEMBER_ADULT UNIQUEIDENTIFIER = '2639F9A5-2AAE-4E48-A8C3-4FFE86681E42';
 
 ----------------------------------------------------------------------------
 -- GET THE DATE RANGES
@@ -147,6 +149,7 @@ FROM
 		FROM Person p
 		INNER JOIN [GroupMember] gmF ON gmF.PersonId = p.Id
 		INNER JOIN [GROUP] f ON f.Id = gmF.GroupId AND f.GroupTypeId = @FamilyGroupTypeId
+		INNER JOIN [GroupTypeRole] gr ON gmF.GroupRoleId = gr.Id AND gr.[Guid]= @cGROUPTYPEROLE_FAMILY_MEMBER_ADULT
 	) AS personTable
 LEFT JOIN (
 	SELECT gm.PersonId AS 'PersonId',
