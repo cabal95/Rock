@@ -73,15 +73,7 @@
 			{% endif %}
 		
 				<tr class="{{ rowclass }}">
-					<td><span class="{{ textclass }}">{{ reservationSummary.ReservationName }}</span>
-					
-					<br>
-						Contact: {{ reservationSummary.EventContactPersonAlias.Person.FullName }}<br>
-						Email: {{ reservationSummary.EventContactEmail }}<br>
-						Phone: {{ reservationSummary.EventContactPhoneNumber }}<br>
-						MinistryName: {{ reservationSummary.MinistryName }}<br>
-							
-						</td>
+					<td><span class="{{ textclass }}">{{ reservationSummary.ReservationName }}</span></td>
 					<td><span class="{{ textclass }}">{{ reservationSummary.EventDateTimeDescription }}</span></td>
 					<td><span class="{{ textclass }}">{{ reservationSummary.ReservationDateTimeDescription }}</span></td>
 					<td><span class="{{ textclass }}">
