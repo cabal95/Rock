@@ -1,3 +1,7 @@
+<!-- 
+ Notes and Requester information is available using {{reservationSummary.Note}}
+ and {{reservationSummary.RequesterAlias.Person}}
+-->
   {% assign reservationCount = ReservationSummaries | Size %}
 
   {% if reservationCount == 0 %}

@@ -97,7 +97,8 @@ namespace com.centralaz.RoomManagement.Model
                             EventContactEmail = reservation.EventContactEmail,
                             EventContactPhoneNumber = reservation.EventContactPhone,
                             SetupPhotoId = reservation.SetupPhotoId,
-                            Note = reservation.Note
+                            Note = reservation.Note,
+                            RequesterAlias = reservation.RequesterAlias
                         } );
                     }
                 }
@@ -341,6 +342,7 @@ namespace com.centralaz.RoomManagement.Model
             public String EventContactEmail { get; set; }
             public int? SetupPhotoId { get; set; }
             public string Note { get; set; }
+            public PersonAlias RequesterAlias { get; set; }
         }
 
         public class ReservationDate
