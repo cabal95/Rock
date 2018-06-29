@@ -520,7 +520,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 EventDateTimeDescription = r.EventTimeDescription,
                 ReservationDateTimeDescription = r.ReservationTimeDescription,
                 SetupPhotoId = r.SetupPhotoId,
-                SetupPhotoLink = ResolveRockUrl( String.Format( "~/GetImage.ashx?id={0}", r.SetupPhotoId ?? 0 ) )
+                SetupPhotoLink = ResolveRockUrl( String.Format( "~/GetImage.ashx?id={0}", r.SetupPhotoId ?? 0 ) ),
+                Note = r.Note
             } )
             .OrderBy( r => r.EventStartDateTime )
             .GroupBy( r => r.EventStartDateTime.Date )
