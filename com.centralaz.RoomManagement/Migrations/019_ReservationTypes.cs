@@ -181,12 +181,31 @@ namespace com.centralaz.RoomManagement.Migrations
             // Attrib for BlockType: Reservation Lava:Report Template
             RockMigrationHelper.UpdateBlockTypeAttribute( "D0EC5F69-5BB1-4BCA-B0F0-3FE2B9267635", "6FD93801-9E5B-48E7-A6C3-B0354A96E5E7", "Report Template", "ReportTemplate", "", "The template for the printed report", 16, @"9b74314a-37e0-40f2-906c-2862c93f8888", "B9BEAFB9-A958-45E6-86E4-7BA6904CC7B1" );
             // Attrib for BlockType: Reservation Lava:Report Lava
-            RockMigrationHelper.UpdateBlockTypeAttribute( "D0EC5F69-5BB1-4BCA-B0F0-3FE2B9267635", "1D0D3794-C210-48A8-8C68-3FBEC08A6BA5", "Report Lava", "ReportLava", "", "If the Lava Template is selected, this is the lava that will be used in the report", 17, @"{% include '~/Plugins/com_centralaz/RoomManagement/Assets/Lava/ReservationReport.lava' %}", "69131013-4E48-468E-B2C2-CF19CEA26590" );          
+            RockMigrationHelper.UpdateBlockTypeAttribute( "D0EC5F69-5BB1-4BCA-B0F0-3FE2B9267635", "1D0D3794-C210-48A8-8C68-3FBEC08A6BA5", "Report Lava", "ReportLava", "", "If the Lava Template is selected, this is the lava that will be used in the report", 17, @"{% include '~/Plugins/com_centralaz/RoomManagement/Assets/Lava/ReservationReport.lava' %}", "69131013-4E48-468E-B2C2-CF19CEA26590" );
+
+
+            // Change History
+            RockMigrationHelper.UpdateCategory( com.centralaz.RoomManagement.SystemGuid.EntityType.RESERVATION, "Reservation Changes", "fa fa-tint", "Anything related to a reservation.", com.centralaz.RoomManagement.SystemGuid.Category.HISTORY_RESERVATION_CHANGES );
+            RockMigrationHelper.AddBlock( true, "4CBD2B96-E076-46DF-A576-356BCA5E577F", "", "C6C2DF41-A50D-4975-B21C-4EFD6FF3E8D0", "History Log", "Main", "", "", 1, "A981B5ED-F5B4-41AE-96A3-2BC10CCF110B" );
+            // Attrib for BlockType: History Log:Entity Type
+            RockMigrationHelper.UpdateBlockTypeAttribute( "C6C2DF41-A50D-4975-B21C-4EFD6FF3E8D0", "3549BAB6-FE1B-4333-AFC4-C5ACA01BB8EB", "Entity Type", "ContextEntityType", "", "The type of entity that will provide context for this block", 0, @"", "8FB690EC-5299-46C5-8695-AAD23168E6E1" );
+            // Attrib for BlockType: History Log:Heading
+            RockMigrationHelper.UpdateBlockTypeAttribute( "C6C2DF41-A50D-4975-B21C-4EFD6FF3E8D0", "9C204CD0-1233-41C5-818A-C5DA439445AA", "Heading", "Heading", "", "The Lava template to use for the heading. <span class='tip tip-lava'></span>", 0, @"{{ Entity.EntityStringValue }} (ID:{{ Entity.Id }})", "614CD413-DCB7-4DA2-80A0-C7ABE5A11047" );
+            // Attrib Value for Block:History Log, Attribute:Entity Type Page: New Reservation, Site: Rock RMS
+            RockMigrationHelper.AddBlockAttributeValue( "A981B5ED-F5B4-41AE-96A3-2BC10CCF110B", "8FB690EC-5299-46C5-8695-AAD23168E6E1", @"839768a3-10d6-446c-a65b-b8f9efd7808f" );
+            // Attrib Value for Block:History Log, Attribute:Heading Page: New Reservation, Site: Rock RMS
+            RockMigrationHelper.AddBlockAttributeValue( "A981B5ED-F5B4-41AE-96A3-2BC10CCF110B", "614CD413-DCB7-4DA2-80A0-C7ABE5A11047", @"{{ Entity.Name}} (ID:{{ Entity.Id }})" );
+            // Add/Update PageContext for Page:New Reservation, Entity: com.centralaz.RoomManagement.Model.Reservation, Parameter: ReservationId
+            RockMigrationHelper.UpdatePageContext( "4CBD2B96-E076-46DF-A576-356BCA5E577F", "com.centralaz.RoomManagement.Model.Reservation", "ReservationId", "2C95976A-ED4F-4229-BEBA-311382A6C953" );
 
         }
 
         public override void Down()
         {
+            RockMigrationHelper.DeleteAttribute( "614CD413-DCB7-4DA2-80A0-C7ABE5A11047" );
+            RockMigrationHelper.DeleteAttribute( "8FB690EC-5299-46C5-8695-AAD23168E6E1" );
+            RockMigrationHelper.DeleteBlock( "A981B5ED-F5B4-41AE-96A3-2BC10CCF110B" );
+
             RockMigrationHelper.DeleteBlock( "160ED605-4BC3-46FD-8C24-A1BB9AD4ECB4" );
             RockMigrationHelper.DeleteBlockType( "CBAAEC6D-9B97-4FCB-96A9-5C53FB4E030E" );
             RockMigrationHelper.DeletePage( "DC6D7ACE-E23F-4CE6-9D66-A63348A1EF4E" ); //  Page: Reservation Type Detail

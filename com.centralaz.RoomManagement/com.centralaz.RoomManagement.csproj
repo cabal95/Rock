@@ -136,6 +136,7 @@
     <Compile Include="Model\Reservation.cs" />
     <Compile Include="Model\ReservationService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SystemGuid\Category.cs" />
     <Compile Include="SystemGuid\DefinedType.cs" />
     <Compile Include="SystemGuid\EntityType.cs" />
     <Compile Include="SystemGuid\Group.cs" />

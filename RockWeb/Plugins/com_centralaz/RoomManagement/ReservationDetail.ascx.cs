@@ -322,13 +322,17 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             if ( Page.IsValid )
             {
                 RockContext rockContext = new RockContext();
+                bool saveSuccess = false;
+
                 ResourceService resourceService = new ResourceService( rockContext );
                 LocationService locationService = new LocationService( rockContext );
                 ReservationService reservationService = new ReservationService( rockContext );
+                ReservationMinistryService reservationMinistryService = new ReservationMinistryService( rockContext );
                 ReservationResourceService reservationResourceService = new ReservationResourceService( rockContext );
                 ReservationLocationService reservationLocationService = new ReservationLocationService( rockContext );
 
                 Reservation reservation = null;
+                var changes = new List<string>();
 
                 if ( PageParameter( "ReservationId" ).AsIntegerOrNull() != null )
                 {
@@ -340,12 +344,14 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     reservation = new Reservation { Id = 0 };
                     reservation.ApprovalState = ReservationApprovalState.Unapproved;
                     reservation.RequesterAliasId = CurrentPersonAliasId;
+                    changes.Add( "Created Reservation" );
                 }
                 else
                 {
                     var uiLocations = LocationsState.Select( l => l.Guid );
                     foreach ( var reservationLocation in reservation.ReservationLocations.Where( l => !uiLocations.Contains( l.Guid ) ).ToList() )
                     {
+                        changes.Add( String.Format( "Removed <span class='field-name'>{0}</span> from Reservation", reservationLocation.Location.Name ) );
                         reservation.ReservationLocations.Remove( reservationLocation );
                         reservationLocationService.Delete( reservationLocation );
                     }
@@ -353,10 +359,13 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     var uiResources = ResourcesState.Select( l => l.Guid );
                     foreach ( var reservationResource in reservation.ReservationResources.Where( l => !uiResources.Contains( l.Guid ) ).ToList() )
                     {
+                        changes.Add( String.Format( "Removed <span class='field-name'>{0} {1}</span> from Reservation", reservationResource.Quantity, reservationResource.Resource.Name ) );
                         reservation.ReservationResources.Remove( reservationResource );
                         reservationResourceService.Delete( reservationResource );
                     }
                 }
+
+                Reservation oldReservation = BuildOldReservation( resourceService, locationService, reservationService, reservation );
 
                 var reservationType = new ReservationTypeService( rockContext ).Get( ReservationType.Id );
                 reservation.ReservationType = reservationType;
@@ -375,7 +384,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                         reservationLocationState.Id = reservationLocation.Id;
                         reservationLocationState.Guid = reservationLocation.Guid;
                     }
-
                     reservationLocation.CopyPropertiesFrom( reservationLocationState as ReservationLocation );
                     reservationLocation.Reservation = reservationService.Get( reservation.Id );
                     reservationLocation.Location = locationService.Get( reservationLocation.LocationId );
@@ -389,6 +397,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     {
                         reservationResource = new ReservationResource();
                         reservation.ReservationResources.Add( reservationResource );
+
                     }
                     else
                     {
@@ -406,35 +415,105 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 {
                     reservation.Schedule = new Schedule();
                     reservation.Schedule.iCalendarContent = sbSchedule.iCalendarContent;
+                    History.EvaluateChange( changes, "Schedule", oldReservation.GetFriendlyReservationScheduleText(), reservation.GetFriendlyReservationScheduleText() );
                 }
 
+                CampusCache oldCampus = null;
+                if ( reservation.CampusId.HasValue )
+                {
+                    oldCampus = CampusCache.Read( reservation.CampusId.Value );
+                }
+
+                CampusCache newCampus = null;
                 if ( ddlCampus.SelectedValueAsId().HasValue )
                 {
-                    reservation.CampusId = ddlCampus.SelectedValueAsId().Value;
+                    newCampus = CampusCache.Read( ddlCampus.SelectedValueAsId().Value );
                 }
 
+                History.EvaluateChange( changes, "Campus", oldCampus != null ? oldCampus.Name : "None", newCampus != null ? newCampus.Name : "None" );
+                reservation.CampusId = ddlCampus.SelectedValueAsId();
+
+                ReservationMinistry oldMinistry = null;
+                if ( reservation.ReservationMinistryId.HasValue )
+                {
+                    oldMinistry = reservationMinistryService.Get( reservation.ReservationMinistryId.Value );
+                }
+
+                ReservationMinistry newMinistry = null;
                 if ( ddlMinistry.SelectedValueAsId().HasValue )
                 {
-                    reservation.ReservationMinistryId = ddlMinistry.SelectedValueAsId().Value;
+                    newMinistry = reservationMinistryService.Get( ddlMinistry.SelectedValueAsId().Value );
                 }
 
-                int? orphanedImageId = null;
+                History.EvaluateChange( changes, "Ministry", oldMinistry != null ? oldMinistry.Name : "None", newMinistry != null ? newMinistry.Name : "None" );
+                reservation.ReservationMinistryId = ddlMinistry.SelectedValueAsId();
+
+                int? orphanedPhotoId = null;
                 if ( reservation.SetupPhotoId != fuSetupPhoto.BinaryFileId )
                 {
-                    orphanedImageId = reservation.SetupPhotoId;
+                    orphanedPhotoId = reservation.SetupPhotoId;
                     reservation.SetupPhotoId = fuSetupPhoto.BinaryFileId;
+
+                    if ( orphanedPhotoId.HasValue )
+                    {
+                        if ( reservation.SetupPhotoId.HasValue )
+                        {
+                            changes.Add( "Modified the setup photo." );
+                        }
+                        else
+                        {
+                            changes.Add( "Deleted the setup photo." );
+                        }
+                    }
+                    else if ( reservation.SetupPhotoId.HasValue )
+                    {
+                        changes.Add( "Added a setup photo." );
+                    }
                 }
 
+                History.EvaluateChange( changes, "Note", reservation.Note, rtbNote.Text );
                 reservation.Note = rtbNote.Text;
+
+                History.EvaluateChange( changes, "Name", reservation.Name, rtbName.Text );
                 reservation.Name = rtbName.Text;
+
+                History.EvaluateChange( changes, "Number Attending", reservation.NumberAttending.ToString(), nbAttending.Text );
                 reservation.NumberAttending = nbAttending.Text.AsInteger();
+
+                History.EvaluateChange( changes, "Setup Time", reservation.SetupTime.ToString(), nbSetupTime.Text );
                 reservation.SetupTime = nbSetupTime.Text.AsInteger();
+
+                History.EvaluateChange( changes, "Cleanup Time", reservation.CleanupTime.ToString(), nbCleanupTime.Text );
                 reservation.CleanupTime = nbCleanupTime.Text.AsInteger();
+
+                if ( !reservation.EventContactPersonAliasId.Equals( ppEventContact.PersonAliasId ) )
+                {
+                    string prevPerson = ( reservation.EventContactPersonAlias != null && reservation.EventContactPersonAlias.Person != null ) ?
+                        reservation.EventContactPersonAlias.Person.FullName : string.Empty;
+                    string newPerson = ppEventContact.PersonName;
+                    History.EvaluateChange( changes, "Event Contact", prevPerson, newPerson );
+                }
                 reservation.EventContactPersonAliasId = ppEventContact.PersonAliasId;
+
+                History.EvaluateChange( changes, "Event Contact Phone Number", reservation.EventContactPhone, PhoneNumber.FormattedNumber( PhoneNumber.DefaultCountryCode(), pnEventContactPhone.Number ) );
                 reservation.EventContactPhone = PhoneNumber.FormattedNumber( PhoneNumber.DefaultCountryCode(), pnEventContactPhone.Number );
+
+                History.EvaluateChange( changes, "Event Contact Email", reservation.EventContactEmail, tbEventContactEmail.Text );
                 reservation.EventContactEmail = tbEventContactEmail.Text;
+
+                if ( !reservation.AdministrativeContactPersonAliasId.Equals( ppAdministrativeContact.PersonAliasId ) )
+                {
+                    string prevPerson = ( reservation.AdministrativeContactPersonAlias != null && reservation.AdministrativeContactPersonAlias.Person != null ) ?
+                        reservation.AdministrativeContactPersonAlias.Person.FullName : string.Empty;
+                    string newPerson = ppAdministrativeContact.PersonName;
+                    History.EvaluateChange( changes, "Administrative Contact", prevPerson, newPerson );
+                }
                 reservation.AdministrativeContactPersonAliasId = ppAdministrativeContact.PersonAliasId;
+
+                History.EvaluateChange( changes, "Administrative Contact Phone Number", reservation.AdministrativeContactPhone, PhoneNumber.FormattedNumber( PhoneNumber.DefaultCountryCode(), pnAdministrativeContactPhone.Number ) );
                 reservation.AdministrativeContactPhone = PhoneNumber.FormattedNumber( PhoneNumber.DefaultCountryCode(), pnAdministrativeContactPhone.Number );
+
+                History.EvaluateChange( changes, "Administrative Contact Email", reservation.AdministrativeContactEmail, tbAdministrativeContactEmail.Text );
                 reservation.AdministrativeContactEmail = tbAdministrativeContactEmail.Text;
 
                 foreach ( var reservationLocation in reservation.ReservationLocations )
@@ -485,6 +564,10 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
                 reservation = reservationService.UpdateApproval( reservation, hfApprovalState.Value.ConvertToEnum<ReservationApprovalState>( ReservationApprovalState.Unapproved ), CurrentPerson );
 
+                changes = EvaluateLocationAndResourceChanges( changes, oldReservation, reservation );
+
+                History.EvaluateChange( changes, "Approval State", oldReservation.ApprovalState.ToString(), reservation.ApprovalState.ToString() );
+
                 if ( reservation.Id.Equals( 0 ) )
                 {
                     reservationService.Add( reservation );
@@ -504,42 +587,152 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                         reservationResource.SaveAttributeValues( rockContext );
                     }
 
+                    saveSuccess = true;
                 } );
 
-                // ..."need to fetch the item using a new service if you need the updated property as a fully hydrated entity"
-                reservation = new ReservationService( new RockContext() ).Get( reservation.Id );
-
-                // We can't send emails because it won't have an ID until the request is saved.
-                reservationService.SendNotifications( reservation );
-
-                BinaryFileService binaryFileService = new BinaryFileService( rockContext );
-                if ( orphanedImageId.HasValue )
+                if ( saveSuccess )
                 {
-                    var binaryFile = binaryFileService.Get( orphanedImageId.Value );
-                    if ( binaryFile != null )
-                    {
-                        // marked the old images as IsTemporary so they will get cleaned up later
-                        binaryFile.IsTemporary = true;
-                        rockContext.SaveChanges();
-                    }
-                }
+                    // ..."need to fetch the item using a new service if you need the updated property as a fully hydrated entity"
+                    reservation = new ReservationService( new RockContext() ).Get( reservation.Guid );
 
-                // ensure the IsTemporary is set to false on binaryFile associated with this reservation
-                if ( reservation.SetupPhotoId.HasValue )
-                {
-                    var binaryFile = binaryFileService.Get( reservation.SetupPhotoId.Value );
-                    if ( binaryFile != null && binaryFile.IsTemporary )
+                    if ( changes.Any() )
                     {
-                        binaryFile.IsTemporary = false;
-                        rockContext.SaveChanges();
+                        HistoryService.SaveChanges(
+                            rockContext,
+                            typeof( Reservation ),
+                            com.centralaz.RoomManagement.SystemGuid.Category.HISTORY_RESERVATION_CHANGES.AsGuid(),
+                            reservation.Id,
+                            changes );
                     }
-                }
 
-                // Redirect back to same page so that item grid will show any attributes that were selected to show on grid
-                var qryParams = new Dictionary<string, string>();
-                qryParams["ReservationId"] = reservation.Id.ToString();
-                NavigateToPage( RockPage.Guid, qryParams );
+                    // We can't send emails because it won't have an ID until the request is saved.
+                    reservationService.SendNotifications( reservation );
+
+                    BinaryFileService binaryFileService = new BinaryFileService( rockContext );
+                    if ( orphanedPhotoId.HasValue )
+                    {
+                        var binaryFile = binaryFileService.Get( orphanedPhotoId.Value );
+                        if ( binaryFile != null )
+                        {
+                            // marked the old images as IsTemporary so they will get cleaned up later
+                            binaryFile.IsTemporary = true;
+                            rockContext.SaveChanges();
+                        }
+                    }
+
+                    // ensure the IsTemporary is set to false on binaryFile associated with this reservation
+                    if ( reservation.SetupPhotoId.HasValue )
+                    {
+                        var binaryFile = binaryFileService.Get( reservation.SetupPhotoId.Value );
+                        if ( binaryFile != null && binaryFile.IsTemporary )
+                        {
+                            binaryFile.IsTemporary = false;
+                            rockContext.SaveChanges();
+                        }
+                    }
+
+                    // Redirect back to same page so that item grid will show any attributes that were selected to show on grid
+                    var qryParams = new Dictionary<string, string>();
+                    qryParams["ReservationId"] = reservation.Id.ToString();
+                    NavigateToPage( RockPage.Guid, qryParams );
+                }
             }
+        }
+
+        private static Reservation BuildOldReservation( ResourceService resourceService, LocationService locationService, ReservationService reservationService, Reservation reservation )
+        {
+            var oldReservation = new Reservation();
+            oldReservation.Schedule = reservation.Schedule ?? new Schedule();
+            if ( reservation.Schedule != null )
+            {
+                oldReservation.Schedule.iCalendarContent = reservation.Schedule.iCalendarContent;
+            }
+            oldReservation.ApprovalState = reservation.ApprovalState;
+            oldReservation.ReservationLocations = new List<ReservationLocation>();
+            oldReservation.ReservationResources = new List<ReservationResource>();
+
+            foreach ( var reservationLocation in reservation.ReservationLocations )
+            {
+                ReservationLocation oldReservationLocation = new ReservationLocation();
+                oldReservation.ReservationLocations.Add( oldReservationLocation );
+                oldReservationLocation.CopyPropertiesFrom( reservationLocation );
+                oldReservationLocation.Reservation = reservationService.Get( oldReservation.Id );
+                oldReservationLocation.Location = locationService.Get( reservationLocation.LocationId );
+                oldReservationLocation.ReservationId = reservation.Id;
+            }
+
+            foreach ( var reservationResource in reservation.ReservationResources )
+            {
+                ReservationResource oldReservationResource = new ReservationResource();
+                oldReservation.ReservationResources.Add( oldReservationResource );
+                oldReservationResource.CopyPropertiesFrom( reservationResource as ReservationResource );
+                oldReservationResource.Reservation = reservationService.Get( oldReservation.Id );
+                oldReservationResource.Resource = resourceService.Get( oldReservationResource.ResourceId );
+                oldReservationResource.ReservationId = reservation.Id;
+            }
+
+            return oldReservation;
+        }
+
+        private List<string> EvaluateLocationAndResourceChanges( List<string> changes, Reservation oldReservation, Reservation reservation )
+        {
+            foreach ( var reservationLocation in reservation.ReservationLocations )
+            {
+                var oldReservationLocation = oldReservation.ReservationLocations.Where( rl => rl.Guid == reservationLocation.Guid ).FirstOrDefault();
+
+                if ( oldReservationLocation != null )
+                {
+                    History.EvaluateChange( changes, String.Format( "{0} Approval State", reservationLocation.Location.Name ), oldReservationLocation.ApprovalState.ToString(), reservationLocation.ApprovalState.ToString() );
+                    oldReservationLocation.LoadAttributes();
+                    reservationLocation.LoadAttributes();
+                    foreach ( var attribute in reservationLocation.Attributes.Select( a => a.Value ) )
+                    {
+                        string originalValue = oldReservationLocation.AttributeValues.ContainsKey( attribute.Key ) ? oldReservationLocation.AttributeValues[attribute.Key].Value : string.Empty;
+                        string newValue = reservationLocation.AttributeValues.ContainsKey( attribute.Key ) ? reservationLocation.AttributeValues[attribute.Key].Value : string.Empty;
+                        if ( newValue != originalValue )
+                        {
+                            string originalFormattedValue = attribute.FieldType.Field.FormatValue( null, originalValue, attribute.QualifierValues, false );
+                            string newFormattedValue = attribute.FieldType.Field.FormatValue( null, newValue, attribute.QualifierValues, false );
+                            History.EvaluateChange( changes, String.Format( "({0}) {1}", reservationLocation.Location.Name, attribute.Name ), originalFormattedValue, newFormattedValue );
+                        }
+                    }
+                }
+                else
+                {
+                    changes.Add( String.Format( "Added <span class='field-name'>{0}</span>", reservationLocation.Location.Name ) );
+                }
+            }
+
+            foreach ( var reservationResource in reservation.ReservationResources )
+            {
+                var oldReservationResource = oldReservation.ReservationResources.Where( rl => rl.Guid == reservationResource.Guid ).FirstOrDefault();
+
+                if ( oldReservationResource != null )
+                {
+                    History.EvaluateChange( changes, String.Format( "{0} Approval State", reservationResource.Resource.Name ), oldReservationResource.ApprovalState.ToString(), reservationResource.ApprovalState.ToString() );
+                    History.EvaluateChange( changes, String.Format( "{0} Quantity", reservationResource.Resource.Name ), oldReservationResource.Quantity.ToString(), reservationResource.Quantity.ToString() );
+
+                    oldReservationResource.LoadAttributes();
+                    reservationResource.LoadAttributes();
+                    foreach ( var attribute in reservationResource.Attributes.Select( a => a.Value ) )
+                    {
+                        string originalValue = oldReservationResource.AttributeValues.ContainsKey( attribute.Key ) ? oldReservationResource.AttributeValues[attribute.Key].Value : string.Empty;
+                        string newValue = reservationResource.AttributeValues.ContainsKey( attribute.Key ) ? reservationResource.AttributeValues[attribute.Key].Value : string.Empty;
+                        if ( newValue != originalValue )
+                        {
+                            string originalFormattedValue = attribute.FieldType.Field.FormatValue( null, originalValue, attribute.QualifierValues, false );
+                            string newFormattedValue = attribute.FieldType.Field.FormatValue( null, newValue, attribute.QualifierValues, false );
+                            History.EvaluateChange( changes, String.Format( "({0}) {1}", reservationResource.Resource.Name, attribute.Name ), originalFormattedValue, newFormattedValue );
+                        }
+                    }
+                }
+                else
+                {
+                    changes.Add( String.Format( "Added <span class='field-name'>{0} {1}</span>", reservationResource.Quantity, reservationResource.Resource.Name ) );
+                }
+            }
+
+            return changes;
         }
 
         /// <summary>
@@ -2217,7 +2410,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                                     mdWorkflowLaunched.Show( string.Format( "A '{0}' workflow has been started.",
                                         workflowType.Name ), ModalAlertType.Information );
                                 }
-                                
+
                             }
                             else
                             {

@@ -360,7 +360,7 @@ namespace com.centralaz.RoomManagement.Model
 
         public string GetFriendlyReservationScheduleText()
         {
-            string result = "N/A";
+            string result = "";
             if ( Schedule != null )
             {
                 StringBuilder sb = new StringBuilder();
