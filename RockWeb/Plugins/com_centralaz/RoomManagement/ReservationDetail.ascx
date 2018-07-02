@@ -115,7 +115,7 @@
                                     <Rock:RockLiteral ID="lNumberAttending" runat="server" Label="Number Attending" />
                                 </div>
                                 <div class="col-md-3">
-                                    <Rock:RockLiteral ID="lSetupPhoto" runat="server" Label="SetupPhoto" />
+                                    <Rock:RockLiteral ID="lSetupPhoto" runat="server" Label="Setup Photo" />
                                 </div>
                             </div>
                         </div>
