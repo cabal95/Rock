@@ -275,7 +275,7 @@
 
         <asp:HiddenField ID="hfActiveDialog" runat="server" />
 
-        <Rock:ModalDialog ID="dlgReservationLocation" runat="server" Title="Select Location" OnSaveClick="dlgReservationLocation_SaveClick" OnCancelScript="clearActiveDialog();" ValidationGroup="ReservationLocation">
+        <Rock:ModalDialog ID="dlgReservationLocation" runat="server" Title="Select Location" OnSaveThenAddClick="dlgReservationLocation_SaveThenAddClick" OnSaveClick="dlgReservationLocation_SaveClick" OnCancelScript="clearActiveDialog();" ValidationGroup="ReservationLocation">
             <Content>
                 <asp:HiddenField ID="hfAddReservationLocationGuid" runat="server" />
                 <asp:ValidationSummary ID="valReservationLocationSummary" runat="server" HeaderText="Please Correct the Following" CssClass="alert alert-danger" ValidationGroup="ReservationLocation" />
@@ -302,7 +302,7 @@
             </Content>
         </Rock:ModalDialog>
 
-        <Rock:ModalDialog ID="dlgReservationResource" runat="server" Title="Select Resource" OnSaveClick="dlgReservationResource_SaveClick" OnCancelScript="clearActiveDialog();" ValidationGroup="ReservationResource">
+        <Rock:ModalDialog ID="dlgReservationResource" runat="server" Title="Select Resource" OnSaveThenAddClick="dlgReservationResource_SaveThenAddClick" OnSaveClick="dlgReservationResource_SaveClick" OnCancelScript="clearActiveDialog();" ValidationGroup="ReservationResource">
             <Content>
                 <asp:HiddenField ID="hfAddReservationResourceGuid" runat="server" />
                 <asp:ValidationSummary ID="valReservationResourceSummary" runat="server" HeaderText="Please Correct the Following" CssClass="alert alert-danger" ValidationGroup="ReservationResource" />

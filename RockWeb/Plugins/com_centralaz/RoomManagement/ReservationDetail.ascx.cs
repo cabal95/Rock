@@ -888,49 +888,16 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void dlgReservationResource_SaveClick( object sender, EventArgs e )
         {
-            if ( nbQuantity.Text.AsInteger() > 0 )
-            {
-                ReservationResourceSummary reservationResource = null;
-                Guid guid = hfAddReservationResourceGuid.Value.AsGuid();
-                if ( !guid.IsEmpty() )
-                {
-                    reservationResource = ResourcesState.FirstOrDefault( l => l.Guid.Equals( guid ) );
-                }
-
-                if ( reservationResource == null )
-                {
-                    reservationResource = new ReservationResourceSummary();
-                    reservationResource.IsNew = true;
-                }
-
-                try
-                {
-                    reservationResource.Resource = new ResourceService( new RockContext() ).Get( srpResource.SelectedValueAsId().Value );
-                }
-                catch { }
-
-                reservationResource.ApprovalState = ReservationResourceApprovalState.Unapproved;
-                reservationResource.ResourceId = srpResource.SelectedValueAsId().Value;
-                reservationResource.Quantity = nbQuantity.Text.AsInteger();
-                reservationResource.ReservationId = 0;
-
-                if ( !reservationResource.IsValid )
-                {
-                    return;
-                }
-
-                if ( ResourcesState.Any( a => a.Guid.Equals( reservationResource.Guid ) ) )
-                {
-                    ResourcesState.RemoveEntity( reservationResource.Guid );
-                }
-
-                ResourcesState.Add( reservationResource );
-            }
-
-            BindReservationResourcesGrid();
+            SaveReservationResource();
             dlgReservationResource.Hide();
             hfActiveDialog.Value = string.Empty;
-            LoadQuestionsAndAnswers();
+        }
+
+        protected void dlgReservationResource_SaveThenAddClick( object sender, EventArgs e )
+        {
+            SaveReservationResource();
+            LoadPickers();
+            gResources_ShowEdit( Guid.Empty );
         }
 
         /// <summary>
@@ -1140,51 +1107,21 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void dlgReservationLocation_SaveClick( object sender, EventArgs e )
         {
-            ReservationLocationSummary reservationLocation = null;
-            Guid guid = hfAddReservationLocationGuid.Value.AsGuid();
-            if ( !guid.IsEmpty() )
-            {
-                reservationLocation = LocationsState.FirstOrDefault( l => l.Guid.Equals( guid ) );
-            }
+            SaveReservationLocation();
 
-            if ( reservationLocation == null )
-            {
-                reservationLocation = new ReservationLocationSummary();
-                reservationLocation.IsNew = true;
-            }
-
-            try
-            {
-                reservationLocation.Location = new LocationService( new RockContext() ).Get( slpLocation.SelectedValueAsId().Value );
-            }
-            catch { }
-
-            reservationLocation.ApprovalState = ReservationLocationApprovalState.Unapproved;
-            reservationLocation.LocationId = slpLocation.SelectedValueAsId().Value;
-            reservationLocation.ReservationId = 0;
-
-            if ( !reservationLocation.IsValid )
-            {
-                return;
-            }
-
-            if ( LocationsState.Any( a => a.Guid.Equals( reservationLocation.Guid ) ) )
-            {
-                LocationsState.RemoveEntity( reservationLocation.Guid );
-            }
-
-            // Add any location attached resources to the Resources grid for the location that was just selected.
-            AddAttachedResources( reservationLocation.LocationId );
-
-            LocationsState.Add( reservationLocation );
-            BindReservationLocationsGrid();
             dlgReservationLocation.Hide();
             hfActiveDialog.Value = string.Empty;
+        }
 
-            // Re load the pickers because changing a location should include/exclude resources attached
-            // to locations.
-            LoadPickers();
-            LoadQuestionsAndAnswers();
+        /// <summary>
+        /// Handles the SaveThenAddClick event of the dlgReservationLocation control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        protected void dlgReservationLocation_SaveThenAddClick( object sender, EventArgs e )
+        {
+            SaveReservationLocation();
+            gLocations_ShowEdit( Guid.Empty );
         }
 
         /// <summary>
@@ -2551,6 +2488,104 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Saves the reservation location.
+        /// </summary>
+        private void SaveReservationLocation()
+        {
+            ReservationLocationSummary reservationLocation = null;
+            Guid guid = hfAddReservationLocationGuid.Value.AsGuid();
+            if ( !guid.IsEmpty() )
+            {
+                reservationLocation = LocationsState.FirstOrDefault( l => l.Guid.Equals( guid ) );
+            }
+
+            if ( reservationLocation == null )
+            {
+                reservationLocation = new ReservationLocationSummary();
+                reservationLocation.IsNew = true;
+            }
+
+            try
+            {
+                reservationLocation.Location = new LocationService( new RockContext() ).Get( slpLocation.SelectedValueAsId().Value );
+            }
+            catch { }
+
+            reservationLocation.ApprovalState = ReservationLocationApprovalState.Unapproved;
+            reservationLocation.LocationId = slpLocation.SelectedValueAsId().Value;
+            reservationLocation.ReservationId = 0;
+
+            if ( !reservationLocation.IsValid )
+            {
+                return;
+            }
+
+            if ( LocationsState.Any( a => a.Guid.Equals( reservationLocation.Guid ) ) )
+            {
+                LocationsState.RemoveEntity( reservationLocation.Guid );
+            }
+
+            // Add any location attached resources to the Resources grid for the location that was just selected.
+            AddAttachedResources( reservationLocation.LocationId );
+
+            LocationsState.Add( reservationLocation );
+            BindReservationLocationsGrid();
+
+            // Re load the pickers because changing a location should include/exclude resources attached
+            // to locations.
+            LoadPickers();
+            LoadQuestionsAndAnswers();
+        }
+
+        /// <summary>
+        /// Saves the reservation resource.
+        /// </summary>
+        private void SaveReservationResource()
+        {
+            if ( nbQuantity.Text.AsInteger() > 0 )
+            {
+                ReservationResourceSummary reservationResource = null;
+                Guid guid = hfAddReservationResourceGuid.Value.AsGuid();
+                if ( !guid.IsEmpty() )
+                {
+                    reservationResource = ResourcesState.FirstOrDefault( l => l.Guid.Equals( guid ) );
+                }
+
+                if ( reservationResource == null )
+                {
+                    reservationResource = new ReservationResourceSummary();
+                    reservationResource.IsNew = true;
+                }
+
+                try
+                {
+                    reservationResource.Resource = new ResourceService( new RockContext() ).Get( srpResource.SelectedValueAsId().Value );
+                }
+                catch { }
+
+                reservationResource.ApprovalState = ReservationResourceApprovalState.Unapproved;
+                reservationResource.ResourceId = srpResource.SelectedValueAsId().Value;
+                reservationResource.Quantity = nbQuantity.Text.AsInteger();
+                reservationResource.ReservationId = 0;
+
+                if ( !reservationResource.IsValid )
+                {
+                    return;
+                }
+
+                if ( ResourcesState.Any( a => a.Guid.Equals( reservationResource.Guid ) ) )
+                {
+                    ResourcesState.RemoveEntity( reservationResource.Guid );
+                }
+
+                ResourcesState.Add( reservationResource );
+            }
+
+            BindReservationResourcesGrid();
+            LoadQuestionsAndAnswers();
         }
 
         #endregion
