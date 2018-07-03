@@ -48,6 +48,14 @@ namespace com.centralaz.RoomManagement.Web.Cache
         #region Properties
 
         /// <summary>
+        /// Gets or sets the reservation type identifier.
+        /// </summary>
+        /// <value>
+        /// The reservation type identifier.
+        /// </value>
+        public int ReservationTypeId { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether this instance is system.
         /// </summary>
         /// <value>
@@ -79,6 +87,16 @@ namespace com.centralaz.RoomManagement.Web.Cache
         /// </value>
         public bool? IsActive { get; set; }
 
+        /// <summary>
+        /// Gets or sets the order.
+        /// </summary>
+        /// <value>
+        /// The order.
+        /// </value>
+        public int Order { get; set; }
+
+        public virtual ReservationType ReservationType { get; set; }
+
         #endregion
 
         #region Public Methods
@@ -93,10 +111,13 @@ namespace com.centralaz.RoomManagement.Web.Cache
 
             if ( model is ReservationMinistry )
             {
-                var reservationMinistry = (ReservationMinistry)model;
+                var reservationMinistry = ( ReservationMinistry ) model;
                 this.Description = reservationMinistry.Description;
                 this.IsActive = reservationMinistry.IsActive;
                 this.Name = reservationMinistry.Name;
+                this.ReservationType = reservationMinistry.ReservationType;
+                this.ReservationTypeId = reservationMinistry.ReservationTypeId;
+                this.Order = reservationMinistry.Order;
             }
         }
 

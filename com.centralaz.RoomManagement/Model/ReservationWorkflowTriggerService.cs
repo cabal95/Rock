@@ -127,6 +127,7 @@ namespace com.centralaz.RoomManagement.Model
         {
             target.Id = source.Id;
             target.ForeignGuid = source.ForeignGuid;
+            target.ReservationTypeId = source.ReservationTypeId;
             target.ForeignKey = source.ForeignKey;
             target.QualifierValue = source.QualifierValue;
             target.TriggerType = source.TriggerType;

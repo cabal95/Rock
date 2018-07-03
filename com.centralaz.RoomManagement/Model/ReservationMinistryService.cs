@@ -51,6 +51,7 @@ namespace com.centralaz.RoomManagement.Model
             target.Id = source.Id;
             target.ForeignGuid = source.ForeignGuid;
             target.ForeignKey = source.ForeignKey;
+            target.ReservationTypeId = source.ReservationTypeId;
             target.Name = source.Name;
             target.Description = source.Description;
             target.Order = source.Order;

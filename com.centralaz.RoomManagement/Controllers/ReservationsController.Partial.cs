@@ -47,6 +47,7 @@ namespace Rock.Rest.Controllers
         /// </summary>
         /// <param name="startDateTime">The start date time. Defaults to current datetime.</param>
         /// <param name="endDateTime">The end date time. Defaults to current datetime plus one month.</param>
+        /// <param name="reservationTypeIds">An optional parameter to filter occurrences by reservation types. Should be a list of integers separated by commas.</param>
         /// <param name="reservationIds">An optional parameter to filter occurrences by reservations. Should be a list of integers separated by commas.</param>
         /// <param name="locationIds">An optional parameter to filter occurrences by locations. Should be a list of integers separated by commas.</param>
         /// <param name="resourceIds">An optional parameter to filter occurrences by resources. Should be a list of integers separated by commas.</param>
@@ -57,6 +58,7 @@ namespace Rock.Rest.Controllers
         public IQueryable<ReservationOccurrence> GetReservationOccurrences(
             DateTime? startDateTime = null,
             DateTime? endDateTime = null,
+            string reservationTypeIds = null,
             string reservationIds = null,
             string locationIds = null,
             string resourceIds = null,
@@ -67,6 +69,12 @@ namespace Rock.Rest.Controllers
             RockContext rockContext = new RockContext();
             ReservationService reservationService = new ReservationService( rockContext );
             var reservationQry = reservationService.Queryable();
+
+            List<int> reservationTypeIdList = reservationTypeIds.SplitDelimitedValues().AsIntegerList();
+            if ( reservationTypeIdList.Any() )
+            {
+                reservationQry = reservationQry.Where( r => reservationTypeIdList.Contains( r.ReservationTypeId ) );
+            }
 
             List<int> reservationIdList = reservationIds.SplitDelimitedValues().AsIntegerList();
             if ( reservationIdList.Any() )
@@ -148,6 +156,7 @@ namespace Rock.Rest.Controllers
                         reservationOccurrenceList.Add( new ReservationOccurrence
                         {
                             ReservationId = reservation.Id,
+                            ReservationType = reservation.ReservationType,
                             ApprovalState = reservation.ApprovalState,
                             ReservationName = reservation.Name,
                             ReservationLocations = reservation.ReservationLocations.ToList(),
@@ -177,6 +186,7 @@ namespace Rock.Rest.Controllers
     public class ReservationOccurrence
     {
         public int ReservationId { get; set; }
+        public ReservationType ReservationType { get; set; }
         public ReservationApprovalState ApprovalState { get; set; }
         public String ReservationName { get; set; }
         public List<ReservationLocation> ReservationLocations { get; set; }

@@ -44,7 +44,6 @@
 					  <b>Status</b>
 					</th>
 					<th class="col-xs-1">
-					  <b>Edit</b>
 					</th>
 				</tr>
 			</thead>
@@ -72,7 +71,7 @@
 				{% assign approvedItems = approvedItems|Plus:1 %}
 			{% endif %}
 		
-				<tr class="{{ rowclass }}">
+				<tr class="{{ rowclass }} js-clickable-row" data-href="{{ DetailsPage }}?ReservationId={{ reservationSummary.Id }}">
 					<td><span class="{{ textclass }}">{{ reservationSummary.ReservationName }}</span></td>
 					<td><span class="{{ textclass }}">{{ reservationSummary.EventDateTimeDescription }}</span></td>
 					<td><span class="{{ textclass }}">{{ reservationSummary.ReservationDateTimeDescription }}</span></td>
@@ -109,9 +108,6 @@
 					  {{ reservationSummary.ApprovalState }}
 					</span></td>
 					<td>
-						<span class="{{ textclass }}">
-						  <a href="{{ DetailsPage }}?ReservationId={{ reservationSummary.Id }}"><i class="fa fa-edit"></i></a>
-						</span>
 						<div class="second circle" data-size="50" data-thickness="8" data-value="{{ approvedItems | DividedBy:totalItems}}" data-start-angle="11" data-line-cap="round" 
 							{% assign perComp = approvedItems | DividedBy:totalItems %}
 							{% if perComp >= 1 %}
@@ -155,6 +151,10 @@ function InitialiseSettings(){
 		InitialiseSettings();
   });
 
+  $(".js-clickable-row").click(function() {
+        window.location = $(this).data("href");
+    });
+
 </script>
 
 <style>
@@ -195,5 +195,9 @@ function InitialiseSettings(){
   display: block;
   color: #aaa;
   margin-top: 12px;
+}
+
+.js-clickable-row {
+	cursor:pointer;
 }
 </style>

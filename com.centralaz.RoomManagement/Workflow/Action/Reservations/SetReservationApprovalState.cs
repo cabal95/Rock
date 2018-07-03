@@ -87,11 +87,36 @@ namespace com.centralaz.RoomManagement.Workflow.Actions.Reservations
                 errorMessages.Add( "Invalid Approval State Attribute or Value!" );
                 return false;
             }
+            var oldValue = reservation.ApprovalState;
 
             reservation.ApprovalState = approvalState.Value;
 
-            rockContext.SaveChanges();
+            if ( oldValue != reservation.ApprovalState )
+            {
+                var changes = new List<string>();
+                History.EvaluateChange(
+                    changes,
+                    "Approval State",
+                    oldValue.ToString(),
+                    reservation.ApprovalState.ToString() );
 
+                if ( changes.Any() )
+                {
+                    changes.Add( string.Format( "<em>(Updated by the '{0}' workflow)</em>", action.ActionTypeCache.ActivityType.WorkflowType.Name ) );
+                    HistoryService.SaveChanges( rockContext, typeof( Reservation ), com.centralaz.RoomManagement.SystemGuid.Category.HISTORY_RESERVATION_CHANGES.AsGuid(), reservation.Id, changes, false );
+                }
+
+                rockContext.SaveChanges();
+
+                if ( action.Activity != null && action.Activity.Workflow != null )
+                {
+                    var workflowType = action.Activity.Workflow.WorkflowTypeCache;
+                    if ( workflowType != null && workflowType.LoggingLevel == WorkflowLoggingLevel.Action )
+                    {
+                        action.AddLogEntry( string.Format( "Updated approval state for {0} to {1}.", reservation.Name, reservation.ApprovalState.ToString() ) );
+                    }
+                }
+            }
             return true;
         }
     }

@@ -31,6 +31,10 @@ namespace com.centralaz.RoomManagement.Model
     {
         #region Entity Properties
 
+        [Required]
+        [DataMember]
+        public int ReservationTypeId { get; set; }
+
         /// <summary>
         /// Gets or sets the workflow type identifier.
         /// </summary>
@@ -72,6 +76,9 @@ namespace com.centralaz.RoomManagement.Model
         [DataMember]
         public virtual WorkflowType WorkflowType { get; set; }
 
+        [DataMember]
+        public virtual ReservationType ReservationType { get; set; }
+
         #endregion
     }
 
@@ -86,6 +93,7 @@ namespace com.centralaz.RoomManagement.Model
         public ReservationWorkflowTriggerConfiguration()
         {
             this.HasRequired( p => p.WorkflowType ).WithMany().HasForeignKey( p => p.WorkflowTypeId ).WillCascadeOnDelete( true );
+            this.HasRequired( p => p.ReservationType ).WithMany( p => p.ReservationWorkflowTriggers ).HasForeignKey( p => p.ReservationTypeId ).WillCascadeOnDelete( true );
 
             // IMPORTANT!!
             this.HasEntitySetName( "ReservationWorkflowTrigger" );

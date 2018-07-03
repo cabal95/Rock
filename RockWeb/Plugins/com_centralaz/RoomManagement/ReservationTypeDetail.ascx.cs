@@ -1,5 +1,5 @@
 ﻿// <copyright>
-// Copyright by the Central Christian Church
+// Copyright by the Spark Development Network
 //
 // Licensed under the Rock Community License (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,31 +17,37 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data.Entity;
 using System.Linq;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using com.centralaz.RoomManagement.Model;
+
 using Newtonsoft.Json;
+
 using Rock;
+using Rock.Attribute;
 using Rock.Constants;
 using Rock.Data;
 using Rock.Model;
 using Rock.Security;
+using Rock.Web;
 using Rock.Web.Cache;
 using Rock.Web.UI;
 using Rock.Web.UI.Controls;
+using Attribute = Rock.Model.Attribute;
+using com.centralaz.RoomManagement.Model;
 
 namespace RockWeb.Plugins.com_centralaz.RoomManagement
 {
-    [DisplayName( "Reservation Configuration" )]
+    [DisplayName( "Reservation Type Detail" )]
     [Category( "com_centralaz > Room Management" )]
-    [Description( "Displays the details of the given Connection Type for editing." )]
-    public partial class ReservationConfiguration : RockBlock
+    [Description( "Displays the details of the given Reservation Type for editing." )]
+    public partial class ReservationTypeDetail : RockBlock, IDetailBlock
     {
         #region Properties
 
-        private List<ReservationMinistry> MinistriesState { get; set; }
-        private List<ReservationWorkflowTrigger> WorkflowTriggersState { get; set; }
+        private List<ReservationMinistry> ReservationMinistriesState { get; set; }
+        private List<ReservationWorkflowTrigger> ReservationWorkflowTriggersState { get; set; }
 
         #endregion
 
@@ -55,25 +61,24 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         {
             base.LoadViewState( savedState );
 
-            string json = ViewState["MinistriesState"] as string;
+            string json = ViewState["ReservationMinistriesState"] as string;
             if ( string.IsNullOrWhiteSpace( json ) )
             {
-                MinistriesState = new List<ReservationMinistry>();
+                ReservationMinistriesState = new List<ReservationMinistry>();
             }
             else
             {
-                MinistriesState = JsonConvert.DeserializeObject<List<ReservationMinistry>>( json );
+                ReservationMinistriesState = JsonConvert.DeserializeObject<List<ReservationMinistry>>( json );
             }
 
-
-            json = ViewState["WorkflowTriggersState"] as string;
+            json = ViewState["ReservationWorkflowTriggersState"] as string;
             if ( string.IsNullOrWhiteSpace( json ) )
             {
-                WorkflowTriggersState = new List<ReservationWorkflowTrigger>();
+                ReservationWorkflowTriggersState = new List<ReservationWorkflowTrigger>();
             }
             else
             {
-                WorkflowTriggersState = JsonConvert.DeserializeObject<List<ReservationWorkflowTrigger>>( json );
+                ReservationWorkflowTriggersState = JsonConvert.DeserializeObject<List<ReservationWorkflowTrigger>>( json );
             }
         }
 
@@ -84,6 +89,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         protected override void OnInit( EventArgs e )
         {
             base.OnInit( e );
+            bool editAllowed = IsUserAuthorized( Authorization.ADMINISTRATE );
 
             gMinistries.DataKeyNames = new string[] { "Guid" };
             gMinistries.Actions.ShowAdd = true;
@@ -95,8 +101,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             gWorkflowTriggers.Actions.AddClick += gWorkflowTriggers_Add;
             gWorkflowTriggers.GridRebind += gWorkflowTriggers_GridRebind;
 
+            btnDelete.Attributes["onclick"] = string.Format( "javascript: return Rock.dialogs.confirmDelete(event, '{0}', 'This will also delete all the reservation opportunities! Are you sure you wish to continue with the delete?');", ReservationType.FriendlyTypeName );
+            btnSecurity.EntityTypeId = EntityTypeCache.Read( typeof( com.centralaz.RoomManagement.Model.ReservationType ) ).Id;
+
             this.BlockUpdated += Block_BlockUpdated;
-            this.AddConfigurationUpdateTrigger( upContent );
+            this.AddConfigurationUpdateTrigger( upReservationType );
         }
 
         /// <summary>
@@ -109,7 +118,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             if ( !Page.IsPostBack )
             {
-                ShowDetail();
+                ShowDetail( PageParameter( "ReservationTypeId" ).AsInteger() );
             }
         }
 
@@ -127,17 +136,126 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 ContractResolver = new Rock.Utility.IgnoreUrlEncodedKeyContractResolver()
             };
 
-            ViewState["MinistriesState"] = JsonConvert.SerializeObject( MinistriesState, Formatting.None, jsonSetting );
-            ViewState["WorkflowTriggersState"] = JsonConvert.SerializeObject( WorkflowTriggersState, Formatting.None, jsonSetting );
+            ViewState["ReservationMinistriesState"] = JsonConvert.SerializeObject( ReservationMinistriesState, Formatting.None, jsonSetting );
+            ViewState["ReservationWorkflowTriggersState"] = JsonConvert.SerializeObject( ReservationWorkflowTriggersState, Formatting.None, jsonSetting );
 
             return base.SaveViewState();
+        }
+
+        /// <summary>
+        /// Returns breadcrumbs specific to the block that should be added to navigation
+        /// based on the current page reference.  This function is called during the page's
+        /// oninit to load any initial breadcrumbs
+        /// </summary>
+        /// <param name="pageReference">The page reference.</param>
+        /// <returns></returns>
+        public override List<BreadCrumb> GetBreadCrumbs( PageReference pageReference )
+        {
+            var breadCrumbs = new List<BreadCrumb>();
+
+            int? reservationTypeId = PageParameter( pageReference, "ReservationTypeId" ).AsIntegerOrNull();
+            if ( reservationTypeId != null )
+            {
+                ReservationType reservationType = new ReservationTypeService( new RockContext() ).Get( reservationTypeId.Value );
+                if ( reservationType != null )
+                {
+                    breadCrumbs.Add( new BreadCrumb( reservationType.Name, pageReference ) );
+                }
+                else
+                {
+                    breadCrumbs.Add( new BreadCrumb( "New Reservation Type", pageReference ) );
+                }
+            }
+            else
+            {
+                // don't show a breadcrumb if we don't have a pageparam to work with
+            }
+
+            return breadCrumbs;
         }
 
         #endregion
 
         #region Events
 
-        #region Control Events        
+        #region Control Events
+
+        /// <summary>
+        /// Handles the Click event of the btnEdit control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        protected void btnEdit_Click( object sender, EventArgs e )
+        {
+            var rockContext = new RockContext();
+            var reservationType = new ReservationTypeService( rockContext ).Get( hfReservationTypeId.Value.AsInteger() );
+
+            ShowEditDetails( reservationType );
+
+        }
+
+        /// <summary>
+        /// Handles the Click event of the btnDelete control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        protected void btnDeleteConfirm_Click( object sender, EventArgs e )
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                ReservationWorkflowService reservationWorkflowService = new ReservationWorkflowService( rockContext );
+                ReservationTypeService reservationTypeService = new ReservationTypeService( rockContext );
+                AuthService authService = new AuthService( rockContext );
+                ReservationType reservationType = reservationTypeService.Get( int.Parse( hfReservationTypeId.Value ) );
+
+                if ( reservationType != null )
+                {
+                    if ( !reservationType.IsAuthorized( Authorization.ADMINISTRATE, this.CurrentPerson ) )
+                    {
+                        mdDeleteWarning.Show( "You are not authorized to delete this reservation type.", ModalAlertType.Information );
+                        return;
+                    }
+
+                    string errorMessage;
+                    if ( !reservationTypeService.CanDelete( reservationType, out errorMessage ) )
+                    {
+                        mdDeleteWarning.Show( errorMessage, ModalAlertType.Information );
+                        return;
+                    }
+
+                    reservationTypeService.Delete( reservationType );
+                    rockContext.SaveChanges();
+
+                    ReservationWorkflowService.FlushCachedTriggers();
+                }
+            }
+
+            NavigateToParentPage();
+        }
+
+        /// <summary>
+        /// Handles the Click event of the btnDeleteCancel control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        protected void btnDeleteCancel_Click( object sender, EventArgs e )
+        {
+            btnDelete.Visible = true;
+            btnEdit.Visible = true;
+            pnlDeleteConfirm.Visible = false;
+        }
+
+        /// <summary>
+        /// Handles the Click event of the btnDelete control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        protected void btnDelete_Click( object sender, EventArgs e )
+        {
+            btnDelete.Visible = false;
+            btnEdit.Visible = false;
+            pnlDeleteConfirm.Visible = true;
+        }
 
         /// <summary>
         /// Handles the Click event of the btnSave control.
@@ -146,45 +264,73 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         protected void btnSave_Click( object sender, EventArgs e )
         {
+            ReservationType reservationType;
             using ( var rockContext = new RockContext() )
             {
+
+                ReservationTypeService reservationTypeService = new ReservationTypeService( rockContext );
                 ReservationMinistryService reservationMinistryService = new ReservationMinistryService( rockContext );
                 ReservationWorkflowTriggerService reservationWorkflowTriggerService = new ReservationWorkflowTriggerService( rockContext );
+                AttributeService attributeService = new AttributeService( rockContext );
+                AttributeQualifierService qualifierService = new AttributeQualifierService( rockContext );
 
-                var reservationMinistries = reservationMinistryService.Queryable().ToList();
-                var reservationWorkflowTriggers = reservationWorkflowTriggerService.Queryable().ToList();
+                int reservationTypeId = int.Parse( hfReservationTypeId.Value );
 
-                var uiWorkflows = WorkflowTriggersState.Select( l => l.Guid );
-                foreach ( var reservationWorkflowTrigger in reservationWorkflowTriggers.Where( l => !uiWorkflows.Contains( l.Guid ) ).ToList() )
+                if ( reservationTypeId == 0 )
                 {
-                    reservationWorkflowTriggerService.Delete( reservationWorkflowTrigger );
+                    reservationType = new ReservationType();
+                    reservationTypeService.Add( reservationType );
+                }
+                else
+                {
+                    reservationType = reservationTypeService.Queryable( "ReservationMinistries, ReservationWorkflowTriggers" ).Where( c => c.Id == reservationTypeId ).FirstOrDefault();
+
+                    var uiMinistries = ReservationMinistriesState.Select( r => r.Guid );
+                    foreach ( var reservationMinistry in reservationType.ReservationMinistries.Where( r => !uiMinistries.Contains( r.Guid ) ).ToList() )
+                    {
+                        reservationType.ReservationMinistries.Remove( reservationMinistry );
+                        reservationMinistryService.Delete( reservationMinistry );
+                    }
+
+                    var uiTriggers = ReservationWorkflowTriggersState.Select( r => r.Guid );
+                    foreach ( var reservationWorkflowTrigger in reservationType.ReservationWorkflowTriggers.Where( r => !uiTriggers.Contains( r.Guid ) ).ToList() )
+                    {
+                        reservationType.ReservationWorkflowTriggers.Remove( reservationWorkflowTrigger );
+                        reservationWorkflowTriggerService.Delete( reservationWorkflowTrigger );
+                    }
                 }
 
-                var uiActivityTypes = MinistriesState.Select( r => r.Guid );
-                foreach ( var reservationMinistry in reservationMinistries.Where( r => !uiActivityTypes.Contains( r.Guid ) ).ToList() )
-                {
-                    reservationMinistryService.Delete( reservationMinistry );
-                }
+                reservationType.Name = tbName.Text;
+                reservationType.Description = tbDescription.Text;
+                reservationType.IconCssClass = tbIconCssClass.Text;
+                reservationType.FinalApprovalGroupId = ddlFinalApprovalGroup.SelectedValueAsId();
+                reservationType.SuperAdminGroupId = ddlSuperAdminGroup.SelectedValueAsId();
+                reservationType.NotificationEmailId = ddlNotificationEmail.SelectedValueAsId();
+                reservationType.IsCommunicationHistorySaved = cbIsCommunicationHistorySaved.Checked;
+                reservationType.IsContactDetailsRequired = cbIsContactDetailsRequired.Checked;
+                reservationType.IsNumberAttendingRequired = cbIsNumberAttendingRequired.Checked;
+                reservationType.IsSetupTimeRequired = cbIsSetupTimeRequired.Checked;
 
-                foreach ( var reservationMinistryState in MinistriesState )
+                foreach ( var reservationMinistryState in ReservationMinistriesState )
                 {
-                    ReservationMinistry reservationMinistry = reservationMinistries.Where( a => a.Guid == reservationMinistryState.Guid ).FirstOrDefault();
+                    ReservationMinistry reservationMinistry = reservationType.ReservationMinistries.Where( a => a.Guid == reservationMinistryState.Guid ).FirstOrDefault();
                     if ( reservationMinistry == null )
                     {
                         reservationMinistry = new ReservationMinistry();
-                        reservationMinistryService.Add( reservationMinistry );
+                        reservationType.ReservationMinistries.Add( reservationMinistry );
                     }
 
                     reservationMinistry.CopyPropertiesFrom( reservationMinistryState );
+                    reservationMinistry.ReservationTypeId = reservationType.Id;
                 }
 
-                foreach ( ReservationWorkflowTrigger reservationWorkflowTriggerState in WorkflowTriggersState )
+                foreach ( var reservationWorkflowTriggerState in ReservationWorkflowTriggersState )
                 {
-                    ReservationWorkflowTrigger reservationWorkflowTrigger = reservationWorkflowTriggers.Where( a => a.Guid == reservationWorkflowTriggerState.Guid ).FirstOrDefault();
+                    ReservationWorkflowTrigger reservationWorkflowTrigger = reservationType.ReservationWorkflowTriggers.Where( a => a.Guid == reservationWorkflowTriggerState.Guid ).FirstOrDefault();
                     if ( reservationWorkflowTrigger == null )
                     {
                         reservationWorkflowTrigger = new ReservationWorkflowTrigger();
-                        reservationWorkflowTriggerService.Add( reservationWorkflowTrigger );
+                        reservationType.ReservationWorkflowTriggers.Add( reservationWorkflowTrigger );
                     }
                     else
                     {
@@ -193,14 +339,46 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     }
 
                     reservationWorkflowTrigger.CopyPropertiesFrom( reservationWorkflowTriggerState );
+                    reservationWorkflowTrigger.ReservationTypeId = reservationTypeId;
                 }
 
-                rockContext.SaveChanges();
+                if ( !reservationType.IsValid )
+                {
+                    // Controls will render the error messages
+                    return;
+                }
 
-                ReservationWorkflowTriggerService.FlushCachedTriggers();
+                // need WrapTransaction due to Attribute saves
+                rockContext.WrapTransaction( () =>
+                {
+                    rockContext.SaveChanges();
 
-                NavigateToParentPage();
+                    reservationType = reservationTypeService.Get( reservationType.Id );
+                    if ( reservationType != null )
+                    {
+                        if ( !reservationType.IsAuthorized( Authorization.VIEW, CurrentPerson ) )
+                        {
+                            reservationType.AllowPerson( Authorization.VIEW, CurrentPerson, rockContext );
+                        }
 
+                        if ( !reservationType.IsAuthorized( Authorization.EDIT, CurrentPerson ) )
+                        {
+                            reservationType.AllowPerson( Authorization.EDIT, CurrentPerson, rockContext );
+                        }
+
+                        if ( !reservationType.IsAuthorized( Authorization.ADMINISTRATE, CurrentPerson ) )
+                        {
+                            reservationType.AllowPerson( Authorization.ADMINISTRATE, CurrentPerson, rockContext );
+                        }
+                    }
+                } );
+
+                ReservationWorkflowService.FlushCachedTriggers();
+
+                var qryParams = new Dictionary<string, string>();
+                qryParams["ReservationTypeId"] = reservationType.Id.ToString();
+
+                NavigateToPage( RockPage.Guid, qryParams );
             }
         }
 
@@ -211,7 +389,14 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         protected void btnCancel_Click( object sender, EventArgs e )
         {
-            NavigateToParentPage();
+            if ( hfReservationTypeId.Value.Equals( "0" ) )
+            {
+                NavigateToParentPage();
+            }
+            else
+            {
+                ShowReadonlyDetails( GetReservationType( hfReservationTypeId.ValueAsInt(), new RockContext() ) );
+            }
         }
 
         /// <summary>
@@ -221,7 +406,23 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void Block_BlockUpdated( object sender, EventArgs e )
         {
-            ShowDetail();
+            var currentReservationType = GetReservationType( hfReservationTypeId.Value.AsInteger() );
+            if ( currentReservationType != null )
+            {
+                ShowReadonlyDetails( currentReservationType );
+            }
+            else
+            {
+                string reservationTypeId = PageParameter( "ReservationTypeId" );
+                if ( !string.IsNullOrWhiteSpace( reservationTypeId ) )
+                {
+                    ShowDetail( reservationTypeId.AsInteger() );
+                }
+                else
+                {
+                    pnlDetails.Visible = false;
+                }
+            }
         }
 
         #endregion
@@ -235,9 +436,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="RowEventArgs"/> instance containing the event data.</param>
         protected void gMinistries_Delete( object sender, RowEventArgs e )
         {
-            Guid rowGuid = (Guid)e.RowKeyValue;
-            MinistriesState.RemoveEntity( rowGuid );
-            BindReservationMinistrysGrid();
+            Guid rowGuid = ( Guid ) e.RowKeyValue;
+            ReservationMinistriesState.RemoveEntity( rowGuid );
+            BindReservationMinistriesGrid();
         }
 
         /// <summary>
@@ -251,7 +452,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             Guid guid = hfAddMinistryGuid.Value.AsGuid();
             if ( !guid.IsEmpty() )
             {
-                reservationMinistry = MinistriesState.FirstOrDefault( l => l.Guid.Equals( guid ) );
+                reservationMinistry = ReservationMinistriesState.FirstOrDefault( l => l.Guid.Equals( guid ) );
             }
 
             if ( reservationMinistry == null )
@@ -263,13 +464,13 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 return;
             }
-            if ( MinistriesState.Any( a => a.Guid.Equals( reservationMinistry.Guid ) ) )
+            if ( ReservationMinistriesState.Any( a => a.Guid.Equals( reservationMinistry.Guid ) ) )
             {
-                MinistriesState.RemoveEntity( reservationMinistry.Guid );
+                ReservationMinistriesState.RemoveEntity( reservationMinistry.Guid );
             }
-            MinistriesState.Add( reservationMinistry );
+            ReservationMinistriesState.Add( reservationMinistry );
 
-            BindReservationMinistrysGrid();
+            BindReservationMinistriesGrid();
 
             HideDialog();
         }
@@ -281,7 +482,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void gMinistries_GridRebind( object sender, EventArgs e )
         {
-            BindReservationMinistrysGrid();
+            BindReservationMinistriesGrid();
         }
 
         /// <summary>
@@ -301,7 +502,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="RowEventArgs"/> instance containing the event data.</param>
         protected void gMinistries_Edit( object sender, RowEventArgs e )
         {
-            Guid reservationMinistryGuid = (Guid)e.RowKeyValue;
+            Guid reservationMinistryGuid = ( Guid ) e.RowKeyValue;
             gMinistries_ShowEdit( reservationMinistryGuid );
         }
 
@@ -311,7 +512,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="reservationMinistryGuid">The connection status unique identifier.</param>
         protected void gMinistries_ShowEdit( Guid reservationMinistryGuid )
         {
-            ReservationMinistry reservationMinistry = MinistriesState.FirstOrDefault( l => l.Guid.Equals( reservationMinistryGuid ) );
+            ReservationMinistry reservationMinistry = ReservationMinistriesState.FirstOrDefault( l => l.Guid.Equals( reservationMinistryGuid ) );
             if ( reservationMinistry != null )
             {
                 tbMinistryName.Text = reservationMinistry.Name;
@@ -327,10 +528,10 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <summary>
         /// Binds the connection activity types grid.
         /// </summary>
-        private void BindReservationMinistrysGrid()
+        private void BindReservationMinistriesGrid()
         {
-            SetReservationMinistryListOrder( MinistriesState );
-            gMinistries.DataSource = MinistriesState.OrderBy( a => a.Name ).ToList();
+            SetReservationMinistryListOrder( ReservationMinistriesState );
+            gMinistries.DataSource = ReservationMinistriesState.OrderBy( a => a.Name ).ToList();
 
             gMinistries.DataBind();
         }
@@ -365,7 +566,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             Guid guid = hfAddWorkflowTriggerGuid.Value.AsGuid();
             if ( !guid.IsEmpty() )
             {
-                reservationWorkflowTrigger = WorkflowTriggersState.FirstOrDefault( l => l.Guid.Equals( guid ) );
+                reservationWorkflowTrigger = ReservationWorkflowTriggersState.FirstOrDefault( l => l.Guid.Equals( guid ) );
             }
 
             if ( reservationWorkflowTrigger == null )
@@ -384,12 +585,12 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 return;
             }
-            if ( WorkflowTriggersState.Any( a => a.Guid.Equals( reservationWorkflowTrigger.Guid ) ) )
+            if ( ReservationWorkflowTriggersState.Any( a => a.Guid.Equals( reservationWorkflowTrigger.Guid ) ) )
             {
-                WorkflowTriggersState.RemoveEntity( reservationWorkflowTrigger.Guid );
+                ReservationWorkflowTriggersState.RemoveEntity( reservationWorkflowTrigger.Guid );
             }
 
-            WorkflowTriggersState.Add( reservationWorkflowTrigger );
+            ReservationWorkflowTriggersState.Add( reservationWorkflowTrigger );
             BindReservationWorkflowTriggersGrid();
             HideDialog();
         }
@@ -401,8 +602,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="RowEventArgs"/> instance containing the event data.</param>
         protected void gWorkflowTriggers_Delete( object sender, RowEventArgs e )
         {
-            Guid rowGuid = (Guid)e.RowKeyValue;
-            WorkflowTriggersState.RemoveEntity( rowGuid );
+            Guid rowGuid = ( Guid ) e.RowKeyValue;
+            ReservationWorkflowTriggersState.RemoveEntity( rowGuid );
 
             BindReservationWorkflowTriggersGrid();
         }
@@ -424,7 +625,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="RowEventArgs"/> instance containing the event data.</param>
         protected void gWorkflowTriggers_Edit( object sender, RowEventArgs e )
         {
-            Guid reservationWorkflowTriggerGuid = (Guid)e.RowKeyValue;
+            Guid reservationWorkflowTriggerGuid = ( Guid ) e.RowKeyValue;
             gWorkflowTriggers_ShowEdit( reservationWorkflowTriggerGuid );
         }
 
@@ -434,7 +635,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="reservationWorkflowTriggerGuid">The connection workflow unique identifier.</param>
         protected void gWorkflowTriggers_ShowEdit( Guid reservationWorkflowTriggerGuid )
         {
-            ReservationWorkflowTrigger reservationWorkflowTrigger = WorkflowTriggersState.FirstOrDefault( l => l.Guid.Equals( reservationWorkflowTriggerGuid ) );
+            ReservationWorkflowTrigger reservationWorkflowTrigger = ReservationWorkflowTriggersState.FirstOrDefault( l => l.Guid.Equals( reservationWorkflowTriggerGuid ) );
             if ( reservationWorkflowTrigger != null )
             {
                 ddlTriggerType.BindToEnum<ReservationWorkflowTriggerType>();
@@ -508,7 +709,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             using ( var rockContext = new RockContext() )
             {
                 String[] qualifierValues = new String[2];
-                ReservationWorkflowTrigger reservationWorkflowTrigger = WorkflowTriggersState.FirstOrDefault( l => l.Guid.Equals( hfAddWorkflowTriggerGuid.Value.AsGuid() ) );
+                ReservationWorkflowTrigger reservationWorkflowTrigger = ReservationWorkflowTriggersState.FirstOrDefault( l => l.Guid.Equals( hfAddWorkflowTriggerGuid.Value.AsGuid() ) );
                 ReservationWorkflowTriggerType reservationWorkflowTriggerType = ddlTriggerType.SelectedValueAsEnum<ReservationWorkflowTriggerType>();
                 switch ( reservationWorkflowTriggerType )
                 {
@@ -571,8 +772,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// </summary>
         private void BindReservationWorkflowTriggersGrid()
         {
-            SetReservationWorkflowTriggerListOrder( WorkflowTriggersState );
-            gWorkflowTriggers.DataSource = WorkflowTriggersState.Select( c => new
+            SetReservationWorkflowTriggerListOrder( ReservationWorkflowTriggersState );
+            gWorkflowTriggers.DataSource = ReservationWorkflowTriggersState.Select( c => new
             {
                 c.Id,
                 c.Guid,
@@ -606,30 +807,65 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <summary>
         /// Shows the edit.
         /// </summary>
-        /// <param name="connectionTypeId">The Connection Type Type identifier.</param>
-        public void ShowDetail()
+        /// <param name="reservationTypeId">The Reservation Type Type identifier.</param>
+        public void ShowDetail( int reservationTypeId )
         {
             pnlDetails.Visible = false;
 
+            ReservationType reservationType = null;
             using ( var rockContext = new RockContext() )
             {
+                if ( !reservationTypeId.Equals( 0 ) )
+                {
+                    reservationType = GetReservationType( reservationTypeId, rockContext );
+                    pdAuditDetails.SetEntity( reservationType, ResolveRockUrl( "~" ) );
+                }
+
+                if ( reservationType == null )
+                {
+                    reservationType = new ReservationType { Id = 0 };
+                    // hide the panel drawer that show created and last modified dates
+                    pdAuditDetails.Visible = false;
+                }
+
+                // Admin rights are needed to edit a reservation type ( Edit rights only allow adding/removing items )
+                bool adminAllowed = UserCanAdministrate || reservationType.IsAuthorized( Authorization.ADMINISTRATE, CurrentPerson );
                 pnlDetails.Visible = true;
+                hfReservationTypeId.Value = reservationType.Id.ToString();
+                lIcon.Text = string.Format( "<i class='{0}'></i>", reservationType.IconCssClass );
                 bool readOnly = false;
 
                 nbEditModeMessage.Text = string.Empty;
-                if ( !UserCanAdministrate )
+                if ( !adminAllowed )
                 {
                     readOnly = true;
-                    nbEditModeMessage.Text = EditModeMessage.ReadOnlyEditActionNotAllowed( ConnectionType.FriendlyTypeName );
+                    nbEditModeMessage.Text = EditModeMessage.ReadOnlyEditActionNotAllowed( ReservationType.FriendlyTypeName );
                 }
 
                 if ( readOnly )
                 {
-                    ShowReadonlyDetails();
+                    btnEdit.Visible = false;
+                    btnDelete.Visible = false;
+                    btnSecurity.Visible = false;
+                    ShowReadonlyDetails( reservationType );
                 }
                 else
                 {
-                    ShowEditDetails();
+                    btnEdit.Visible = true;
+                    btnDelete.Visible = true;
+                    btnSecurity.Visible = true;
+
+                    btnSecurity.Title = "Secure " + reservationType.Name;
+                    btnSecurity.EntityId = reservationType.Id;
+
+                    if ( !reservationTypeId.Equals( 0 ) )
+                    {
+                        ShowReadonlyDetails( reservationType );
+                    }
+                    else
+                    {
+                        ShowEditDetails( reservationType );
+                    }
                 }
             }
         }
@@ -637,29 +873,133 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <summary>
         /// Shows the edit details.
         /// </summary>
-        /// <param name="connectionType">Type of the connection.</param>
-        private void ShowEditDetails()
+        /// <param name="reservationType">Type of the reservation.</param>
+        private void ShowEditDetails( ReservationType reservationType )
         {
-            var rockContext = new RockContext();
+            if ( reservationType == null )
+            {
+                reservationType = new ReservationType();
+                reservationType.IconCssClass = "fa fa-compress";
+            }
+            if ( reservationType.Id == 0 )
+            {
+                lReadOnlyTitle.Text = ActionTitle.Add( ReservationType.FriendlyTypeName ).FormatAsHtmlTitle();
+            }
+            else
+            {
+                lReadOnlyTitle.Text = reservationType.Name.FormatAsHtmlTitle();
+            }
+
             SetEditMode( true );
 
-            MinistriesState = new ReservationMinistryService( rockContext ).Queryable().ToList();
-            WorkflowTriggersState = new ReservationWorkflowTriggerService( rockContext ).Queryable().ToList();
+            // General
+            tbName.Text = reservationType.Name;
+            tbDescription.Text = reservationType.Description;
+            tbIconCssClass.Text = reservationType.IconCssClass;
+            cbActive.Checked = reservationType.IsActive;
+            cbIsCommunicationHistorySaved.Checked = reservationType.IsCommunicationHistorySaved;
+            cbIsContactDetailsRequired.Checked = reservationType.IsContactDetailsRequired;
+            cbIsNumberAttendingRequired.Checked = reservationType.IsNumberAttendingRequired;
+            cbIsSetupTimeRequired.Checked = reservationType.IsSetupTimeRequired;
 
-            BindReservationMinistrysGrid();
+            LoadDropDowns();
+            if ( reservationType.NotificationEmailId.HasValue )
+            {
+                ddlNotificationEmail.SetValue( reservationType.NotificationEmailId.Value );
+
+            }
+            if ( reservationType.FinalApprovalGroupId.HasValue )
+            {
+                ddlFinalApprovalGroup.SetValue( reservationType.FinalApprovalGroupId.Value );
+
+            }
+            if ( reservationType.SuperAdminGroupId.HasValue )
+            {
+                ddlSuperAdminGroup.SetValue( reservationType.SuperAdminGroupId.Value );
+
+            }
+
+            ReservationWorkflowTriggersState = reservationType.ReservationWorkflowTriggers.ToList();
+            ReservationMinistriesState = reservationType.ReservationMinistries.ToList();
+
             BindReservationWorkflowTriggersGrid();
+            BindReservationMinistriesGrid();
+        }
+
+        private void LoadDropDowns()
+        {
+            ddlFinalApprovalGroup.Items.Clear();
+            ddlSuperAdminGroup.Items.Clear();
+
+            ddlFinalApprovalGroup.Items.Add( new ListItem( string.Empty, string.Empty ) );
+            ddlSuperAdminGroup.Items.Add( new ListItem( string.Empty, string.Empty ) );
+
+            var roles = new GroupService( new RockContext() ).Queryable().Where( g => g.IsSecurityRole ).OrderBy( t => t.Name );
+            if ( roles.Any() )
+            {
+                foreach ( var role in roles )
+                {
+                    ddlFinalApprovalGroup.Items.Add( new ListItem( role.Name, role.Id.ToString() ) );
+                    ddlSuperAdminGroup.Items.Add( new ListItem( role.Name, role.Id.ToString() ) );
+                }
+
+            }
+
+            ddlNotificationEmail.Items.Clear();
+            ddlNotificationEmail.Items.Add( new ListItem( string.Empty, string.Empty ) );
+
+            using ( var rockContext = new RockContext() )
+            {
+                foreach ( var systemEmail in new SystemEmailService( rockContext )
+                    .Queryable().AsNoTracking()
+                    .OrderBy( e => e.Title )
+                    .Select( e => new
+                    {
+                        e.Id,
+                        e.Title
+                    } ) )
+                {
+                    ddlNotificationEmail.Items.Add( new ListItem( systemEmail.Title, systemEmail.Id.ToString() ) );
+                }
+            }
         }
 
         /// <summary>
         /// Shows the readonly details.
         /// </summary>
-        /// <param name="connectionType">Type of the connection.</param>
-        private void ShowReadonlyDetails()
+        /// <param name="reservationType">Type of the reservation.</param>
+        private void ShowReadonlyDetails( ReservationType reservationType )
         {
             SetEditMode( false );
 
-            MinistriesState = null;
-            WorkflowTriggersState = null;
+            hfReservationTypeId.SetValue( reservationType.Id );
+            ReservationWorkflowTriggersState = null;
+            ReservationMinistriesState = null;
+
+            lReadOnlyTitle.Text = reservationType.Name.FormatAsHtmlTitle();
+            lReservationTypeDescription.Text = reservationType.Description.ScrubHtmlAndConvertCrLfToBr();
+        }
+
+        /// <summary>
+        /// Gets the type of the reservation.
+        /// </summary>
+        /// <param name="reservationTypeId">The reservation type identifier.</param>
+        /// <param name="rockContext">The rock context.</param>
+        /// <returns></returns>
+        private ReservationType GetReservationType( int reservationTypeId, RockContext rockContext = null )
+        {
+            string key = string.Format( "ReservationType:{0}", reservationTypeId );
+            ReservationType reservationType = RockPage.GetSharedItem( key ) as ReservationType;
+            if ( reservationType == null )
+            {
+                rockContext = rockContext ?? new RockContext();
+                reservationType = new ReservationTypeService( rockContext ).Queryable()
+                    .Where( c => c.Id == reservationTypeId )
+                    .FirstOrDefault();
+                RockPage.SaveSharedItem( key, reservationType );
+            }
+
+            return reservationType;
         }
 
         /// <summary>
@@ -669,6 +1009,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         private void SetEditMode( bool editable )
         {
             pnlEditDetails.Visible = editable;
+            pnlViewDetails.Visible = !editable;
 
             this.HideSecondaryBlocks( editable );
         }
@@ -692,6 +1033,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         {
             switch ( hfActiveDialog.Value )
             {
+
                 case "RESERVATIONMINISTRIES":
                     dlgMinistries.Show();
                     break;

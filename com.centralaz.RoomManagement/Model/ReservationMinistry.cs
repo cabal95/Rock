@@ -31,6 +31,10 @@ namespace com.centralaz.RoomManagement.Model
 
         #region Entity Properties
 
+        [Required]
+        [DataMember]
+        public int ReservationTypeId { get; set; }
+
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
@@ -75,6 +79,13 @@ namespace com.centralaz.RoomManagement.Model
 
         #endregion
 
+        #region Virtual Properties
+
+        [DataMember]
+        public virtual ReservationType ReservationType { get; set; }
+
+        #endregion
+
     }
 
     #region Entity Configuration
@@ -87,6 +98,8 @@ namespace com.centralaz.RoomManagement.Model
         /// </summary>
         public ReservationMinistryConfiguration()
         {
+            this.HasRequired( p => p.ReservationType ).WithMany( p => p.ReservationMinistries ).HasForeignKey( p => p.ReservationTypeId ).WillCascadeOnDelete( true );
+
             // IMPORTANT!!
             this.HasEntitySetName( "ReservationMinistry" );
         }

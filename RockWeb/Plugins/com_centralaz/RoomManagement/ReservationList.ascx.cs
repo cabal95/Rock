@@ -29,6 +29,7 @@ using Rock.Web.UI.Controls;
 
 using com.centralaz.RoomManagement.Model;
 using System.Web.UI.WebControls;
+using com.centralaz.RoomManagement.Web.Cache;
 
 namespace RockWeb.Plugins.com_centralaz.RoomManagement
 {
@@ -108,24 +109,32 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 case FilterSetting.MINISTRY:
                     {
-                        int ministryId = 0;
-                        var reservationMinistryService = new ReservationMinistryService( new RockContext() );
-                        if ( int.TryParse( e.Value, out ministryId ) )
+                        var reservationMinistryValues = e.Value.Split( ',' ).AsIntegerList();
+                        if ( reservationMinistryValues.Any() )
                         {
-                            var ministry = reservationMinistryService.Get( ministryId );
-                            if ( ministry != null )
-                            {
-                                e.Value = ministry.Name;
-                            }
-                            else
-                            {
-                                e.Value = string.Empty;
-                            }
+                            var reservationMinistryService = new ReservationMinistryService( new RockContext() );
+                            e.Value = reservationMinistryService.GetByIds( reservationMinistryValues ).Select( r => r.Name ).ToList().AsDelimited( "," );
                         }
                         else
                         {
                             e.Value = string.Empty;
                         }
+
+                        break;
+                    }
+                case FilterSetting.RESERVATION_TYPE:
+                    {
+                        var reservationTypeValues = e.Value.Split( ',' ).AsIntegerList();
+                        if ( reservationTypeValues.Any() )
+                        {
+                            var reservationTypeService = new ReservationTypeService( new RockContext() );
+                            e.Value = reservationTypeService.GetByIds( reservationTypeValues ).Select( r => r.Name ).ToList().AsDelimited( "," );
+                        }
+                        else
+                        {
+                            e.Value = string.Empty;
+                        }
+
                         break;
                     }
                 case FilterSetting.APPROVAL_STATE:
@@ -221,15 +230,16 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         protected void gfSettings_ApplyFilterClick( object sender, EventArgs e )
         {
             gfSettings.SaveUserPreference( FilterSetting.RESERVATION_NAME, tbName.Text );
-            gfSettings.SaveUserPreference( FilterSetting.MINISTRY, ddlMinistry.SelectedValue );
             gfSettings.SaveUserPreference( FilterSetting.APPROVAL_STATE, cblApproval.SelectedValues.AsDelimited( "," ) );
+            gfSettings.SaveUserPreference( FilterSetting.MINISTRY, cblMinistry.SelectedValues.AsDelimited( "," ) );
+            gfSettings.SaveUserPreference( FilterSetting.RESERVATION_TYPE, cblReservationType.SelectedValues.AsDelimited( "," ) );
 
             int personId = ppCreator.PersonId ?? 0;
-            gfSettings.SaveUserPreference( FilterSetting.CREATED_BY,  personId.ToString() );
+            gfSettings.SaveUserPreference( FilterSetting.CREATED_BY, personId.ToString() );
 
             gfSettings.SaveUserPreference( FilterSetting.START_TIME, dtpStartDateTime.SelectedDateTime.ToString() );
             gfSettings.SaveUserPreference( FilterSetting.END_TIME, dtpEndDateTime.SelectedDateTime.ToString() );
-            gfSettings.SaveUserPreference( FilterSetting.RESOURCES, rpResource.SelectedValues.AsIntegerList().AsDelimited(","));
+            gfSettings.SaveUserPreference( FilterSetting.RESOURCES, rpResource.SelectedValues.AsIntegerList().AsDelimited( "," ) );
             gfSettings.SaveUserPreference( FilterSetting.LOCATIONS, lipLocation.SelectedValues.AsIntegerList().AsDelimited( "," ) );
             BindGrid();
         }
@@ -250,18 +260,25 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 tbName.Text = gfSettings.GetUserPreference( FilterSetting.RESERVATION_NAME );
             }
 
-            var ministries = new ReservationMinistryService( rockContext ).Queryable().ToList();
-            ddlMinistry.Items.Insert( 0, new ListItem( string.Empty, string.Empty ) );
-            foreach ( var ministry in ministries )
-            {
-                ddlMinistry.Items.Add( new ListItem( ministry.Name, ministry.Id.ToString() ) );
-            }
+            // Setup Ministry Filter
+            cblMinistry.DataSource = ReservationMinistryCache.All();
+            cblMinistry.DataBind();
+
             if ( !string.IsNullOrWhiteSpace( gfSettings.GetUserPreference( FilterSetting.MINISTRY ) ) )
             {
-                ddlMinistry.SetValue( gfSettings.GetUserPreference( FilterSetting.MINISTRY ) );
+                cblMinistry.SetValues( gfSettings.GetUserPreference( FilterSetting.MINISTRY ).SplitDelimitedValues() );
             }
 
-            cblApproval.BindToEnum<ReservationApprovalState>( );
+            // Setup Reservation Type Filter
+            cblReservationType.DataSource = new ReservationTypeService( new RockContext() ).Queryable().ToList();
+            cblReservationType.DataBind();
+
+            if ( !string.IsNullOrWhiteSpace( gfSettings.GetUserPreference( FilterSetting.RESERVATION_TYPE ) ) )
+            {
+                cblReservationType.SetValues( gfSettings.GetUserPreference( FilterSetting.RESERVATION_TYPE ).SplitDelimitedValues() );
+            }
+
+            cblApproval.BindToEnum<ReservationApprovalState>();
             if ( !string.IsNullOrWhiteSpace( gfSettings.GetUserPreference( FilterSetting.APPROVAL_STATE ) ) )
             {
                 cblApproval.SetValues( gfSettings.GetUserPreference( FilterSetting.APPROVAL_STATE ).SplitDelimitedValues() );
@@ -283,7 +300,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             if ( !string.IsNullOrWhiteSpace( gfSettings.GetUserPreference( FilterSetting.START_TIME ) ) )
             {
-                dtpStartDateTime.SelectedDateTime = gfSettings.GetUserPreference(  FilterSetting.START_TIME ).AsDateTime();
+                dtpStartDateTime.SelectedDateTime = gfSettings.GetUserPreference( FilterSetting.START_TIME ).AsDateTime();
             }
 
             if ( !string.IsNullOrWhiteSpace( gfSettings.GetUserPreference( FilterSetting.END_TIME ) ) )
@@ -318,19 +335,30 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
 
             // Filter by Ministry
-            var ministryValueId = ddlMinistry.SelectedValueAsInt();
-            if ( ministryValueId.HasValue )
+            List<int> ministryIds = cblMinistry.Items.OfType<System.Web.UI.WebControls.ListItem>().Where( l => l.Selected ).Select( a => a.Value.AsInteger() ).ToList();
+            if ( ministryIds.Any() )
             {
-                qry = qry.Where( r => r.ReservationMinistryId == ministryValueId );
+                qry = qry
+                    .Where( r =>
+                        !r.ReservationMinistryId.HasValue ||    // All
+                        ministryIds.Contains( r.ReservationMinistryId.Value ) );
             }
 
             // Filter by Approval
-            List<ReservationApprovalState> approvalValues = cblApproval.Items.OfType<ListItem>().Where( l => l.Selected ).Select( a => a.Value.ConvertToEnum<ReservationApprovalState>() ).Where( a => a != null ).ToList();
+            List<ReservationApprovalState> approvalValues = cblApproval.Items.OfType<System.Web.UI.WebControls.ListItem>().Where( l => l.Selected ).Select( a => a.Value.ConvertToEnum<ReservationApprovalState>() ).Where( a => a != null ).ToList();
             if ( approvalValues.Any() )
             {
                 qry = qry
                     .Where( r =>
                         approvalValues.Contains( r.ApprovalState ) );
+            }
+
+            // Filter by Reservation Type
+            List<int> reservationTypeIds = cblReservationType.Items.OfType<System.Web.UI.WebControls.ListItem>().Where( l => l.Selected ).Select( a => a.Value.AsInteger() ).ToList();
+            if ( reservationTypeIds.Any() )
+            {
+                qry = qry
+                    .Where( r => reservationTypeIds.Contains( r.ReservationTypeId ) );
             }
 
             // Filter by Creator
@@ -367,6 +395,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             gReservations.DataSource = reservationSummaryList.Select( r => new
             {
                 Id = r.Id,
+                ReservationType = r.ReservationType.Name,
                 ReservationName = r.ReservationName,
                 Locations = r.ReservationLocations.Select( rl => rl.Location.Name ).ToList().AsDelimited( ", " ),
                 Resources = r.ReservationResources.Select( rr => rr.Resource.Name ).ToList().AsDelimited( ", " ),
@@ -375,8 +404,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 ReservationStartDateTime = r.ReservationStartDateTime,
                 ReservationEndDateTime = r.ReservationEndDateTime,
                 EventDateTimeDescription = r.EventDateTimeDescription,
-                ReservationDateTimeDescription = r.ReservationDateTimeDescription + 
-                    string.Format( " ({0})", ( r.ReservationStartDateTime.Date == r.ReservationEndDateTime.Date ) 
+                ReservationDateTimeDescription = r.ReservationDateTimeDescription +
+                    string.Format( " ({0})", ( r.ReservationStartDateTime.Date == r.ReservationEndDateTime.Date )
                         ? r.ReservationStartDateTime.DayOfWeek.ToStringSafe().Substring( 0, 3 )
                         : r.ReservationStartDateTime.DayOfWeek.ToStringSafe().Substring( 0, 3 ) + "-" + r.ReservationEndDateTime.DayOfWeek.ToStringSafe().Substring( 0, 3 ) ),
                 ApprovalState = r.ApprovalState.ConvertToString()
@@ -396,6 +425,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         public static class FilterSetting
         {
             public const string RESERVATION_NAME = "Reservation Name";
+            public const string RESERVATION_TYPE = "Reservation Type";
             public const string MINISTRY = "Ministry";
             public const string CREATED_BY = "Created By";
             public const string LOCATIONS = "Locations";
