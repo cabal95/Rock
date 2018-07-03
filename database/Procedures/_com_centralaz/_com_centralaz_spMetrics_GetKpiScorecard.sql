@@ -37,13 +37,29 @@ BEGIN CATCH
 END CATCH 
 
 ----------------------------------------------------------------------------
+-- CREATE WEIGHTED VALUES
+----------------------------------------------------------------------------
+DECLARE @MetricConfigTbl TABLE (
+	MetricGuid uniqueidentifier NOT NULL,
+	WeightedValue decimal(9,2) NOT NULL,
+	AssociateWeightedValue decimal(9,2) NOT NULL,
+	IsPercentage bit NOT NULL
+)
+
+INSERT INTO @MetricConfigTbl
+VALUES
+	( 'BBF8148D-84A2-4FCD-8768-A154B951A986', 35, 0, 0 ),	--	Discover More Attendance
+	( '2340CC55-FDF6-4F87-9013-E4918C3D83C7', 25, 60, 0 ),	--	Connection Cards (FTG)
+	( '35CCF658-25AE-4DD5-88A4-83F3C3DDAAB2', 20, 0, 1 ),	--	Connection Card Conversion
+	( '8E502D63-9485-4332-A412-94EAC686E91B', 8, 40, 1 ),	--	DM Room Capacity Utilization
+	( '92BAE802-FA3C-41C2-A551-960A492B800E', 4, 0, 0 ),	--	Baptisms
+	( '156C80A4-33CF-4E6D-920E-30FC56BE7801', 4, 0, 1 ),	--	New Servant Ministers
+	( 'A22B3072-1A68-4034-A3E6-7B331894BC6E', 4, 0, 1 )		--	New Life Group Members
+
+----------------------------------------------------------------------------
 -- GET THE CONSTANTS
 ----------------------------------------------------------------------------
-DECLARE @RootCategoryId INT = 541;
-
-DECLARE @WeightedValueAttributeId INT = 16976;
-DECLARE @AssociateWeightedValueAttributeId INT = 16977;
-DECLARE @IsPercentageAttributeId INT = 16983;
+DECLARE @RootCategoryId INT = ( SELECT TOP 1 [Id] FROM [Category] WHERE [Guid] = 'A4AA0D21-3CEE-4CD3-B527-8400724B3AB2' ) -- KPI Metric Category
 
 DECLARE @ConnectionCardParentGroupId int = 258830;
 DECLARE @FamilyGroupTypeId INT = 10;
@@ -71,7 +87,6 @@ ELSE SET @SelectedDate  = @SundayDateTime;
 DECLARE @ThisMonthStart DATETIME= DATEADD(mm, DATEDIFF(mm, 0, @SelectedDate ), 0)
 DECLARE @ThisMonthEnd DATETIME = DATEADD(DAY, -1,DATEADD(mm, 1, @ThisMonthStart));
 
-
 -- Finally, grab the ministry year start for this year and last year
 DECLARE @ThisMinistryYearStart DATETIME = DATEADD(mm, 7, DATEADD(yy,DATEDIFF(yy,0,@SelectedDate),0));
 IF(@SelectedDate < @ThisMinistryYearStart)
@@ -85,6 +100,7 @@ DECLARE @ThisMinistryYearEnd DATETIME = DATEADD(dd,-1, DATEADD(yy,1,@ThisMinistr
 
 DECLARE @MetricValues TABLE(
 	[Id] [int] NULL,
+	[Guid] [uniqueidentifier] NULL,
 	[MetricId] [int] NULL,
 	[MetricCategoryId] [int] null,
 	[CategoryId][int] null,
@@ -101,8 +117,9 @@ DECLARE @MetricValues TABLE(
 INSERT INTO @MetricValues
 SELECT mv.Id
 	,m.Id
+	,m.Guid
 	,mc.Id
-	,cat.Id
+	,mc.CategoryId
 	,m.Title
 	,mv.YValue
 	,mv.MetricValueType
@@ -115,7 +132,6 @@ JOIN MetricValuePartition mvpC ON mvpC.MetricValueId = mv.Id
 JOIN MetricPartition mpC ON mvpC.MetricPartitionId = mpC.Id AND mpC.EntityTypeId IN (SELECT TOP 1 Id FROM EntityType WHERE Name='Rock.Model.Campus')
 JOIN Campus c ON mvpC.EntityId = c.Id
 JOIN MetricCategory mc ON mc.MetricId = m.Id
-JOIN Category cat ON cat.Id = mc.CategoryId
 WHERE  mc.CategoryId = @RootCategoryId
 AND mv.YValue IS NOT NULL
 AND ( @IsCampus = 0 OR c.id = @CampusId)
@@ -373,13 +389,11 @@ FROM (
 	SELECT DISTINCT
 	mv.MetricCategoryId AS 'MetricCategoryId',
 	mv.MetricName AS 'MetricName',
-	CONVERT(FLOAT,wvAv.Value) AS 'WeightedValue',
-	CONVERT(FLOAT,awvAv.Value) AS 'AssociateWeightedValue',
-	ipAv.Value AS 'IsPercentage'
+	CONVERT(FLOAT,ct.WeightedValue) AS 'WeightedValue',
+	CONVERT(FLOAT,ct.AssociateWeightedValue) AS 'AssociateWeightedValue',
+	ct.IsPercentage AS 'IsPercentage'
 	FROM @MetricValues mv
-	LEFT JOIN AttributeValue wvAv ON wvAv.EntityId = mv.MetricCategoryId AND wvAv.AttributeId = @WeightedValueAttributeId
-	LEFT JOIN AttributeValue awvAv ON awvAv.EntityId = mv.MetricCategoryId AND awvAv.AttributeId = @AssociateWeightedValueAttributeId
-	LEFT JOIN AttributeValue ipAv ON ipAv.EntityId = mv.MetricCategoryId AND ipAv.AttributeId = @IsPercentageAttributeId
+	INNER JOIN @MetricConfigTbl CT ON CT.MetricGuid = mv.Guid
 	) referenceTable
 LEFT JOIN 
 	(
@@ -502,5 +516,3 @@ WHERE (@IsAssociate = 0 OR AssociateWeightedValue <> '')
 GROUP BY ROLLUP(MetricCategoryId)
 ORDER BY [Order], WeightedValue DESC
 END
-GO
-
