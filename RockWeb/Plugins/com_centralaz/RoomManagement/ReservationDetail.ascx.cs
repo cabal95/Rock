@@ -341,9 +341,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 Reservation reservation = null;
                 var changes = new List<string>();
 
-                if ( PageParameter( "ReservationId" ).AsIntegerOrNull() != null )
+                if ( hfReservationId.ValueAsInt() != null )
                 {
-                    reservation = reservationService.Get( PageParameter( "ReservationId" ).AsInteger() );
+                    reservation = reservationService.Get( hfReservationId.ValueAsInt() );
                 }
 
                 if ( reservation == null )
@@ -714,7 +714,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 ReservationService reservationService = new ReservationService( rockContext );
                 ReservationResourceService reservationResourceService = new ReservationResourceService( rockContext );
                 ReservationLocationService reservationLocationService = new ReservationLocationService( rockContext );
-                var reservation = reservationService.Get( PageParameter( "ReservationId" ).AsInteger() );
+                var reservation = reservationService.Get( hfReservationId.ValueAsInt() );
                 if ( reservation != null )
                 {
                     if ( reservation.ReservationResources != null )
@@ -802,7 +802,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         {
             if ( PageParameter( "ReservationId" ).AsIntegerOrNull() != null )
             {
-                var reservation = new ReservationService( new RockContext() ).Get( PageParameter( "ReservationId" ).AsInteger() );
+                var reservation = new ReservationService( new RockContext() ).Get( hfReservationId.ValueAsInt() );
                 if ( reservation != null )
                 {
                     ReservationApprovalState? newApprovalState = hfApprovalState.Value.ConvertToEnum<ReservationApprovalState>();
@@ -2139,7 +2139,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 var locationId = slpLocation.SelectedValueAsId().Value;
                 var location = new LocationService( rockContext ).Get( locationId );
 
-                int reservationId = PageParameter( "ReservationId" ).AsInteger();
+                int reservationId = hfReservationId.ValueAsInt();
                 var newReservation = new Reservation() { Id = reservationId, Schedule = new Schedule() { iCalendarContent = sbSchedule.iCalendarContent }, SetupTime = nbSetupTime.Text.AsInteger(), CleanupTime = nbCleanupTime.Text.AsInteger() };
                 var message = new ReservationService( rockContext ).BuildLocationConflictHtmlList( newReservation, locationId, this.CurrentPageReference.Route );
 
@@ -2170,7 +2170,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 var resourceId = srpResource.SelectedValueAsId().Value;
                 var resource = new ResourceService( rockContext ).Get( resourceId );
 
-                int reservationId = PageParameter( "ReservationId" ).AsInteger();
+                int reservationId = hfReservationId.ValueAsInt();
                 var newReservation = new Reservation() { Id = reservationId, Schedule = new Schedule() { iCalendarContent = sbSchedule.iCalendarContent }, SetupTime = nbSetupTime.Text.AsInteger(), CleanupTime = nbCleanupTime.Text.AsInteger() };
 
                 var conflicts = new ReservationService( rockContext ).GetConflictsForResourceId( resource.Id, newReservation );
@@ -2484,7 +2484,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                         {
                             mdWorkflowLaunched.Show( "Workflow Processing Error(s):<ul><li>" + workflowErrors.AsDelimited( "</li><li>" ) + "</li></ul>", ModalAlertType.Information );
                         }
-                        ShowDetail( PageParameter( "ReservationId" ).AsInteger() );
+                        ShowDetail( hfReservationId.ValueAsInt() );
                     }
                 }
             }
