@@ -94,6 +94,7 @@
     <Compile Include="Field\Types\ReportTemplateFieldType.cs" />
     <Compile Include="Field\Types\ReservationFieldType.cs" />
     <Compile Include="Jobs\FireWorkflowFromReservationInDateRange.cs" />
+    <Compile Include="ReportTemplates\AdvancedReportTemplate.cs" />
     <Compile Include="ReportTemplates\LavaReportTemplate.cs" />
     <Compile Include="ReportTemplates\ReportTemplate.cs" />
     <Compile Include="ReportTemplates\ReportTemplateContainer.cs" />
