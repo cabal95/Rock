@@ -152,9 +152,13 @@ namespace com.centralaz.RoomManagement.Migrations
                     foreach ( var workflowActionType in workflowActivityType.ActionTypes )
                     {
                         workflowActionType.Order++;
-                    }
+                        Sql( String.Format( @"
+                            UPDATE [WorkflowActionType]
+                            SET [Order] = [Order] + 1
+                            Where [Guid] = '{0}'
+                            ", workflowActionType.Guid ) );
 
-                    rockContext.SaveChanges();
+                    }
 
                     RockMigrationHelper.UpdateWorkflowActionType( "6A396018-6CC1-4C41-8EF1-FB9779C0B04D", "Set Final Approval Group from Entity", 0, "972F19B9-598B-474B-97A4-50E56E7B59D2", true, false, "", "", 1, "", "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity
                     RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "9392E3D7-A28B-4CD8-8B03-5E147B102EF1", @"False" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Active
