@@ -109,6 +109,12 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
         }
 
+        /// <summary>
+        /// Gets or sets the type of the reservation.
+        /// </summary>
+        /// <value>
+        /// The type of the reservation.
+        /// </value>
         private ReservationType ReservationType { get; set; }
 
         /// <summary>
@@ -640,114 +646,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         }
 
         /// <summary>
-        /// Builds the old reservation.
-        /// </summary>
-        /// <param name="resourceService">The resource service.</param>
-        /// <param name="locationService">The location service.</param>
-        /// <param name="reservationService">The reservation service.</param>
-        /// <param name="reservation">The reservation.</param>
-        /// <returns></returns>
-        private static Reservation BuildOldReservation( ResourceService resourceService, LocationService locationService, ReservationService reservationService, Reservation reservation )
-        {
-            var oldReservation = new Reservation();
-            oldReservation.Schedule = reservation.Schedule ?? new Schedule();
-            if ( reservation.Schedule != null )
-            {
-                oldReservation.Schedule.iCalendarContent = reservation.Schedule.iCalendarContent;
-            }
-            oldReservation.ApprovalState = reservation.ApprovalState;
-            oldReservation.ReservationLocations = new List<ReservationLocation>();
-            oldReservation.ReservationResources = new List<ReservationResource>();
-
-            foreach ( var reservationLocation in reservation.ReservationLocations )
-            {
-                ReservationLocation oldReservationLocation = new ReservationLocation();
-                oldReservation.ReservationLocations.Add( oldReservationLocation );
-                oldReservationLocation.CopyPropertiesFrom( reservationLocation );
-                oldReservationLocation.Reservation = reservationService.Get( oldReservation.Id );
-                oldReservationLocation.Location = locationService.Get( reservationLocation.LocationId );
-                oldReservationLocation.ReservationId = reservation.Id;
-            }
-
-            foreach ( var reservationResource in reservation.ReservationResources )
-            {
-                ReservationResource oldReservationResource = new ReservationResource();
-                oldReservation.ReservationResources.Add( oldReservationResource );
-                oldReservationResource.CopyPropertiesFrom( reservationResource as ReservationResource );
-                oldReservationResource.Reservation = reservationService.Get( oldReservation.Id );
-                oldReservationResource.Resource = resourceService.Get( oldReservationResource.ResourceId );
-                oldReservationResource.ReservationId = reservation.Id;
-            }
-
-            return oldReservation;
-        }
-
-        private List<string> EvaluateLocationAndResourceChanges( List<string> changes, Reservation oldReservation, Reservation reservation )
-        {
-            foreach ( var reservationLocation in reservation.ReservationLocations )
-            {
-                var oldReservationLocation = oldReservation.ReservationLocations.Where( rl => rl.Guid == reservationLocation.Guid ).FirstOrDefault();
-
-                if ( oldReservationLocation != null )
-                {
-                    History.EvaluateChange( changes, String.Format( "{0} Approval State", reservationLocation.Location.Name ), oldReservationLocation.ApprovalState.ToString(), reservationLocation.ApprovalState.ToString() );
-                    if ( reservationLocation.Attributes != null )
-                    {
-                        oldReservationLocation.LoadAttributes();
-                        foreach ( var attribute in reservationLocation.Attributes.Select( a => a.Value ) )
-                        {
-                            string originalValue = oldReservationLocation.AttributeValues.ContainsKey( attribute.Key ) ? oldReservationLocation.AttributeValues[attribute.Key].Value : string.Empty;
-                            string newValue = reservationLocation.AttributeValues.ContainsKey( attribute.Key ) ? reservationLocation.AttributeValues[attribute.Key].Value : string.Empty;
-                            if ( newValue != originalValue )
-                            {
-                                string originalFormattedValue = attribute.FieldType.Field.FormatValue( null, originalValue, attribute.QualifierValues, false );
-                                string newFormattedValue = attribute.FieldType.Field.FormatValue( null, newValue, attribute.QualifierValues, false );
-                                History.EvaluateChange( changes, String.Format( "({0}) {1}", reservationLocation.Location.Name, attribute.Name ), originalFormattedValue, newFormattedValue );
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    changes.Add( String.Format( "Added <span class='field-name'>{0}</span>", reservationLocation.Location.Name ) );
-                }
-            }
-
-            foreach ( var reservationResource in reservation.ReservationResources )
-            {
-                var oldReservationResource = oldReservation.ReservationResources.Where( rl => rl.Guid == reservationResource.Guid ).FirstOrDefault();
-
-                if ( oldReservationResource != null )
-                {
-                    History.EvaluateChange( changes, String.Format( "{0} Approval State", reservationResource.Resource.Name ), oldReservationResource.ApprovalState.ToString(), reservationResource.ApprovalState.ToString() );
-                    History.EvaluateChange( changes, String.Format( "{0} Quantity", reservationResource.Resource.Name ), oldReservationResource.Quantity.ToString(), reservationResource.Quantity.ToString() );
-
-                    if ( reservationResource.Attributes != null )
-                    {
-                        oldReservationResource.LoadAttributes();
-                        foreach ( var attribute in reservationResource.Attributes.Select( a => a.Value ) )
-                        {
-                            string originalValue = oldReservationResource.AttributeValues.ContainsKey( attribute.Key ) ? oldReservationResource.AttributeValues[attribute.Key].Value : string.Empty;
-                            string newValue = reservationResource.AttributeValues.ContainsKey( attribute.Key ) ? reservationResource.AttributeValues[attribute.Key].Value : string.Empty;
-                            if ( newValue != originalValue )
-                            {
-                                string originalFormattedValue = attribute.FieldType.Field.FormatValue( null, originalValue, attribute.QualifierValues, false );
-                                string newFormattedValue = attribute.FieldType.Field.FormatValue( null, newValue, attribute.QualifierValues, false );
-                                History.EvaluateChange( changes, String.Format( "({0}) {1}", reservationResource.Resource.Name, attribute.Name ), originalFormattedValue, newFormattedValue );
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    changes.Add( String.Format( "Added <span class='field-name'>{0} {1}</span>", reservationResource.Quantity, reservationResource.Resource.Name ) );
-                }
-            }
-
-            return changes;
-        }
-
-        /// <summary>
         /// Handles the OnClick event of the btnEdit control.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
@@ -793,6 +691,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             ddlCampus.Focus();
         }
 
+        /// <summary>
+        /// Handles the SelectedIndexChanged event of the ddlReservationType control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void ddlReservationType_SelectedIndexChanged( object sender, EventArgs e )
         {
             ReservationType = new ReservationTypeService( new RockContext() ).Get( ddlReservationType.SelectedValueAsId().Value );
@@ -831,7 +734,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             ReturnToParentPage();
         }
-
 
         /// <summary>
         /// Handles the Click event of the Copy button control and creates a copy of the reservation 
@@ -1398,6 +1300,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             gLocations.DataBind();
         }
 
+        /// <summary>
+        /// Handles the ApproveClick event of the gLocations control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="RowEventArgs"/> instance containing the event data.</param>
         protected void gLocations_ApproveClick( object sender, RowEventArgs e )
         {
             bool failure = true;
@@ -1421,6 +1328,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
         }
 
+        /// <summary>
+        /// Handles the DenyClick event of the gLocations control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="RowEventArgs"/> instance containing the event data.</param>
         protected void gLocations_DenyClick( object sender, RowEventArgs e )
         {
             bool failure = true;
@@ -1444,6 +1356,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
         }
 
+        /// <summary>
+        /// Handles the RowDataBound event of the gLocations control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="GridViewRowEventArgs"/> instance containing the event data.</param>
         protected void gLocations_RowDataBound( object sender, GridViewRowEventArgs e )
         {
             Guid? approvalGroupGuid = null;
@@ -1493,6 +1410,10 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
         #region Methods
 
+        /// <summary>
+        /// Shows the detail.
+        /// </summary>
+        /// <param name="reservationId">The reservation identifier.</param>
         public void ShowDetail( int reservationId )
         {
             pnlEditDetails.Visible = false;
@@ -2353,6 +2274,10 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
         }
 
+        /// <summary>
+        /// Sets the edit mode.
+        /// </summary>
+        /// <param name="editable">if set to <c>true</c> [editable].</param>
         private void SetEditMode( bool editable )
         {
             pnlEditDetails.Visible = editable;
@@ -2361,6 +2286,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             this.HideSecondaryBlocks( editable );
         }
 
+        /// <summary>
+        /// Generates the new reservation.
+        /// </summary>
+        /// <param name="rockContext">The rock context.</param>
+        /// <returns></returns>
         private Reservation GenerateNewReservation( RockContext rockContext )
         {
             Reservation reservation;
@@ -2442,6 +2372,122 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
 
             return reservation;
+        }
+
+
+        /// <summary>
+        /// Builds the old reservation.
+        /// </summary>
+        /// <param name="resourceService">The resource service.</param>
+        /// <param name="locationService">The location service.</param>
+        /// <param name="reservationService">The reservation service.</param>
+        /// <param name="reservation">The reservation.</param>
+        /// <returns></returns>
+        private static Reservation BuildOldReservation( ResourceService resourceService, LocationService locationService, ReservationService reservationService, Reservation reservation )
+        {
+            var oldReservation = new Reservation();
+            oldReservation.Schedule = reservation.Schedule ?? new Schedule();
+            if ( reservation.Schedule != null )
+            {
+                oldReservation.Schedule.iCalendarContent = reservation.Schedule.iCalendarContent;
+            }
+            oldReservation.ApprovalState = reservation.ApprovalState;
+            oldReservation.ReservationLocations = new List<ReservationLocation>();
+            oldReservation.ReservationResources = new List<ReservationResource>();
+
+            foreach ( var reservationLocation in reservation.ReservationLocations )
+            {
+                ReservationLocation oldReservationLocation = new ReservationLocation();
+                oldReservation.ReservationLocations.Add( oldReservationLocation );
+                oldReservationLocation.CopyPropertiesFrom( reservationLocation );
+                oldReservationLocation.Reservation = reservationService.Get( oldReservation.Id );
+                oldReservationLocation.Location = locationService.Get( reservationLocation.LocationId );
+                oldReservationLocation.ReservationId = reservation.Id;
+            }
+
+            foreach ( var reservationResource in reservation.ReservationResources )
+            {
+                ReservationResource oldReservationResource = new ReservationResource();
+                oldReservation.ReservationResources.Add( oldReservationResource );
+                oldReservationResource.CopyPropertiesFrom( reservationResource as ReservationResource );
+                oldReservationResource.Reservation = reservationService.Get( oldReservation.Id );
+                oldReservationResource.Resource = resourceService.Get( oldReservationResource.ResourceId );
+                oldReservationResource.ReservationId = reservation.Id;
+            }
+
+            return oldReservation;
+        }
+
+        /// <summary>
+        /// Evaluates the location and resource changes.
+        /// </summary>
+        /// <param name="changes">The changes.</param>
+        /// <param name="oldReservation">The old reservation.</param>
+        /// <param name="reservation">The reservation.</param>
+        /// <returns></returns>
+        private List<string> EvaluateLocationAndResourceChanges( List<string> changes, Reservation oldReservation, Reservation reservation )
+        {
+            foreach ( var reservationLocation in reservation.ReservationLocations )
+            {
+                var oldReservationLocation = oldReservation.ReservationLocations.Where( rl => rl.Guid == reservationLocation.Guid ).FirstOrDefault();
+
+                if ( oldReservationLocation != null )
+                {
+                    History.EvaluateChange( changes, String.Format( "{0} Approval State", reservationLocation.Location.Name ), oldReservationLocation.ApprovalState.ToString(), reservationLocation.ApprovalState.ToString() );
+                    if ( reservationLocation.Attributes != null )
+                    {
+                        oldReservationLocation.LoadAttributes();
+                        foreach ( var attribute in reservationLocation.Attributes.Select( a => a.Value ) )
+                        {
+                            string originalValue = oldReservationLocation.AttributeValues.ContainsKey( attribute.Key ) ? oldReservationLocation.AttributeValues[attribute.Key].Value : string.Empty;
+                            string newValue = reservationLocation.AttributeValues.ContainsKey( attribute.Key ) ? reservationLocation.AttributeValues[attribute.Key].Value : string.Empty;
+                            if ( newValue != originalValue )
+                            {
+                                string originalFormattedValue = attribute.FieldType.Field.FormatValue( null, originalValue, attribute.QualifierValues, false );
+                                string newFormattedValue = attribute.FieldType.Field.FormatValue( null, newValue, attribute.QualifierValues, false );
+                                History.EvaluateChange( changes, String.Format( "({0}) {1}", reservationLocation.Location.Name, attribute.Name ), originalFormattedValue, newFormattedValue );
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    changes.Add( String.Format( "Added <span class='field-name'>{0}</span>", reservationLocation.Location.Name ) );
+                }
+            }
+
+            foreach ( var reservationResource in reservation.ReservationResources )
+            {
+                var oldReservationResource = oldReservation.ReservationResources.Where( rl => rl.Guid == reservationResource.Guid ).FirstOrDefault();
+
+                if ( oldReservationResource != null )
+                {
+                    History.EvaluateChange( changes, String.Format( "{0} Approval State", reservationResource.Resource.Name ), oldReservationResource.ApprovalState.ToString(), reservationResource.ApprovalState.ToString() );
+                    History.EvaluateChange( changes, String.Format( "{0} Quantity", reservationResource.Resource.Name ), oldReservationResource.Quantity.ToString(), reservationResource.Quantity.ToString() );
+
+                    if ( reservationResource.Attributes != null )
+                    {
+                        oldReservationResource.LoadAttributes();
+                        foreach ( var attribute in reservationResource.Attributes.Select( a => a.Value ) )
+                        {
+                            string originalValue = oldReservationResource.AttributeValues.ContainsKey( attribute.Key ) ? oldReservationResource.AttributeValues[attribute.Key].Value : string.Empty;
+                            string newValue = reservationResource.AttributeValues.ContainsKey( attribute.Key ) ? reservationResource.AttributeValues[attribute.Key].Value : string.Empty;
+                            if ( newValue != originalValue )
+                            {
+                                string originalFormattedValue = attribute.FieldType.Field.FormatValue( null, originalValue, attribute.QualifierValues, false );
+                                string newFormattedValue = attribute.FieldType.Field.FormatValue( null, newValue, attribute.QualifierValues, false );
+                                History.EvaluateChange( changes, String.Format( "({0}) {1}", reservationResource.Resource.Name, attribute.Name ), originalFormattedValue, newFormattedValue );
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    changes.Add( String.Format( "Added <span class='field-name'>{0} {1}</span>", reservationResource.Quantity, reservationResource.Resource.Name ) );
+                }
+            }
+
+            return changes;
         }
 
         /// <summary>
