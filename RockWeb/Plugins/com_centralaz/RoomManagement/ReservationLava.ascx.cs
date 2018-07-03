@@ -67,7 +67,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
     [TextField( "Report Font", "", true, "Gotham", "", 14 )]
     [TextField( "Report Logo", "URL to the logo (PNG) to display in the printed report.", true, "~/Plugins/com_centralaz/RoomManagement/Assets/Icons/Central_Logo_Black_rgb_165_90.png", "", 15 )]
-    [ReportTemplateField( "Report Template", "The template for the printed report", true, "9b74314a-37e0-40f2-906c-2862c93f8888", "", 16 )]
+    [ReportTemplateField( "Report Template", "The template for the printed report. The Default and Advanced Templates will generate a printed report based on the templates' hardcoded layout. The Lava Template will generate a report based on the lava provided below in the Report Lava Setting. Any other custom templates will format based on their developer's documentation.", true, "9b74314a-37e0-40f2-906c-2862c93f8888", "", 16 )]
     [CodeEditorField( "Report Lava", "If the Lava Template is selected, this is the lava that will be used in the report", CodeEditorMode.Lava, CodeEditorTheme.Rock, 400, true, @"{% include '~/Plugins/com_centralaz/RoomManagement/Assets/Lava/ReservationReport.lava' %}", "", 17 )]
 
     [BooleanField( "Enable Debug", "Display a list of merge fields available for lava.", false, "", 18 )]
