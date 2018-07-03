@@ -206,54 +206,64 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
         private DateTime? GetLatestSundayDate()
         {
             DateTime? sundayDate = null;
-            using ( var rockContext = new RockContext() )
+
+            try
             {
-                var categoryService = new CategoryService( rockContext );
-                var scheduleService = new ScheduleService( rockContext );
-                var metricValuePartitionService = new MetricValuePartitionService( rockContext );
-
-                var metricCategoryList = new List<Category>();
-                var metricCategoryGuidList = GetAttributeValue( "MetricCategories" ).SplitDelimitedValues().AsGuidList();
-                foreach ( var metricCategoryGuid in metricCategoryGuidList )
+                using ( var rockContext = new RockContext() )
                 {
-                    metricCategoryList.Add( categoryService.Get( metricCategoryGuid ) );
-                    metricCategoryList.AddRange( categoryService.GetAllDescendents( metricCategoryGuid ) );
-                }
-                var metricCategoryIdList = metricCategoryList.Select( mc => mc.Id ).ToList();
+                    var categoryService = new CategoryService( rockContext );
+                    var scheduleService = new ScheduleService( rockContext );
+                    var metricValuePartitionService = new MetricValuePartitionService( rockContext );
 
-                var scheduleCategoryList = new List<Category>();
-                var scheduleCategoryGuidList = GetAttributeValue( "ScheduleCategories" ).SplitDelimitedValues().AsGuidList();
-                foreach ( var scheduleGuid in scheduleCategoryGuidList )
-                {
-                    scheduleCategoryList.Add( categoryService.Get( scheduleGuid ) );
-                    scheduleCategoryList.AddRange( categoryService.GetAllDescendents( scheduleGuid ) );
-                }
-                var scheduleCategoryIdList = scheduleCategoryList.Select( sc => sc.Id ).ToList();
+                    var metricCategoryList = new List<Category>();
+                    var metricCategoryGuidList = GetAttributeValue( "MetricCategories" ).SplitDelimitedValues().AsGuidList();
+                    foreach ( var metricCategoryGuid in metricCategoryGuidList )
+                    {
+                        metricCategoryList.Add( categoryService.Get( metricCategoryGuid ) );
+                        metricCategoryList.AddRange( categoryService.GetAllDescendents( metricCategoryGuid ) );
+                    }
+                    var metricCategoryIdList = metricCategoryList.Select( mc => mc.Id ).ToList();
 
-                var scheduleIdList = scheduleService.Queryable().Where( s =>
-                s.CategoryId != null &&
-                scheduleCategoryIdList.Contains( s.CategoryId.Value )
-                )
-                .Select( s => s.Id )
-                .ToList();
+                    var scheduleCategoryList = new List<Category>();
+                    var scheduleCategoryGuidList = GetAttributeValue( "ScheduleCategories" ).SplitDelimitedValues().AsGuidList();
+                    foreach ( var scheduleGuid in scheduleCategoryGuidList )
+                    {
+                        scheduleCategoryList.Add( categoryService.Get( scheduleGuid ) );
+                        scheduleCategoryList.AddRange( categoryService.GetAllDescendents( scheduleGuid ) );
+                    }
+                    var scheduleCategoryIdList = scheduleCategoryList.Select( sc => sc.Id ).ToList();
 
-                var scheduleTypeGuid = Rock.SystemGuid.EntityType.SCHEDULE.AsGuid();
-                var latestMetricDateTime = metricValuePartitionService.Queryable().Where( mvp =>
-                    mvp.MetricPartition.EntityType.Guid == scheduleTypeGuid &&
-                    mvp.EntityId != null &&
-                    scheduleIdList.Contains( mvp.EntityId.Value ) &&
-                    mvp.MetricValue.Metric.MetricCategories.Any( mc => metricCategoryIdList.Contains( mc.CategoryId ) ) &&
-                    mvp.MetricValue.YValue != null
+                    var scheduleIdList = scheduleService.Queryable().Where( s =>
+                    s.CategoryId != null &&
+                    scheduleCategoryIdList.Contains( s.CategoryId.Value )
                     )
-                    .Max( mvp => mvp.MetricValue.MetricValueDateTime );
-                if ( latestMetricDateTime.HasValue )
-                {
-                    sundayDate = latestMetricDateTime.Value.SundayDate();
+                    .Select( s => s.Id )
+                    .ToList();
+
+                    var scheduleTypeGuid = Rock.SystemGuid.EntityType.SCHEDULE.AsGuid();
+                    var latestMetricDateTime = metricValuePartitionService.Queryable().Where( mvp =>
+                        mvp.MetricPartition.EntityType.Guid == scheduleTypeGuid &&
+                        mvp.EntityId != null &&
+                        scheduleIdList.Contains( mvp.EntityId.Value ) &&
+                        mvp.MetricValue.Metric.MetricCategories.Any( mc => metricCategoryIdList.Contains( mc.CategoryId ) ) &&
+                        mvp.MetricValue.YValue != null
+                        )
+                        .Max( mvp => mvp.MetricValue.MetricValueDateTime );
+                    if ( latestMetricDateTime.HasValue )
+                    {
+                        sundayDate = latestMetricDateTime.Value.SundayDate();
+                    }
+                    else
+                    {
+                        sundayDate = RockDateTime.Now.Date;
+                    }
                 }
-                else
-                {
-                    sundayDate = RockDateTime.Now.Date;
-                }
+
+            }
+            catch
+            {
+                sundayDate = RockDateTime.Now.Date;
+
             }
 
             return sundayDate;
