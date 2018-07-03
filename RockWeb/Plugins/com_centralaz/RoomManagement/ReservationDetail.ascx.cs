@@ -1028,6 +1028,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             BindReservationResourcesGrid();
             dlgReservationResource.Hide();
             hfActiveDialog.Value = string.Empty;
+            LoadQuestionsAndAnswers();
         }
 
         /// <summary>
@@ -1121,6 +1122,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             gResources.DataBind();
         }
 
+        /// <summary>
+        /// Handles the ApproveClick event of the gResources control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="RowEventArgs"/> instance containing the event data.</param>
         protected void gResources_ApproveClick( object sender, RowEventArgs e )
         {
             bool failure = true;
@@ -1144,6 +1150,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
         }
 
+        /// <summary>
+        /// Handles the DenyClick event of the gResources control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="RowEventArgs"/> instance containing the event data.</param>
         protected void gResources_DenyClick( object sender, RowEventArgs e )
         {
             bool failure = true;
@@ -1167,6 +1178,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
         }
 
+        /// <summary>
+        /// Handles the RowDataBound event of the gResources control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="GridViewRowEventArgs"/> instance containing the event data.</param>
         protected void gResources_RowDataBound( object sender, GridViewRowEventArgs e )
         {
             var reservationResource = e.Row.DataItem as ReservationResource;
