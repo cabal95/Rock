@@ -639,6 +639,14 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
         }
 
+        /// <summary>
+        /// Builds the old reservation.
+        /// </summary>
+        /// <param name="resourceService">The resource service.</param>
+        /// <param name="locationService">The location service.</param>
+        /// <param name="reservationService">The reservation service.</param>
+        /// <param name="reservation">The reservation.</param>
+        /// <returns></returns>
         private static Reservation BuildOldReservation( ResourceService resourceService, LocationService locationService, ReservationService reservationService, Reservation reservation )
         {
             var oldReservation = new Reservation();
@@ -683,17 +691,19 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 if ( oldReservationLocation != null )
                 {
                     History.EvaluateChange( changes, String.Format( "{0} Approval State", reservationLocation.Location.Name ), oldReservationLocation.ApprovalState.ToString(), reservationLocation.ApprovalState.ToString() );
-                    oldReservationLocation.LoadAttributes();
-                    reservationLocation.LoadAttributes();
-                    foreach ( var attribute in reservationLocation.Attributes.Select( a => a.Value ) )
+                    if ( reservationLocation.Attributes != null )
                     {
-                        string originalValue = oldReservationLocation.AttributeValues.ContainsKey( attribute.Key ) ? oldReservationLocation.AttributeValues[attribute.Key].Value : string.Empty;
-                        string newValue = reservationLocation.AttributeValues.ContainsKey( attribute.Key ) ? reservationLocation.AttributeValues[attribute.Key].Value : string.Empty;
-                        if ( newValue != originalValue )
+                        oldReservationLocation.LoadAttributes();
+                        foreach ( var attribute in reservationLocation.Attributes.Select( a => a.Value ) )
                         {
-                            string originalFormattedValue = attribute.FieldType.Field.FormatValue( null, originalValue, attribute.QualifierValues, false );
-                            string newFormattedValue = attribute.FieldType.Field.FormatValue( null, newValue, attribute.QualifierValues, false );
-                            History.EvaluateChange( changes, String.Format( "({0}) {1}", reservationLocation.Location.Name, attribute.Name ), originalFormattedValue, newFormattedValue );
+                            string originalValue = oldReservationLocation.AttributeValues.ContainsKey( attribute.Key ) ? oldReservationLocation.AttributeValues[attribute.Key].Value : string.Empty;
+                            string newValue = reservationLocation.AttributeValues.ContainsKey( attribute.Key ) ? reservationLocation.AttributeValues[attribute.Key].Value : string.Empty;
+                            if ( newValue != originalValue )
+                            {
+                                string originalFormattedValue = attribute.FieldType.Field.FormatValue( null, originalValue, attribute.QualifierValues, false );
+                                string newFormattedValue = attribute.FieldType.Field.FormatValue( null, newValue, attribute.QualifierValues, false );
+                                History.EvaluateChange( changes, String.Format( "({0}) {1}", reservationLocation.Location.Name, attribute.Name ), originalFormattedValue, newFormattedValue );
+                            }
                         }
                     }
                 }
@@ -712,17 +722,19 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     History.EvaluateChange( changes, String.Format( "{0} Approval State", reservationResource.Resource.Name ), oldReservationResource.ApprovalState.ToString(), reservationResource.ApprovalState.ToString() );
                     History.EvaluateChange( changes, String.Format( "{0} Quantity", reservationResource.Resource.Name ), oldReservationResource.Quantity.ToString(), reservationResource.Quantity.ToString() );
 
-                    oldReservationResource.LoadAttributes();
-                    reservationResource.LoadAttributes();
-                    foreach ( var attribute in reservationResource.Attributes.Select( a => a.Value ) )
+                    if ( reservationResource.Attributes != null )
                     {
-                        string originalValue = oldReservationResource.AttributeValues.ContainsKey( attribute.Key ) ? oldReservationResource.AttributeValues[attribute.Key].Value : string.Empty;
-                        string newValue = reservationResource.AttributeValues.ContainsKey( attribute.Key ) ? reservationResource.AttributeValues[attribute.Key].Value : string.Empty;
-                        if ( newValue != originalValue )
+                        oldReservationResource.LoadAttributes();
+                        foreach ( var attribute in reservationResource.Attributes.Select( a => a.Value ) )
                         {
-                            string originalFormattedValue = attribute.FieldType.Field.FormatValue( null, originalValue, attribute.QualifierValues, false );
-                            string newFormattedValue = attribute.FieldType.Field.FormatValue( null, newValue, attribute.QualifierValues, false );
-                            History.EvaluateChange( changes, String.Format( "({0}) {1}", reservationResource.Resource.Name, attribute.Name ), originalFormattedValue, newFormattedValue );
+                            string originalValue = oldReservationResource.AttributeValues.ContainsKey( attribute.Key ) ? oldReservationResource.AttributeValues[attribute.Key].Value : string.Empty;
+                            string newValue = reservationResource.AttributeValues.ContainsKey( attribute.Key ) ? reservationResource.AttributeValues[attribute.Key].Value : string.Empty;
+                            if ( newValue != originalValue )
+                            {
+                                string originalFormattedValue = attribute.FieldType.Field.FormatValue( null, originalValue, attribute.QualifierValues, false );
+                                string newFormattedValue = attribute.FieldType.Field.FormatValue( null, newValue, attribute.QualifierValues, false );
+                                History.EvaluateChange( changes, String.Format( "({0}) {1}", reservationResource.Resource.Name, attribute.Name ), originalFormattedValue, newFormattedValue );
+                            }
                         }
                     }
                 }
@@ -1476,7 +1488,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             if ( !reservationId.Equals( 0 ) )
             {
                 reservation = new ReservationService( rockContext ).Get( reservationId );
-          		hfReservationId.Value = reservationId.ToString();
+                hfReservationId.Value = reservationId.ToString();
                 pdAuditDetails.SetEntity( reservation, ResolveRockUrl( "~" ) );
             }
 
@@ -1884,6 +1896,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             BuildResourceQuestions( isEditMode, resetControls );
         }
 
+        /// <summary>
+        /// Builds the location questions.
+        /// </summary>
+        /// <param name="isEditMode">if set to <c>true</c> [is edit mode].</param>
+        /// <param name="resetControls">if set to <c>true</c> [reset controls].</param>
         private void BuildLocationQuestions( bool isEditMode, bool resetControls )
         {
             if ( resetControls )
@@ -1948,6 +1965,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
         }
 
+        /// <summary>
+        /// Builds the resource questions.
+        /// </summary>
+        /// <param name="isEditMode">if set to <c>true</c> [is edit mode].</param>
+        /// <param name="resetControls">if set to <c>true</c> [reset controls].</param>
         private void BuildResourceQuestions( bool isEditMode, bool resetControls )
         {
             if ( resetControls )
@@ -2484,4 +2506,3 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         #endregion
     }
 }
- 
