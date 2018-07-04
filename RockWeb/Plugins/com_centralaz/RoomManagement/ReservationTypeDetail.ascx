@@ -66,7 +66,14 @@
                             <Rock:RockCheckBox ID="cbIsCommunicationHistorySaved" runat="server" Label="Is Communication History Saved" SourceTypeName="com.centralaz.RoomManagement.Model.ReservationType, com.centralaz.RoomManagement" PropertyName="IsCommunicationHistorySaved" />
                             <Rock:RockCheckBox ID="cbIsNumberAttendingRequired" runat="server" Label="Is Number Attending Required" SourceTypeName="com.centralaz.RoomManagement.Model.ReservationType, com.centralaz.RoomManagement" PropertyName="IsNumberAttendingRequired"  />
                             <Rock:RockCheckBox ID="cbIsContactDetailsRequired" runat="server" Label="Are Contact Details Required" SourceTypeName="com.centralaz.RoomManagement.Model.ReservationType, com.centralaz.RoomManagement" PropertyName="IsContactDetailsRequired" />
-                            <Rock:RockCheckBox ID="cbIsSetupTimeRequired" runat="server" Label="Is Setup Time Required" SourceTypeName="com.centralaz.RoomManagement.Model.ReservationType, com.centralaz.RoomManagement" PropertyName="IsSetupTimeRequired" />
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <Rock:RockCheckBox ID="cbIsSetupTimeRequired" runat="server" Label="Is Setup Time Required" SourceTypeName="com.centralaz.RoomManagement.Model.ReservationType, com.centralaz.RoomManagement" PropertyName="IsSetupTimeRequired" />
+                                </div>
+                                <div class="col-md-6">
+                            <Rock:NumberBox ID="nbDefaultSetupTime" runat="server" Label="Default Setup & Cleanup Time" Help="If you wish to default to a particular setup and cleanup time, you can supply a value here. (empty or -1 indicates no default value)" NumberType="Integer" MinimumValue="-1" SourceTypeName="com.centralaz.RoomManagement.Model.ReservationType, com.centralaz.RoomManagement" PropertyName="DefaultSetupTime" />
+                                </div>
+                            </div>
                         </div>
                     </div>
 

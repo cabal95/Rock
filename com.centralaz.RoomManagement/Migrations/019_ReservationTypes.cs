@@ -85,6 +85,9 @@ namespace com.centralaz.RoomManagement.Migrations
                 ALTER TABLE [dbo].[_com_centralaz_RoomManagement_ReservationType] CHECK CONSTRAINT [FK__com_centralaz_RoomManagement_ReservationType_ModifiedByPersonAliasId]
 " );
 
+            // Make the ReservationDetails block's attributes KNOWN Guids:
+            RockMigrationHelper.UpdateBlockTypeAttribute( "C938B1DE-9AB3-46D9-AB28-57BFCA362AEB", "1EDAFDED-DFE6-4334-B019-6EECBA89E05A", "Require Contact Details", "RequireContactDetails", "", "Should the Event and Administrative Contact be required to be supplied?", 3, @"True", "1C8DE8CB-E078-4483-9648-7C2CC57E6985" );
+
             string sqlQry = GenerateDefaultReservationTypeSql();
             Sql( sqlQry );
 
