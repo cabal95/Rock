@@ -1727,6 +1727,54 @@ namespace Rock.Data
                         ExceptionLogService.LogException( new Exception( $"Exception occurred when adding Plugin Entity Configurations from {assembly} to RockContext", ex ), null );
                     }
                 }
+
+                //
+                // Ignore Geospatial types if doing unit tests.
+                //
+                if ( Database.Connection.GetType().Name.StartsWith( "Effort", StringComparison.Ordinal ) )
+                {
+                    modelBuilder.Entity<AnalyticsDimAttendanceLocation>()
+                        .Ignore( t => t.GeoPoint )
+                        .Ignore( t => t.GeoFence );
+
+                    modelBuilder.Entity<AnalyticsDimCampus>()
+                        .Ignore( t => t.AddressGeoFence )
+                        .Ignore( t => t.AddressGeoPoint );
+
+                    modelBuilder.Entity<AnalyticsDimFamilyCurrent>()
+                        .Ignore( t => t.MailingAddressGeoFence )
+                        .Ignore( t => t.MailingAddressGeoPoint )
+                        .Ignore( t => t.MappedAddressGeoFence )
+                        .Ignore( t => t.MappedAddressGeoPoint );
+
+                    modelBuilder.Entity<AnalyticsDimFamilyHeadOfHousehold>()
+                        .Ignore( t => t.MailingAddressGeoFence )
+                        .Ignore( t => t.MailingAddressGeoPoint )
+                        .Ignore( t => t.MappedAddressGeoFence )
+                        .Ignore( t => t.MappedAddressGeoPoint );
+
+                    modelBuilder.Entity<AnalyticsDimFamilyHistorical>()
+                        .Ignore( t => t.MailingAddressGeoFence )
+                        .Ignore( t => t.MailingAddressGeoPoint )
+                        .Ignore( t => t.MappedAddressGeoFence )
+                        .Ignore( t => t.MappedAddressGeoPoint );
+
+                    modelBuilder.Entity<AnalyticsDimPersonCurrent>()
+                        .Ignore( t => t.MailingAddressGeoFence )
+                        .Ignore( t => t.MailingAddressGeoPoint )
+                        .Ignore( t => t.MappedAddressGeoFence )
+                        .Ignore( t => t.MappedAddressGeoPoint );
+
+                    modelBuilder.Entity<AnalyticsDimPersonHistorical>()
+                        .Ignore( t => t.MailingAddressGeoFence )
+                        .Ignore( t => t.MailingAddressGeoPoint )
+                        .Ignore( t => t.MappedAddressGeoFence )
+                        .Ignore( t => t.MappedAddressGeoPoint );
+
+                    modelBuilder.Entity<Location>()
+                        .Ignore( t => t.GeoPoint )
+                        .Ignore( t => t.GeoFence );
+                }
             }
             catch ( Exception ex )
             {
