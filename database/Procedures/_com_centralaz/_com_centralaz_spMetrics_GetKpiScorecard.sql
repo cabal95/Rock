@@ -1,17 +1,9 @@
-USE [RockDB_Test]
-GO
-
 /****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]    Script Date: 6/28/2018 11:57:26 AM ******/
-DROP PROCEDURE [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]
+IF EXISTS ( SELECT * FROM [sysobjects] WHERE ID = object_id(N'[dbo].[_com_centralaz_spMetrics_GetKpiScorecard]') and OBJECTPROPERTY(id, N'IsProcedure') = 1 )
+BEGIN
+    DROP PROCEDURE [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]
+END
 GO
-
-/****** Object:  StoredProcedure [dbo].[_com_centralaz_spMetrics_GetKpiScorecard]    Script Date: 6/28/2018 11:57:26 AM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
 
 -- =============================================
 -- Author:		Taylor Cavaletto
@@ -48,17 +40,18 @@ DECLARE @MetricConfigTbl TABLE (
 
 INSERT INTO @MetricConfigTbl
 VALUES
-	( 'BBF8148D-84A2-4FCD-8768-A154B951A986', 35, 0, 0 ),	--	Discover More Attendance
-	( '2340CC55-FDF6-4F87-9013-E4918C3D83C7', 25, 60, 0 ),	--	Connection Cards (FTG)
-	( '35CCF658-25AE-4DD5-88A4-83F3C3DDAAB2', 20, 0, 1 ),	--	Connection Card Conversion
-	( '8E502D63-9485-4332-A412-94EAC686E91B', 8, 40, 1 ),	--	DM Room Capacity Utilization
-	( '92BAE802-FA3C-41C2-A551-960A492B800E', 4, 0, 0 ),	--	Baptisms
-	( '156C80A4-33CF-4E6D-920E-30FC56BE7801', 4, 0, 1 ),	--	New Servant Ministers
-	( 'A22B3072-1A68-4034-A3E6-7B331894BC6E', 4, 0, 1 )		--	New Life Group Members
+	( 'BBF8148D-84A2-4FCD-8768-A154B951A986', .35, 0, 0 ),	--	Discover More Attendance
+	( '2340CC55-FDF6-4F87-9013-E4918C3D83C7', .25, .60, 0 ),	--	Connection Cards (FTG)
+	( '35CCF658-25AE-4DD5-88A4-83F3C3DDAAB2', .20, 0, 1 ),	--	Connection Card Conversion
+	( '8E502D63-9485-4332-A412-94EAC686E91B', .08, .40, 1 ),	--	DM Room Capacity Utilization
+	( '92BAE802-FA3C-41C2-A551-960A492B800E', .04, 0, 0 ),	--	Baptisms
+	( '156C80A4-33CF-4E6D-920E-30FC56BE7801', .04, 0, 1 ),	--	New Servant Ministers
+	( 'A22B3072-1A68-4034-A3E6-7B331894BC6E', .04, 0, 1 )		--	New Life Group Members
 
 ----------------------------------------------------------------------------
 -- GET THE CONSTANTS
 ----------------------------------------------------------------------------
+DECLARE @CampusEntityTypeId INT = ( SELECT TOP 1 Id FROM EntityType WHERE Name='Rock.Model.Campus' )
 DECLARE @RootCategoryId INT = ( SELECT TOP 1 [Id] FROM [Category] WHERE [Guid] = 'A4AA0D21-3CEE-4CD3-B527-8400724B3AB2' ) -- KPI Metric Category
 
 DECLARE @ConnectionCardParentGroupId int = 258830;
@@ -100,9 +93,8 @@ DECLARE @ThisMinistryYearEnd DATETIME = DATEADD(dd,-1, DATEADD(yy,1,@ThisMinistr
 
 DECLARE @MetricValues TABLE(
 	[Id] [int] NULL,
-	[Guid] [uniqueidentifier] NULL,
 	[MetricId] [int] NULL,
-	[MetricCategoryId] [int] null,
+	[MetricGuid] [uniqueidentifier] NULL,
 	[CategoryId][int] null,
 	[MetricName] [nvarchar](50) NULL,
 	[YValue] [FLOAT] NULL,
@@ -118,7 +110,6 @@ INSERT INTO @MetricValues
 SELECT mv.Id
 	,m.Id
 	,m.Guid
-	,mc.Id
 	,mc.CategoryId
 	,m.Title
 	,mv.YValue
@@ -129,7 +120,7 @@ SELECT mv.Id
 FROM MetricValue mv
 JOIN Metric m ON mv.MetricId = m.Id
 JOIN MetricValuePartition mvpC ON mvpC.MetricValueId = mv.Id
-JOIN MetricPartition mpC ON mvpC.MetricPartitionId = mpC.Id AND mpC.EntityTypeId IN (SELECT TOP 1 Id FROM EntityType WHERE Name='Rock.Model.Campus')
+JOIN MetricPartition mpC ON mvpC.MetricPartitionId = mpC.Id AND mpC.EntityTypeId = @CampusEntityTypeId
 JOIN Campus c ON mvpC.EntityId = c.Id
 JOIN MetricCategory mc ON mc.MetricId = m.Id
 WHERE  mc.CategoryId = @RootCategoryId
@@ -313,14 +304,14 @@ DECLARE @DmCapacityMonth_subA FLOAT = (SELECT COUNT(*)
 		WHERE mv.MetricValueDateTime >= @ThisMonthStart
 		AND mv.MetricValueDateTime <= @ThisMonthEnd
 		AND mv.MetricValueType = 0
-		AND MetricCategoryId = 165)
+		AND MetricGuid = '8E502D63-9485-4332-A412-94EAC686E91B')
 
 DECLARE @DmCapacityYear_subA FLOAT = (SELECT COUNT(*)
 		FROM @MetricValues AS mv
 		WHERE mv.MetricValueDateTime >= @ThisMinistryYearStart
 		AND mv.MetricValueDateTime <= @ThisMinistryYearEnd
 		AND mv.MetricValueType = 0
-		AND MetricCategoryId = 165)
+		AND MetricGuid = '8E502D63-9485-4332-A412-94EAC686E91B')
 
 DECLARE @DmCapacityMonth FLOAT = (SELECT CASE 
 		WHEN (@DmCapacityMonth_subA != 0 AND @DmCapacityMonth_subA IS NOT NULL) 
@@ -357,7 +348,7 @@ SELECT	@IsCampus AS 'IsCampus',
 --  TABLE 2: GRAB THE DATA
 ----------------------------------------------------------------------------
 DECLARE @ScoreCardTable TABLE(
-	MetricCategoryId [int],
+	MetricGuid [uniqueidentifier],
 	MetricName [nvarchar](50),
 	RowOrder [int], 
 	WeightedValue [float],
@@ -377,8 +368,8 @@ DECLARE @ScoreCardTable TABLE(
 	AssociateYearlyRating [float]
 );
 
-INSERT INTO @ScoreCardTable(MetricCategoryId, MetricName, WeightedValue,AssociateWeightedValue, IsPercent, MonthlyGoal, YearlyGoal)
-SELECT referenceTable.MetricCategoryId,
+INSERT INTO @ScoreCardTable(MetricGuid, MetricName, WeightedValue,AssociateWeightedValue, IsPercent, MonthlyGoal, YearlyGoal)
+SELECT referenceTable.MetricGuid,
 		referenceTable.MetricName,
 		referenceTable.WeightedValue,
 		referenceTable.AssociateWeightedValue,
@@ -387,13 +378,13 @@ SELECT referenceTable.MetricCategoryId,
 		fiscalYearGoal.Measure
 FROM (
 	SELECT DISTINCT
-	mv.MetricCategoryId AS 'MetricCategoryId',
+	mv.MetricGuid AS 'MetricGuid',
 	mv.MetricName AS 'MetricName',
 	CONVERT(FLOAT,ct.WeightedValue) AS 'WeightedValue',
 	CONVERT(FLOAT,ct.AssociateWeightedValue) AS 'AssociateWeightedValue',
 	ct.IsPercentage AS 'IsPercentage'
 	FROM @MetricValues mv
-	INNER JOIN @MetricConfigTbl CT ON CT.MetricGuid = mv.Guid
+	INNER JOIN @MetricConfigTbl CT ON CT.MetricGuid = mv.MetricGuid
 	) referenceTable
 LEFT JOIN 
 	(
@@ -431,7 +422,7 @@ MonthlyRating = (SELECT	CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL)
 AssociateMonthlyRating = (SELECT CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@BaptismMonth / MonthlyGoal) ELSE NULL END),
 YearlyRating = (SELECT CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN WeightedValue*(@BaptismYear / YearlyGoal) ELSE NULL END),
 AssociateYearlyRating = (SELECT	CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@BaptismYear / YearlyGoal) ELSE NULL END)
-WHERE MetricCategoryId = 158
+WHERE MetricGuid = '92BAE802-FA3C-41C2-A551-960A492B800E'
 
 UPDATE @ScoreCardTable
 SET MonthlyMeasure = @DiscoverMoreMonth,
@@ -442,7 +433,7 @@ MonthlyRating = (SELECT	CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL)
 AssociateMonthlyRating = (SELECT CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@DiscoverMoreMonth / MonthlyGoal) ELSE NULL END),
 YearlyRating = (SELECT CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN WeightedValue*(@DiscoverMoreYear / YearlyGoal) ELSE NULL END),
 AssociateYearlyRating = (SELECT	CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@DiscoverMoreYear / YearlyGoal) ELSE NULL END)
-WHERE MetricCategoryId = 159
+WHERE MetricGuid = 'BBF8148D-84A2-4FCD-8768-A154B951A986'
 
 UPDATE @ScoreCardTable
 SET MonthlyMeasure = @ConnectionCardMonth,
@@ -453,7 +444,7 @@ MonthlyRating = (SELECT	CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL)
 AssociateMonthlyRating = (SELECT CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@ConnectionCardMonth / MonthlyGoal) ELSE NULL END),
 YearlyRating = (SELECT CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN WeightedValue*(@ConnectionCardYear / YearlyGoal) ELSE NULL END),
 AssociateYearlyRating = (SELECT	CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@ConnectionCardYear / YearlyGoal) ELSE NULL END)
-WHERE MetricCategoryId = 160
+WHERE MetricGuid = '2340CC55-FDF6-4F87-9013-E4918C3D83C7'
 
 UPDATE @ScoreCardTable
 SET MonthlyMeasure = @ServantMinisterMonth,
@@ -464,7 +455,7 @@ MonthlyRating = (SELECT	CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL)
 AssociateMonthlyRating = (SELECT CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@ServantMinisterMonth / MonthlyGoal) ELSE NULL END),
 YearlyRating = (SELECT CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN WeightedValue*(@ServantMinisterYear / YearlyGoal) ELSE NULL END),
 AssociateYearlyRating = (SELECT	CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@ServantMinisterYear / YearlyGoal) ELSE NULL END)
-WHERE MetricCategoryId = 161
+WHERE MetricGuid = '156C80A4-33CF-4E6D-920E-30FC56BE7801'
 
 UPDATE @ScoreCardTable
 SET MonthlyMeasure = @LifeGroupMonth,
@@ -475,7 +466,7 @@ MonthlyRating = (SELECT	CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL)
 AssociateMonthlyRating = (SELECT CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@LifeGroupMonth / MonthlyGoal) ELSE NULL END),
 YearlyRating = (SELECT CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN WeightedValue*(@LifeGroupYear / YearlyGoal) ELSE NULL END),
 AssociateYearlyRating = (SELECT	CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@LifeGroupYear / YearlyGoal) ELSE NULL END)
-WHERE MetricCategoryId = 162
+WHERE MetricGuid = 'A22B3072-1A68-4034-A3E6-7B331894BC6E'
 
 UPDATE @ScoreCardTable
 SET MonthlyMeasure = @ConnectionCardConversionMonth,
@@ -486,7 +477,7 @@ MonthlyRating = (SELECT	CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL)
 AssociateMonthlyRating = (SELECT CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@ConnectionCardConversionMonth / MonthlyGoal) ELSE NULL END),
 YearlyRating = (SELECT CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN WeightedValue*(@ConnectionCardConversionYear / YearlyGoal) ELSE NULL END),
 AssociateYearlyRating = (SELECT	CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@ConnectionCardConversionYear / YearlyGoal) ELSE NULL END)
-WHERE MetricCategoryId = 163
+WHERE MetricGuid = '35CCF658-25AE-4DD5-88A4-83F3C3DDAAB2'
 
 UPDATE @ScoreCardTable
 SET MonthlyMeasure = @DmCapacityMonth,
@@ -497,10 +488,10 @@ MonthlyRating = (SELECT	CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL)
 AssociateMonthlyRating = (SELECT CASE WHEN (MonthlyGoal != 0 AND MonthlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@DmCapacityMonth / MonthlyGoal) ELSE NULL END),
 YearlyRating = (SELECT CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN WeightedValue*(@DmCapacityYear / YearlyGoal) ELSE NULL END),
 AssociateYearlyRating = (SELECT	CASE WHEN (YearlyGoal != 0 AND YearlyGoal IS NOT NULL) THEN AssociateWeightedValue*(@DmCapacityYear / YearlyGoal) ELSE NULL END)
-WHERE MetricCategoryId = 165
+WHERE MetricGuid = '8E502D63-9485-4332-A412-94EAC686E91B'
 
-SELECT	 CASE GROUPING(MetricCategoryId) WHEN 1 THEN 'Total' ELSE MAX(MetricName) END AS 'Name',
-		 CASE GROUPING(MetricCategoryId) WHEN 1 THEN 1 ELSE 0 END AS 'Order',
+SELECT	 CASE GROUPING(MetricGuid) WHEN 1 THEN 'Total' ELSE MAX(MetricName) END AS 'Name',
+		 CASE GROUPING(MetricGuid) WHEN 1 THEN 1 ELSE 0 END AS 'Order',
 		 CASE @IsAssociate WHEN 0 THEN SUM(WeightedValue) ELSE SUM(AssociateWeightedValue) END AS 'WeightedValue',
 		 SUM(MonthlyGoal) AS 'MonthlyGoal',
 		 SUM(YearlyGoal) AS 'YearlyGoal',
@@ -513,6 +504,6 @@ SELECT	 CASE GROUPING(MetricCategoryId) WHEN 1 THEN 'Total' ELSE MAX(MetricName)
 		 CASE When MAX(IsPercent) = 'True' Then 1 ELSE 0 END AS 'IsPercent'
 FROM @ScoreCardTable
 WHERE (@IsAssociate = 0 OR AssociateWeightedValue <> '')
-GROUP BY ROLLUP(MetricCategoryId)
+GROUP BY ROLLUP(MetricGuid)
 ORDER BY [Order], WeightedValue DESC
 END
