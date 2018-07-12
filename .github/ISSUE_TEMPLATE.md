@@ -35,4 +35,6 @@ Do you want to ask a question? Are you looking for support? The Ask Rock is the 
 ### Versions
 
 * **Rock Version:** [Enter Rock version here]  
-* **Client Culture Setting:** [Enter Client Culture here]  
+* **Client Culture Setting:** [Enter Client Culture here]  ("en-us", "en-gb", etc.)  <a href="https://www.rockrms.com/github-detect-client-culture-setting" target="_blank">unsure? detect what yours is here</a>
+
+
