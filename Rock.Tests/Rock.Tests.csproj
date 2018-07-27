@@ -40,9 +40,6 @@
     <Reference Include="DDay.iCal, Version=1.0.2.575, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DDay.iCal.1.0.2.575\lib\DDay.iCal.dll</HintPath>
     </Reference>
-    <Reference Include="Effort, Version=1.0.0.0, Culture=neutral, PublicKeyToken=6a46696d54971e6d, processorArchitecture=MSIL">
-      <HintPath>..\packages\Effort.EF6.1.3.5\lib\net45\Effort.dll</HintPath>
-    </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
@@ -55,14 +52,12 @@
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="NMemory, Version=1.0.0.0, Culture=neutral, PublicKeyToken=6a46696d54971e6d, processorArchitecture=MSIL">
-      <HintPath>..\packages\NMemory.1.1.2\lib\net45\NMemory.dll</HintPath>
-    </Reference>
     <Reference Include="RestSharp, Version=105.2.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\RestSharp.105.2.3\lib\net452\RestSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.Xml.Linq" />
@@ -89,12 +84,9 @@
       <Link>AssemblySharedInfo.cs</Link>
     </Compile>
     <Compile Include="Data\DatabaseFixture.cs" />
-    <Compile Include="Data\LoadDataAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rock.Rest\Controllers\CodeGenerated\CommunicationControllerTests.cs" />
     <Compile Include="Communications\MailgunTests.cs" />
-    <Compile Include="Data\ZipDataLoader.cs" />
-    <Compile Include="Data\ZipTableDataLoaderFactory.cs" />
     <Compile Include="Rock\Lava\RockFiltersTests.cs" />
     <Compile Include="Rock\Lava\LegacyLavaUpdaterTest.cs" />
     <Compile Include="Rock\Model\AttendanceCodeTests.cs" />
@@ -107,14 +99,14 @@
     <Compile Include="Rock\Model\PageTests.cs" />
     <Compile Include="Rock\Model\PersonTests.cs" />
     <Compile Include="Rock\MoqTest.cs" />
-    <Compile Include="Data\TestProviderFactory.cs" />
     <Compile Include="Rock\Utility\ExtensionMethods\StringExtensionsTests.cs" />
     <Compile Include="Rock\Workflow\Action\BackgroundCheckRequestTests.cs" />
     <Compile Include="SqlServerTypes\Loader.cs" />
-    <Compile Include="Data\ZipFileReference.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

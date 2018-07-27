@@ -11,8 +11,7 @@ using Xunit;
 
 namespace Rock.Tests.Rock
 {
-    [LoadData( @"C:\Users\Daniel Hazelbaker\Desktop\RockDataBase.zip" )]
-    public class MoqTest : DatabaseFixture
+    public class MoqTest : IClassFixture<DatabaseFixture>
     {
         [Fact]
         public void MyTest()
@@ -25,7 +24,6 @@ namespace Rock.Tests.Rock
                 Assert.Equal( 1, adultCount );
             }
         }
-
 
         [Fact]
         public void Test1()
@@ -58,7 +56,6 @@ namespace Rock.Tests.Rock
         }
     }
 
-    [LoadData( @"C:\Users\Daniel Hazelbaker\Desktop\RockDataBase.zip" )]
     public class MoqTest2 : DatabaseFixture
     {
         [Fact]
