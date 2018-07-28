@@ -1460,7 +1460,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             lNumberAttending.Text = reservation.NumberAttending.ToString();
             lSetupTime.Text = reservation.SetupTime.HasValue ? String.Format( "{0} min", reservation.SetupTime ) : "N/A";
             lCleanupTime.Text = reservation.CleanupTime.HasValue ? String.Format( "{0} min", reservation.CleanupTime ) : "N/A";
-            lCampus.Text = reservation.Campus.Name;
+            lCampus.Text = reservation.Campus != null ? reservation.Campus.Name : string.Empty;
             lMinistry.Text = reservation.ReservationMinistry != null ? reservation.ReservationMinistry.Name : string.Empty;
             lReservationType.Text = ReservationType.Name;
             lSchedule.Text = reservation.GetFriendlyReservationScheduleText();
@@ -1474,7 +1474,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 reservation.AdministrativeContactPersonAlias != null ? reservation.AdministrativeContactPersonAlias.Person.FullName : string.Empty,
                 reservation.AdministrativeContactPhone,
                 reservation.AdministrativeContactEmail );
-            
+
             if ( reservation.SetupPhotoId.HasValue )
             {
                 string imgTag = string.Format( "<img src='{0}GetImage.ashx?id={1}&maxwidth=200&maxheight=200'/>", VirtualPathUtility.ToAbsolute( "~/" ), reservation.SetupPhotoId.Value );
