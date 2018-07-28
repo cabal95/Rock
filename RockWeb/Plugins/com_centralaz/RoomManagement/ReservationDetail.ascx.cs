@@ -1461,7 +1461,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             lSetupTime.Text = reservation.SetupTime.HasValue ? String.Format( "{0} min", reservation.SetupTime ) : "N/A";
             lCleanupTime.Text = reservation.CleanupTime.HasValue ? String.Format( "{0} min", reservation.CleanupTime ) : "N/A";
             lCampus.Text = reservation.Campus.Name;
-            lMinistry.Text = reservation.ReservationMinistry.Name;
+            lMinistry.Text = reservation.ReservationMinistry != null ? reservation.ReservationMinistry.Name : string.Empty;
             lReservationType.Text = ReservationType.Name;
             lSchedule.Text = reservation.GetFriendlyReservationScheduleText();
             lEventContact.Text = String.Format( "<a href='/Person/{0}'>{1}</a><br>{2}<br>{3}",

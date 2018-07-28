@@ -404,7 +404,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 EventContactPersonAlias = r.EventContactPersonAlias,
                 EventContactEmail = r.EventContactEmail,
                 EventContactPhoneNumber = r.EventContactPhoneNumber,
-                MinistryName = r.ReservationMinistry.Name,
+                MinistryName = r.ReservationMinistry != null ? r.ReservationMinistry.Name : string.Empty,
             } )
             .OrderBy( r => r.EventStartDateTime )
             .GroupBy( r => r.EventStartDateTime.Date )

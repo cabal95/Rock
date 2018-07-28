@@ -514,14 +514,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         protected void gMinistries_ShowEdit( Guid reservationMinistryGuid )
         {
             ReservationMinistry reservationMinistry = ReservationMinistriesState.FirstOrDefault( l => l.Guid.Equals( reservationMinistryGuid ) );
-            if ( reservationMinistry != null )
-            {
-                tbMinistryName.Text = reservationMinistry.Name;
-            }
-            else
-            {
-                tbMinistryName.Text = string.Empty;
-            }
+            tbMinistryName.Text = reservationMinistry != null ? reservationMinistry.Name : string.Empty;
+
             hfAddMinistryGuid.Value = reservationMinistryGuid.ToString();
             ShowDialog( "ReservationMinistries", true );
         }
