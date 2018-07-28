@@ -175,8 +175,8 @@
                 </div>
                 <% } %>
 
-                <Rock:DateRangePicker ID="drpDateRange" runat="server" Label="Select Range" />
-                <asp:LinkButton ID="lbDateRangeRefresh" runat="server" CssClass="btn btn-default btn-sm" Text="Refresh" OnClick="lbDateRangeRefresh_Click" />
+                <Rock:DatePicker ID="dpStartDate" runat="server" Label="Start Date" OnTextChanged="dpStartDate_TextChanged" AutoPostBack="true" />
+                <Rock:DatePicker ID="dpEndDate" runat="server" Label="End Date" OnTextChanged="dpEndDate_TextChanged" AutoPostBack="true" />
 
                 <small class="text-muted">v<asp:Literal ID="lVersionText" runat="server"></asp:Literal></small>
             </asp:Panel>

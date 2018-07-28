@@ -47,7 +47,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
     [Category( "com_centralaz > Room Management" )]
     [Description( "Renders a list of reservations in lava." )]
 
-    [CustomRadioListField( "Location Filter Display Mode", "", "1^Hidden, 2^Plain, 3^Panel Open, 4^Panel Closed", true, "1", order: 1, category:"Filter Settings" )]
+    [CustomRadioListField( "Location Filter Display Mode", "", "1^Hidden, 2^Plain, 3^Panel Open, 4^Panel Closed", true, "1", order: 1, category: "Filter Settings" )]
     [CustomRadioListField( "Resource Filter Display Mode", "", "1^Hidden, 2^Plain, 3^Panel Open, 4^Panel Closed", true, "1", order: 2, category: "Filter Settings" )]
     [CustomRadioListField( "Campus Filter Display Mode", "", "1^Hidden, 2^Plain, 3^Panel Open, 4^Panel Closed", true, "1", order: 3, category: "Filter Settings" )]
     [CustomRadioListField( "Ministry Filter Display Mode", "", "1^Hidden, 2^Plain, 3^Panel Open, 4^Panel Closed", true, "1", key: "MinistryFilterDisplayMode", order: 4, category: "Filter Settings" )]
@@ -324,10 +324,15 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             BindData();
         }
 
-        protected void lbDateRangeRefresh_Click( object sender, EventArgs e )
+        protected void dpStartDate_TextChanged( object sender, EventArgs e )
         {
-            FilterStartDate = drpDateRange.LowerValue;
-            FilterEndDate = drpDateRange.UpperValue;
+            FilterStartDate = dpStartDate.SelectedDate;
+            BindData();
+        }
+
+        protected void dpEndDate_TextChanged( object sender, EventArgs e )
+        {
+            FilterEndDate = dpEndDate.SelectedDate;
             BindData();
         }
 
@@ -606,10 +611,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
 
             // Date Range Filter
-            drpDateRange.Visible = GetAttributeValue( "ShowDateRangeFilter" ).AsBoolean();
-            lbDateRangeRefresh.Visible = drpDateRange.Visible;
-            drpDateRange.LowerValue = FilterStartDate;
-            drpDateRange.UpperValue = FilterEndDate;
+            dpStartDate.Visible = GetAttributeValue( "ShowDateRangeFilter" ).AsBoolean();
+            dpStartDate.SelectedDate = FilterStartDate;
+
+            dpEndDate.Visible = GetAttributeValue( "ShowDateRangeFilter" ).AsBoolean();
+            dpEndDate.SelectedDate = FilterEndDate;
 
             // Get the View Modes, and only show them if more than one is visible
             var viewsVisible = new List<bool> {
@@ -624,7 +630,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             btnMonth.Visible = howManyVisible > 1 && viewsVisible[2];
 
             // Set filter visibility
-            bool showFilter = ( pnlCalendar.Visible || lipLocation.Visible || rpResource.Visible || rcwCampus.Visible || rcwMinistry.Visible || rcwApproval.Visible || drpDateRange.Visible );
+            bool showFilter = ( pnlCalendar.Visible || lipLocation.Visible || rpResource.Visible || rcwCampus.Visible || rcwMinistry.Visible || rcwApproval.Visible || dpStartDate.Visible || dpEndDate.Visible );
             pnlFilters.Visible = showFilter;
             pnlList.CssClass = showFilter ? "col-md-9" : "col-md-12";
 
