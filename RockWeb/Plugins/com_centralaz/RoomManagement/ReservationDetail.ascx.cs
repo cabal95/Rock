@@ -798,6 +798,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             LoadPickers();
         }
 
+        /// <summary>
+        /// Handles the ValueChanged event of the approval toggle. If the reservation is set to approved, it will iterate through each resource and location and approve the ones the user has access to approve.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         protected void hfApprovalState_ValueChanged( object sender, EventArgs e )
         {
             if ( PageParameter( "ReservationId" ).AsIntegerOrNull() != null )
@@ -807,16 +812,25 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 {
                     ReservationApprovalState? newApprovalState = hfApprovalState.Value.ConvertToEnum<ReservationApprovalState>();
 
-                    if ( newApprovalState != null && ( newApprovalState == ReservationApprovalState.Denied || newApprovalState == ReservationApprovalState.Approved ) )
+                    if ( newApprovalState != null && newApprovalState == ReservationApprovalState.Approved )
                     {
+                        bool isSuperAdmin = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, reservation.ReservationType.SuperAdminGroupId );
                         foreach ( var reservationResource in reservation.ReservationResources )
                         {
-                            reservationResource.ApprovalState = ReservationResourceApprovalState.Approved;
+                            bool canApprove = ReservationService.CanPersonApproveReservationResource( CurrentPerson, isSuperAdmin, reservationResource );
+                            if ( canApprove )
+                            {
+                                reservationResource.ApprovalState = ReservationResourceApprovalState.Approved;
+                            }
                         }
 
                         foreach ( var reservationLocation in reservation.ReservationLocations )
                         {
-                            reservationLocation.ApprovalState = ReservationLocationApprovalState.Approved;
+                            bool canApprove = ReservationService.CanPersonApproveReservationLocation( CurrentPerson, isSuperAdmin, reservationLocation );
+                            if ( canApprove )
+                            {
+                                reservationLocation.ApprovalState = ReservationLocationApprovalState.Approved;
+                            }
                         }
                     }
                 }

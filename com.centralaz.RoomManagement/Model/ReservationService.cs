@@ -346,23 +346,23 @@ namespace com.centralaz.RoomManagement.Model
         /// <returns>
         ///   <c>true</c> if this instance [can person approve reservation resource] the specified person; otherwise, <c>false</c>.
         /// </returns>
-        private static bool CanPersonApproveReservationResource( Person person, bool isSuperAdmin, ReservationResource reservationResource )
+        public static bool CanPersonApproveReservationResource( Person person, bool isSuperAdmin, ReservationResource reservationResource )
         {
             bool canApprove = false;
 
-            if ( reservationResource.Resource.ApprovalGroupId == null )
+            if ( isSuperAdmin )
             {
                 canApprove = true;
             }
             else
             {
-                if ( ReservationTypeService.IsPersonInGroupWithId( person, reservationResource.Resource.ApprovalGroupId ) )
+                if ( reservationResource.Resource.ApprovalGroupId == null )
                 {
                     canApprove = true;
                 }
                 else
                 {
-                    if ( isSuperAdmin )
+                    if ( ReservationTypeService.IsPersonInGroupWithId( person, reservationResource.Resource.ApprovalGroupId ) )
                     {
                         canApprove = true;
                     }
@@ -381,25 +381,26 @@ namespace com.centralaz.RoomManagement.Model
         /// <returns>
         ///   <c>true</c> if this instance [can person approve reservation location] the specified person; otherwise, <c>false</c>.
         /// </returns>
-        private static bool CanPersonApproveReservationLocation( Person person, bool isSuperAdmin, ReservationLocation reservationLocation )
+        public static bool CanPersonApproveReservationLocation( Person person, bool isSuperAdmin, ReservationLocation reservationLocation )
         {
             bool canApprove = false;
-            reservationLocation.Location.LoadAttributes();
-            var approvalGroupGuid = reservationLocation.Location.GetAttributeValue( "ApprovalGroup" ).AsGuidOrNull();
 
-            if ( approvalGroupGuid == null )
+            if ( isSuperAdmin )
             {
                 canApprove = true;
             }
             else
             {
-                if ( ReservationTypeService.IsPersonInGroupWithGuid( person, approvalGroupGuid ) )
+                reservationLocation.Location.LoadAttributes();
+                var approvalGroupGuid = reservationLocation.Location.GetAttributeValue( "ApprovalGroup" ).AsGuidOrNull();
+
+                if ( approvalGroupGuid == null )
                 {
                     canApprove = true;
                 }
                 else
                 {
-                    if ( isSuperAdmin )
+                    if ( ReservationTypeService.IsPersonInGroupWithGuid( person, approvalGroupGuid ) )
                     {
                         canApprove = true;
                     }
@@ -774,7 +775,7 @@ namespace com.centralaz.RoomManagement.Model
 
             target.CampusId = source.CampusId;
             target.ReservationMinistryId = source.ReservationMinistryId;
-            
+
             //target.ApprovalState = source.ApprovalState;
             target.RequesterAliasId = source.RequesterAliasId;
             //target.ApproverAliasId = source.ApproverAliasId;
