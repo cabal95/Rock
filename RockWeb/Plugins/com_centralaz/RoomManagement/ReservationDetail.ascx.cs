@@ -1465,18 +1465,16 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             lReservationType.Text = ReservationType.Name;
             lSchedule.Text = reservation.GetFriendlyReservationScheduleText();
             lEventContact.Text = String.Format( "<a href='/Person/{0}'>{1}</a><br>{2}<br>{3}",
-                reservation.EventContactPersonAlias.PersonId,
-                reservation.EventContactPersonAlias.Person.FullName,
+                reservation.EventContactPersonAlias != null ? reservation.EventContactPersonAlias.PersonId.ToStringSafe() : string.Empty,
+                reservation.EventContactPersonAlias != null ? reservation.EventContactPersonAlias.Person.FullName : string.Empty,
                 reservation.EventContactPhone,
                 reservation.EventContactEmail );
             lAdminContact.Text = String.Format( "<a href='/Person/{0}'>{1}</a><br>{2}<br>{3}",
-                reservation.AdministrativeContactPersonAlias.PersonId,
-                reservation.AdministrativeContactPersonAlias.Person.FullName,
+                reservation.AdministrativeContactPersonAlias != null ? reservation.AdministrativeContactPersonAlias.PersonId.ToStringSafe() : string.Empty,
+                reservation.AdministrativeContactPersonAlias != null ? reservation.AdministrativeContactPersonAlias.Person.FullName : string.Empty,
                 reservation.AdministrativeContactPhone,
                 reservation.AdministrativeContactEmail );
-
-
-
+            
             if ( reservation.SetupPhotoId.HasValue )
             {
                 string imgTag = string.Format( "<img src='{0}GetImage.ashx?id={1}&maxwidth=200&maxheight=200'/>", VirtualPathUtility.ToAbsolute( "~/" ), reservation.SetupPhotoId.Value );
