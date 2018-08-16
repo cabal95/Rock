@@ -56,7 +56,7 @@ namespace Rock.Tests.Rock
         }
     }
 
-    public class MoqTest2 : DatabaseFixture
+    public class MoqTest2 : IClassFixture<DatabaseFixture>
     {
         [Fact]
         public void Test3()
