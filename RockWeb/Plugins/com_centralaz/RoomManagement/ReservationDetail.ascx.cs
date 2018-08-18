@@ -1505,6 +1505,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             // Show the delete button if the person is authorized to delete it
             if ( canApprove || CurrentPersonAliasId == reservation.CreatedByPersonAliasId )
             {
+                btnEdit.Visible = true;
                 btnDelete.Visible = true;
             }
 
