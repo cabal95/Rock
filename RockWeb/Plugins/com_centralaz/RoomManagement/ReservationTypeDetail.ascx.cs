@@ -833,21 +833,24 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     nbEditModeMessage.Text = EditModeMessage.ReadOnlyEditActionNotAllowed( ReservationType.FriendlyTypeName );
                 }
 
+                // Security won't be enabled until 1.3.1/1.4
+                btnSecurity.Visible = false;
+
                 if ( readOnly )
                 {
                     btnEdit.Visible = false;
                     btnDelete.Visible = false;
-                    btnSecurity.Visible = false;
+                    // btnSecurity.Visible = false;
                     ShowReadonlyDetails( reservationType );
                 }
                 else
                 {
                     btnEdit.Visible = true;
                     btnDelete.Visible = true;
-                    btnSecurity.Visible = true;
+                    // btnSecurity.Visible = true;
 
-                    btnSecurity.Title = "Secure " + reservationType.Name;
-                    btnSecurity.EntityId = reservationType.Id;
+                    // btnSecurity.Title = "Secure " + reservationType.Name;
+                    // btnSecurity.EntityId = reservationType.Id;
 
                     if ( !reservationTypeId.Equals( 0 ) )
                     {

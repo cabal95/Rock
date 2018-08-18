@@ -54,8 +54,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         protected string PendingCss = "btn-default";
         protected string ApprovedCss = "btn-default";
         protected string DeniedCss = "btn-default";
-        public bool _canEdit = false;
-        public bool _canApprove = false;
 
         #endregion
 
@@ -209,9 +207,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             // this event gets fired after block settings are updated. it's nice to repaint the screen if these settings would alter it
             this.AddConfigurationUpdateTrigger( upnlContent );
-
-            _canEdit = UserCanEdit;
-            _canApprove = UserCanAdministrate;
 
             string script = string.Format( @"
     $('#{0} .btn-toggle').click(function (e) {{
@@ -1417,22 +1412,23 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             bool readOnly = false;
             nbEditModeMessage.Text = string.Empty;
 
-            if ( !_canEdit )
-            {
-                readOnly = true;
-                nbEditModeMessage.Text = EditModeMessage.ReadOnlyEditActionNotAllowed( EventItem.FriendlyTypeName );
-            }
+            // This method is for 1.3.1 or 1.4 when we add security
+            //if ( !reservation.IsAuthorized( Authorization.EDIT, CurrentPerson ) )
+            //{
+            //    readOnly = true;
+            //    nbEditModeMessage.Text = EditModeMessage.ReadOnlyEditActionNotAllowed( EventItem.FriendlyTypeName );
+            //}
+
+            btnDelete.Visible = false;
 
             if ( readOnly )
             {
                 btnEdit.Visible = false;
-                btnDelete.Visible = false;
                 ShowReadonlyDetails( reservation );
             }
             else
             {
                 btnEdit.Visible = true;
-                btnDelete.Visible = true;
 
                 if ( !reservationId.Equals( 0 ) )
                 {
