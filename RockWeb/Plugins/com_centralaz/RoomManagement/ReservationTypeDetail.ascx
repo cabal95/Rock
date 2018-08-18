@@ -48,9 +48,9 @@
                         <div class="col-md-6">
                             <Rock:DataTextBox ID="tbName" runat="server" SourceTypeName="com.centralaz.RoomManagement.Model.ReservationType, com.centralaz.RoomManagement" PropertyName="Name" />
                         </div>
-                        <div class="col-md-6">
+<%--                        <div class="col-md-6">
                             <Rock:RockCheckBox ID="cbActive" runat="server" SourceTypeName="com.centralaz.RoomManagement.Model.ReservationType, com.centralaz.RoomManagement" PropertyName="IsActive" Label="Active" Checked="true" Text="Yes" />
-                        </div>
+                        </div>--%>
                     </div>
 
                     <Rock:DataTextBox ID="tbDescription" runat="server" SourceTypeName="com.centralaz.RoomManagement.Model.ReservationType, com.centralaz.RoomManagement" PropertyName="Description" TextMode="MultiLine" Rows="4" />

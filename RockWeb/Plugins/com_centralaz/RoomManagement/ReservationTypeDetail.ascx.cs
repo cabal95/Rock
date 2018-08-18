@@ -299,6 +299,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
                 reservationType.Name = tbName.Text;
                 reservationType.Description = tbDescription.Text;
+                //reservationType.IsActive = cbActive.Checked;
+                reservationType.IsActive = true;
                 reservationType.IconCssClass = tbIconCssClass.Text;
                 reservationType.FinalApprovalGroupId = ddlFinalApprovalGroup.SelectedValueAsId();
                 reservationType.SuperAdminGroupId = ddlSuperAdminGroup.SelectedValueAsId();
@@ -887,7 +889,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             tbName.Text = reservationType.Name;
             tbDescription.Text = reservationType.Description;
             tbIconCssClass.Text = reservationType.IconCssClass;
-            cbActive.Checked = reservationType.IsActive;
+            //cbActive.Checked = reservationType.IsActive;
             cbIsCommunicationHistorySaved.Checked = reservationType.IsCommunicationHistorySaved;
             cbIsContactDetailsRequired.Checked = reservationType.IsContactDetailsRequired;
             cbIsNumberAttendingRequired.Checked = reservationType.IsNumberAttendingRequired;
