@@ -101,7 +101,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             gWorkflowTriggers.Actions.AddClick += gWorkflowTriggers_Add;
             gWorkflowTriggers.GridRebind += gWorkflowTriggers_GridRebind;
 
-            btnDelete.Attributes["onclick"] = string.Format( "javascript: return Rock.dialogs.confirmDelete(event, '{0}', 'This will also delete all the reservation opportunities! Are you sure you wish to continue with the delete?');", ReservationType.FriendlyTypeName );
             btnSecurity.EntityTypeId = EntityTypeCache.Read( typeof( com.centralaz.RoomManagement.Model.ReservationType ) ).Id;
 
             this.BlockUpdated += Block_BlockUpdated;
@@ -216,12 +215,10 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                         return;
                     }
 
-                    string errorMessage;
-                    if ( !reservationTypeService.CanDelete( reservationType, out errorMessage ) )
-                    {
-                        mdDeleteWarning.Show( errorMessage, ModalAlertType.Information );
-                        return;
-                    }
+                    // Currently the Cascade delete isn't working, so this is temp code to force the issue.
+                    var reservationService = new ReservationService( rockContext );
+                    var reservationQry = reservationService.Queryable().Where( r => r.ReservationTypeId == reservationType.Id );
+                    reservationService.DeleteRange( reservationQry );
 
                     reservationTypeService.Delete( reservationType );
                     rockContext.SaveChanges();
