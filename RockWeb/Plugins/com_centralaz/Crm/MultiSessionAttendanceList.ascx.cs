@@ -508,6 +508,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                     // Build nice neat PersonAttendanceDataRow qry
                     var qry = qryRegistrations
                         .SelectMany( r => r.Registrants )
+                        .OrderBy( rr=> rr.Person.LastName ).ThenBy( rr => rr.Person.FirstName )
                         .Select( rr => new PersonAttendanceDataRow
                         {
                             Id = rr.PersonId.Value,
