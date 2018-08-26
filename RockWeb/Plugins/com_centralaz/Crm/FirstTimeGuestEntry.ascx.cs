@@ -389,7 +389,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             tbSpouseFirstName.Text = tbSpouseLastName.Text = pnSpouseCell.Text = tbSpouseEmail.Text = string.Empty;
             tbComments.Text = tbPrayerRequests.Text = string.Empty;
             acAddress.Street1 = acAddress.Street2 = acAddress.City = acAddress.PostalCode = string.Empty;
-            pnlNewPerson.Enabled = tbFirstName.Required = tbLastName.Required = tbEmail.Required = true;
+            pnlNewPerson.Enabled = tbFirstName.Required = tbLastName.Required = true;
         }
 
         /// <summary>
@@ -405,7 +405,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             }
             else
             {
-                pnlNewPerson.Enabled = tbFirstName.Required = tbLastName.Required = tbEmail.Required = true;
+                pnlNewPerson.Enabled = tbFirstName.Required = tbLastName.Required = true;
             }
         }
 
