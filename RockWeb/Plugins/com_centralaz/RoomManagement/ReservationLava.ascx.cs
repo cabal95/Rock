@@ -563,7 +563,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             // Setup Campus Filter
             rcwCampus.Visible = GetAttributeValue( "CampusFilterDisplayMode" ).AsInteger() > 1;
-            cblCampus.DataSource = CampusCache.All();
+            cblCampus.DataSource = CampusCache.All( false );
             cblCampus.DataBind();
             if ( !string.IsNullOrWhiteSpace( this.GetUserPreference( "Campuses" ) ) )
             {
