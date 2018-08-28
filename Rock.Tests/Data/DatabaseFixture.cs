@@ -10,24 +10,30 @@ using Rock.Cache;
 
 namespace Rock.Tests.Data
 {
-    public class DatabaseFixture : IDisposable
+    public class DatabaseTests : IDisposable
     {
-        static DatabaseFixture()
-        {
-        }
-
-        public DatabaseFixture()
+        /// <summary>
+        /// Initializes a new database test class. This resets the database
+        /// </summary>
+        public DatabaseTests()
         {
             var testSource = ConfigurationManager.AppSettings["RockUnitTestSource"];
 
             ResetDatabase( testSource );
         }
 
+        /// <summary>
+        /// The test or test group has finished, delete the database.
+        /// </summary>
         public void Dispose()
         {
             DeleteDatabase();
         }
 
+        /// <summary>
+        /// Gets the data path where we will store files.
+        /// </summary>
+        /// <returns>A string that contains the full path to our temporary folder.</returns>
         private static string GetDataPath()
         {
             string path = Path.Combine( Directory.GetCurrentDirectory(), "Data" );
@@ -40,10 +46,19 @@ namespace Rock.Tests.Data
             return path;
         }
 
+        /// <summary>
+        /// Resets the database by using the specified path to a database archive file.
+        /// </summary>
+        /// <param name="archivePath">The archive path that contains the MDF and LDF files.</param>
         protected virtual void ResetDatabase( string archivePath )
         {
             var cs = ConfigurationManager.ConnectionStrings["RockContext"].ConnectionString;
             var csb = new SqlConnectionStringBuilder( cs );
+
+            //
+            // We need to connect to the master database, but track the target database
+            // for use later.
+            //
             var dbName = csb.InitialCatalog;
             csb.InitialCatalog = "master";
 
@@ -52,6 +67,22 @@ namespace Rock.Tests.Data
                 using ( var connection = new SqlConnection( csb.ConnectionString ) )
                 {
                     connection.Open();
+
+                    //
+                    // Check if the database already exists as if something went horribly wrong
+                    // then it may not have been deleted.
+                    //
+                    using ( var cmd = connection.CreateCommand() )
+                    {
+                        cmd.CommandText = "SELECT COUNT(*) FROM [sysdatabases] WHERE [name] = @dbName";
+                        cmd.Parameters.AddWithValue( "dbName", dbName );
+
+                        if ( ( int ) cmd.ExecuteScalar() != 0 )
+                        {
+                            DeleteDatabase( connection, dbName );
+                        }
+                    }
+
                     CreateDatabase( connection, dbName, archive );
                 }
             }
@@ -59,10 +90,18 @@ namespace Rock.Tests.Data
             RockCache.ClearAllCachedItems();
         }
 
+        /// <summary>
+        /// Deletes the database from the SQL server so the next test can start clean.
+        /// </summary>
         protected virtual void DeleteDatabase()
         {
             var cs = ConfigurationManager.ConnectionStrings["RockContext"].ConnectionString;
             var csb = new SqlConnectionStringBuilder( cs );
+
+            //
+            // We need to connect to the master database, but track the target database
+            // for use later.
+            //
             var dbName = csb.InitialCatalog;
             csb.InitialCatalog = "master";
 
@@ -77,11 +116,20 @@ namespace Rock.Tests.Data
             }
         }
 
+        /// <summary>
+        /// Creates the database from the files stored in the archive.
+        /// </summary>
+        /// <param name="connection">The connection to use when running SQL commands.</param>
+        /// <param name="dbName">Name of the database to be created.</param>
+        /// <param name="archive">The archive that contains the MDF and LDF files.</param>
         private static void CreateDatabase( DbConnection connection, string dbName, ZipArchive archive )
         {
             var mdf = archive.Entries.Where( e => e.Name.EndsWith( ".mdf" ) ).First();
             var ldf = archive.Entries.Where( e => e.Name.EndsWith( ".ldf" ) ).First();
 
+            //
+            // Extract the MDF file from the archive.
+            //
             using ( var writer = File.Create( Path.Combine( GetDataPath(), string.Format( "{0}_Data.mdf", dbName ) ) ) )
             {
                 using ( var reader = mdf.Open() )
@@ -90,6 +138,9 @@ namespace Rock.Tests.Data
                 }
             }
 
+            //
+            // Extract the LDF file from the archive.
+            //
             using ( var writer = File.Create( Path.Combine( GetDataPath(), string.Format( "{0}_Log.ldf", dbName ) ) ) )
             {
                 using ( var reader = ldf.Open() )
@@ -98,25 +149,38 @@ namespace Rock.Tests.Data
                 }
             }
 
-            string sql = string.Format( @"CREATE DATABASE [{0}]   
+            //
+            // Execute the SQL command to create the database from existing files.
+            //
+            string sql = string.Format( @"
+CREATE DATABASE [{0}]   
     ON (FILENAME = '{1}\{0}_Data.mdf'),  
     (FILENAME = '{1}\{0}_Log.ldf')  
     FOR ATTACH;", dbName, GetDataPath() );
 
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = sql;
-            cmd.ExecuteNonQuery();
+            using ( var cmd = connection.CreateCommand() )
+            {
+                cmd.CommandText = sql;
+                cmd.ExecuteNonQuery();
+            }
         }
 
+        /// <summary>
+        /// Deletes the database from SQL server as well as from disk.
+        /// </summary>
+        /// <param name="connection">The connection.</param>
+        /// <param name="name">The name of the database.</param>
         private void DeleteDatabase( DbConnection connection, string name )
         {
-            string sql = string.Format( @"USE master;
+            string sql = string.Format( @"
 ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
 DROP DATABASE [{0}] ;", name );
 
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = sql;
-            cmd.ExecuteNonQuery();
+            using ( var cmd = connection.CreateCommand() )
+            {
+                cmd.CommandText = sql;
+                cmd.ExecuteNonQuery();
+            }
 
             File.Delete( Path.Combine( GetDataPath(), string.Format( "{0}_Data.mdf", name ) ) );
             File.Delete( Path.Combine( GetDataPath(), string.Format( "{0}_Log.mdf", name ) ) );

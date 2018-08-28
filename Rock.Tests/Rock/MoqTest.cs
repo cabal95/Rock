@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Rock.Tests.Rock
 {
-    public class MoqTest : IClassFixture<DatabaseFixture>
+    public class MoqTest : IClassFixture<DatabaseTests>
     {
         [Fact]
         public void MyTest()
@@ -56,7 +56,7 @@ namespace Rock.Tests.Rock
         }
     }
 
-    public class MoqTest2 : IClassFixture<DatabaseFixture>
+    public class MoqTest2 : DatabaseTests
     {
         [Fact]
         public void Test3()
