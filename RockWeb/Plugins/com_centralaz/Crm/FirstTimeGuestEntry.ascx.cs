@@ -192,7 +192,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                         person.Email = tbEmail.Text.Trim();
                         person.IsEmailActive = true;
                         person.EmailPreference = EmailPreference.EmailAllowed;
-                        person.RecordTypeValueId = DefinedValueCache.Read( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_PERSON.AsGuid() ).Id;
+                        person.RecordTypeValueId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_PERSON.AsGuid() ).Id;
                         person.ConnectionStatusValueId = _dvcConnectionStatus.Id;
                         person.RecordStatusValueId = _dvcRecordStatus.Id;
                         person.Gender = Gender.Unknown;
@@ -521,7 +521,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 return false;
             }
 
-            _dvcConnectionStatus = DefinedValueCache.Read( GetAttributeValue( "ConnectionStatus" ).AsGuid() );
+            _dvcConnectionStatus = DefinedValueCache.Get( GetAttributeValue( "ConnectionStatus" ).AsGuid() );
             if ( _dvcConnectionStatus == null )
             {
                 nbNotice.Heading = "Invalid Connection Status";
@@ -529,7 +529,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 return false;
             }
 
-            _dvcRecordStatus = DefinedValueCache.Read( GetAttributeValue( "RecordStatus" ).AsGuid() );
+            _dvcRecordStatus = DefinedValueCache.Get( GetAttributeValue( "RecordStatus" ).AsGuid() );
             if ( _dvcRecordStatus == null )
             {
                 nbNotice.Heading = "Invalid Record Status";
@@ -537,9 +537,9 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 return false;
             }
 
-            _married = DefinedValueCache.Read( Rock.SystemGuid.DefinedValue.PERSON_MARITAL_STATUS_MARRIED.AsGuid() );
-            _homeAddressType = DefinedValueCache.Read( Rock.SystemGuid.DefinedValue.GROUP_LOCATION_TYPE_HOME.AsGuid() );
-            _familyType = GroupTypeCache.Read( Rock.SystemGuid.GroupType.GROUPTYPE_FAMILY.AsGuid() );
+            _married = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_MARITAL_STATUS_MARRIED.AsGuid() );
+            _homeAddressType = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.GROUP_LOCATION_TYPE_HOME.AsGuid() );
+            _familyType = GroupTypeCache.Get( Rock.SystemGuid.GroupType.GROUPTYPE_FAMILY.AsGuid() );
             _adultRole = _familyType.Roles.FirstOrDefault( r => r.Guid.Equals( Rock.SystemGuid.GroupRole.GROUPROLE_FAMILY_MEMBER_ADULT.AsGuid() ) );
 
             if ( _married == null || _homeAddressType == null || _familyType == null || _adultRole == null )
@@ -565,7 +565,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         /// <param name="changes">The changes.</param>
         private void SetPhoneNumber( RockContext rockContext, Person person, PhoneNumberBox pnbNumber, RockCheckBox cbSms, Guid phoneTypeGuid, List<string> changes )
         {
-            var phoneType = DefinedValueCache.Read( phoneTypeGuid );
+            var phoneType = DefinedValueCache.Get( phoneTypeGuid );
             if ( phoneType != null )
             {
                 var phoneNumber = person.PhoneNumbers.FirstOrDefault( n => n.NumberTypeValueId == phoneType.Id );

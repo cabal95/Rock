@@ -101,7 +101,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             gWorkflowTriggers.Actions.AddClick += gWorkflowTriggers_Add;
             gWorkflowTriggers.GridRebind += gWorkflowTriggers_GridRebind;
 
-            btnSecurity.EntityTypeId = EntityTypeCache.Read( typeof( com.centralaz.RoomManagement.Model.ReservationType ) ).Id;
+            btnSecurity.EntityTypeId = EntityTypeCache.Get( typeof( com.centralaz.RoomManagement.Model.ReservationType ) ).Id;
 
             this.BlockUpdated += Block_BlockUpdated;
             this.AddConfigurationUpdateTrigger( upReservationType );
@@ -223,7 +223,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     reservationTypeService.Delete( reservationType );
                     rockContext.SaveChanges();
 
-                    ReservationWorkflowService.FlushCachedTriggers();
+                    ReservationWorkflowService.RemoveCachedTriggers();
                 }
             }
 
@@ -373,7 +373,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     }
                 } );
 
-                ReservationWorkflowService.FlushCachedTriggers();
+                ReservationWorkflowService.RemoveCachedTriggers();
 
                 var qryParams = new Dictionary<string, string>();
                 qryParams["ReservationTypeId"] = reservationType.Id.ToString();

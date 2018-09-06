@@ -109,7 +109,7 @@ namespace com.centralaz.GeneralJobs.Jobs
                     recipients.Add( groupMember.Person.Email );
                 }
 
-                var appRoot = Rock.Web.Cache.GlobalAttributesCache.Read( rockContext ).GetValue( "PublicApplicationRoot" );
+                var appRoot = Rock.Web.Cache.GlobalAttributesCache.Value( "PublicApplicationRoot" );
                 Email.Send( emailFrom, emailSubject, recipients, message, appRoot );
                 context.Result = string.Format( "{0} emails sent", recipients.Count() );
             }
@@ -178,7 +178,7 @@ namespace com.centralaz.GeneralJobs.Jobs
         /// <returns></returns>
         private string BuildLinkToGroup( RockContext rockContext, Group group, bool sendToDescendants )
         {
-            var appRoot = Rock.Web.Cache.GlobalAttributesCache.Read( rockContext ).GetValue( "InternalApplicationRoot" );
+            var appRoot = Rock.Web.Cache.GlobalAttributesCache.Value( "InternalApplicationRoot" );
 
             string html = string.Format( "<p><i>This report was sent to the members of the '{0}' group{1}. <a href='{2}Group/{3}'>Click to add or remove people</a> to receive this report.</i></p>",
                 group.Name,

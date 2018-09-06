@@ -411,7 +411,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 ApprovalState = r.ApprovalState.ConvertToString()
             } )
             .OrderBy( r => r.ReservationStartDateTime ).ToList();
-            gReservations.EntityTypeId = EntityTypeCache.Read<Reservation>().Id;
+            gReservations.EntityTypeId = EntityTypeCache.Get<Reservation>().Id;
             gReservations.DataBind();
         }
 

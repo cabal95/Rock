@@ -177,7 +177,7 @@ namespace com.centralaz.Calendar.Jobs
                                             t.IsRequired ) ) )
                                 {
 
-                                    var attribute = AttributeCache.Read( field.AttributeId.Value );
+                                    var attribute = AttributeCache.Get( field.AttributeId.Value );
                                     if ( attribute != null )
                                     {
                                         string originalValue = person.GetAttributeValue( attribute.Key );
@@ -201,7 +201,7 @@ namespace com.centralaz.Calendar.Jobs
                                                     t.FieldSource == RegistrationFieldSource.GroupMemberAttribute &&
                                                     t.AttributeId.HasValue ) ) )
                                         {
-                                            var attribute = AttributeCache.Read( field.AttributeId.Value );
+                                            var attribute = AttributeCache.Get( field.AttributeId.Value );
                                             if ( attribute != null )
                                             {
                                                 string originalValue = groupMember.GetAttributeValue( attribute.Key );
@@ -223,7 +223,7 @@ namespace com.centralaz.Calendar.Jobs
                                             t.FieldSource == RegistrationFieldSource.RegistrationAttribute &&
                                             t.AttributeId.HasValue ) ) )
                                 {
-                                    var attribute = AttributeCache.Read( field.AttributeId.Value );
+                                    var attribute = AttributeCache.Get( field.AttributeId.Value );
                                     if ( attribute != null )
                                     {
                                         string originalValue = registrant.GetAttributeValue( attribute.Key );
@@ -252,7 +252,7 @@ namespace com.centralaz.Calendar.Jobs
                             }
                         }
 
-                        var appRoot = Rock.Web.Cache.GlobalAttributesCache.Read( rockContext ).GetValue( "ExternalApplicationRoot" );
+                        var appRoot = GlobalAttributesCache.Value( "ExternalApplicationRoot" );
                         Email.Send( systemEmail.Guid, recipients, appRoot );
                     }
                 }

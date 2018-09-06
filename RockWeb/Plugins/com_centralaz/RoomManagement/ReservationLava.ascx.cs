@@ -573,7 +573,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 if ( GetAttributeValue( "EnableCampusContext" ).AsBoolean() )
                 {
-                    var contextCampus = RockPage.GetCurrentContext( EntityTypeCache.Read( "Rock.Model.Campus" ) ) as Campus;
+                    var contextCampus = RockPage.GetCurrentContext( EntityTypeCache.Get( "Rock.Model.Campus" ) ) as Campus;
                     if ( contextCampus != null )
                     {
                         cblCampus.SetValue( contextCampus.Id );
@@ -705,7 +705,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         {
             if ( reportTemplateGuid.HasValue )
             {
-                var reportTemplateEntityType = EntityTypeCache.Read( reportTemplateGuid.Value );
+                var reportTemplateEntityType = EntityTypeCache.Get( reportTemplateGuid.Value );
                 if ( reportTemplateEntityType == null )
                 {
                     return null;

@@ -316,7 +316,7 @@ namespace RockWeb.Plugins.com_centralaz.HumanResources
                     InactiveDate = c.InactiveDate.HasValue ? c.InactiveDate.Value.ToShortDateString() : "",
                 } ).ToList();
 
-            gContributionElections.EntityTypeId = EntityTypeCache.Read<com.centralaz.HumanResources.Model.ContributionElection>().Id;
+            gContributionElections.EntityTypeId = EntityTypeCache.Get<com.centralaz.HumanResources.Model.ContributionElection>().Id;
             gContributionElections.DataBind();
         }
 

@@ -95,7 +95,7 @@ namespace RockWeb.Plugins.com_centralaz.Core.Prayer
                 {
                     
                     Guid defaultCategoryGuid = GetAttributeValue( "DefaultCategory" ).AsGuid();
-                    var defaultCategoryId = CategoryCache.Read( defaultCategoryGuid, rockContext ).Id;
+                    var defaultCategoryId = CategoryCache.Get( defaultCategoryGuid, rockContext ).Id;
 
                     bddlCategory.SetValue( defaultCategoryId );
                 }

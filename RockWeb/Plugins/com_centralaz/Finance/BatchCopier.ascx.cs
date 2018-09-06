@@ -140,7 +140,7 @@ namespace RockWeb.Plugins.com_centralaz.Finance
                     changes.Add( "Created the batch" );
 
                     BatchStatus batchStatus = BatchStatus.Pending;
-                    CampusCache newCampus = oldBatch.CampusId.HasValue ? CampusCache.Read( oldBatch.CampusId.Value ) : null;
+                    CampusCache newCampus = oldBatch.CampusId.HasValue ? CampusCache.Get( oldBatch.CampusId.Value ) : null;
                     DateTime? startDateTime = dtpBatchDate.SelectedDateTimeIsBlank ? null : dtpBatchDate.SelectedDateTime;
 
                     History.EvaluateChange( changes, "Batch Name", batch.Name, oldBatch.Name );
@@ -261,7 +261,7 @@ namespace RockWeb.Plugins.com_centralaz.Finance
         {
             if ( definedValueId.HasValue )
             {
-                var dv = DefinedValueCache.Read( definedValueId.Value );
+                var dv = DefinedValueCache.Get( definedValueId.Value );
                 if ( dv != null )
                 {
                     return dv.Value;

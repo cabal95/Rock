@@ -321,7 +321,7 @@ namespace RockWeb.Plugins.com_centralaz.HumanResources
                     InactiveDate = c.InactiveDate.HasValue ? c.InactiveDate.Value.ToShortDateString() : "",
                 } ).ToList();
 
-            gRetirementFunds.EntityTypeId = EntityTypeCache.Read<com.centralaz.HumanResources.Model.RetirementFund>().Id;
+            gRetirementFunds.EntityTypeId = EntityTypeCache.Get<com.centralaz.HumanResources.Model.RetirementFund>().Id;
             gRetirementFunds.DataBind();
         }
 
@@ -370,7 +370,7 @@ namespace RockWeb.Plugins.com_centralaz.HumanResources
 
             if ( GetAttributeValue( "FundDefinedType" ).AsGuid() != null )
             {
-                dvpFund.DefinedTypeId = DefinedTypeCache.Read( GetAttributeValue( "FundDefinedType" ).AsGuid() ).Id;
+                dvpFund.DefinedTypeId = DefinedTypeCache.Get( GetAttributeValue( "FundDefinedType" ).AsGuid() ).Id;
                 dvpFund.SetValue( retirementFund.FundValueId.ToString() );
             }
 

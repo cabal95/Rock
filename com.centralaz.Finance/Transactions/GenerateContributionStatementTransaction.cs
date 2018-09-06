@@ -342,7 +342,7 @@ namespace com.centralaz.Finance.Transactions
                     var emailMergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
                     emailMergeFields.Add( "Person", Requestor );
 
-                    var appRoot = Rock.Web.Cache.GlobalAttributesCache.Read( rockContext ).GetValue( "ExternalApplicationRoot" );
+                    var appRoot = Rock.Web.Cache.GlobalAttributesCache.Value( "ExternalApplicationRoot" );
 
                     var recipients = new List<RecipientData>();
                     recipients.Add( new RecipientData( Requestor.Email, emailMergeFields ) );

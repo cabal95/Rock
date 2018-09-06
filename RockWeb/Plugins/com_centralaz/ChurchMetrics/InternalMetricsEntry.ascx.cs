@@ -194,8 +194,8 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void btnSave_Click( object sender, EventArgs e )
         {
-            int campusEntityTypeId = EntityTypeCache.Read( typeof( Rock.Model.Campus ) ).Id;
-            int scheduleEntityTypeId = EntityTypeCache.Read( typeof( Rock.Model.Schedule ) ).Id;
+            int campusEntityTypeId = EntityTypeCache.Get( typeof( Rock.Model.Campus ) ).Id;
+            int scheduleEntityTypeId = EntityTypeCache.Get( typeof( Rock.Model.Schedule ) ).Id;
 
             int? campusId = bddlCampus.SelectedValueAsInt();
             int? scheduleId = bddlService.SelectedValueAsInt();
@@ -487,7 +487,7 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
 
             if ( _selectedCampusId.HasValue )
             {
-                var campus = CampusCache.Read( _selectedCampusId.Value );
+                var campus = CampusCache.Get( _selectedCampusId.Value );
                 if ( campus != null )
                 {
                     using ( var rockContext = new RockContext() )
@@ -495,7 +495,7 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                         var scheduleService = new ScheduleService( rockContext );
 
                         // Grab the weekend schedule categories
-                        var weekendScheduleCategory = CategoryCache.Read( GetAttributeValue( "WeekendScheduleCategory" ).AsGuid() );
+                        var weekendScheduleCategory = CategoryCache.Get( GetAttributeValue( "WeekendScheduleCategory" ).AsGuid() );
                         if ( weekendScheduleCategory != null )
                         {
                             //If there is a campus-specific schedule category underneath this one, use that instead
@@ -517,7 +517,7 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                         }
 
                         // grab any event schedule categories
-                        var eventScheduleCategory = CategoryCache.Read( GetAttributeValue( "EventScheduleCategory" ).AsGuid() );
+                        var eventScheduleCategory = CategoryCache.Get( GetAttributeValue( "EventScheduleCategory" ).AsGuid() );
                         if ( eventScheduleCategory != null )
                         {
                             //If there is a campus-specific schedule category underneath this one, use that instead
@@ -539,7 +539,7 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                         }
 
                         // Grab any holiday schedules that have occurred in the last 5 days
-                        var holidayScheduleCategory = CategoryCache.Read( GetAttributeValue( "HolidayScheduleCategory" ).AsGuid() );
+                        var holidayScheduleCategory = CategoryCache.Get( GetAttributeValue( "HolidayScheduleCategory" ).AsGuid() );
                         if ( holidayScheduleCategory != null )
                         {
                             var holidayCategoryIds = new List<int>();
@@ -615,8 +615,8 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
         {
             var serviceMetricValues = new List<InternalServiceMetric>();
 
-            int campusEntityTypeId = EntityTypeCache.Read( typeof( Rock.Model.Campus ) ).Id;
-            int scheduleEntityTypeId = EntityTypeCache.Read( typeof( Rock.Model.Schedule ) ).Id;
+            int campusEntityTypeId = EntityTypeCache.Get( typeof( Rock.Model.Campus ) ).Id;
+            int scheduleEntityTypeId = EntityTypeCache.Get( typeof( Rock.Model.Schedule ) ).Id;
 
             int? campusId = bddlCampus.SelectedValueAsInt();
             int? scheduleId = bddlService.SelectedValueAsInt();

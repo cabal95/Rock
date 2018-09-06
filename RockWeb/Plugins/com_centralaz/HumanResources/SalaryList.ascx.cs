@@ -318,7 +318,7 @@ namespace RockWeb.Plugins.com_centralaz.HumanResources
                     ReviewedDate = c.ReviewedDate.HasValue ? c.ReviewedDate.Value.ToShortDateString() : "",
                 } ).ToList();
 
-            gSalaries.EntityTypeId = EntityTypeCache.Read<com.centralaz.HumanResources.Model.Salary>().Id;
+            gSalaries.EntityTypeId = EntityTypeCache.Get<com.centralaz.HumanResources.Model.Salary>().Id;
             gSalaries.DataBind();
         }
 

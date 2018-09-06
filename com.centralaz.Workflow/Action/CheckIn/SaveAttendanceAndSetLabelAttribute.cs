@@ -65,7 +65,7 @@ namespace com.centralaz.Workflow.Action.CheckIn
                 bool canPrintLabelMultipleTimes = true;
                 if ( checkInState.CheckinTypeId.HasValue )
                 {
-                    var checkinType = GroupTypeCache.Read( checkInState.CheckinTypeId.Value );
+                    var checkinType = GroupTypeCache.Get( checkInState.CheckinTypeId.Value );
                     if ( checkinType != null )
                     {
                         var guidList = GetAttributeValue( action, "CheckinTypesToLimit" ).SplitDelimitedValues().AsGuidList();
@@ -176,7 +176,7 @@ namespace com.centralaz.Workflow.Action.CheckIn
             Guid guid = GetAttributeValue( action, "WillLabelPrintAttribute" ).AsGuid();
             if ( !guid.IsEmpty() )
             {
-                var attribute = AttributeCache.Read( guid, rockContext );
+                var attribute = AttributeCache.Get( guid, rockContext );
                 if ( attribute != null )
                 {
                     if ( attribute.EntityTypeId == new Rock.Model.Workflow().TypeId )

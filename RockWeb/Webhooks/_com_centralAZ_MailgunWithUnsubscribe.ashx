@@ -67,7 +67,7 @@ public class _com_centralAZ_MailgunWithUnsubscribe : IHttpHandler
             string signature = request.Form["signature"];
             string apiKey = string.Empty;
 
-            var mailgunEntity = Rock.Web.Cache.EntityTypeCache.Read( "Rock.Communication.Transport.MailgunSmtp", false );
+            var mailgunEntity = Rock.Web.Cache.EntityTypeCache.Get( "Rock.Communication.Transport.MailgunSmtp", false );
             if ( mailgunEntity != null )
             {
                 apiKey = new AttributeValueService( rockContext )

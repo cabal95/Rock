@@ -399,7 +399,7 @@ namespace RockWeb.Plugins.com_centralaz.Accountability
             mediumData.Add( "Subject", subject );
             mediumData.Add( "Body", System.Text.RegularExpressions.Regex.Replace( body, @"\[\[\s*UnsubscribeOption\s*\]\]", string.Empty ) );
 
-            var mediumEntity = EntityTypeCache.Read( Rock.SystemGuid.EntityType.COMMUNICATION_MEDIUM_EMAIL.AsGuid(), rockContext );
+            var mediumEntity = EntityTypeCache.Get( Rock.SystemGuid.EntityType.COMMUNICATION_MEDIUM_EMAIL.AsGuid(), rockContext );
             if ( mediumEntity != null )
             {
                 var medium = MediumContainer.GetComponent( mediumEntity.Name );
@@ -408,7 +408,7 @@ namespace RockWeb.Plugins.com_centralaz.Accountability
                     var transport = medium.Transport;
                     if ( transport != null && transport.IsActive )
                     {
-                        var appRoot = GlobalAttributesCache.Read( rockContext ).GetValue( "InternalApplicationRoot" );
+                        var appRoot = GlobalAttributesCache.Value( "InternalApplicationRoot" );
                         ( (Rock.Communication.Transport.SMTPComponent)transport ).Send( mediumData, recipients, ResolveRockUrl( "~/" ), ResolveRockUrl( "~~/" ), true, metaData );
                     }
                 }
@@ -424,7 +424,7 @@ namespace RockWeb.Plugins.com_centralaz.Accountability
         /// <returns>The safe email to use when sending email.</returns>
         private string CheckSafeSender( string from, string substitutionEmail, Dictionary<string, string> metaData, Dictionary<string, string> mediumData )
         {
-            var safeDomains = DefinedTypeCache.Read( Rock.SystemGuid.DefinedType.COMMUNICATION_SAFE_SENDER_DOMAINS.AsGuid() ).DefinedValues.Select( v => v.Value ).ToList();
+            var safeDomains = DefinedTypeCache.Get( Rock.SystemGuid.DefinedType.COMMUNICATION_SAFE_SENDER_DOMAINS.AsGuid() ).DefinedValues.Select( v => v.Value ).ToList();
             var emailParts = from.Split( new char[] { '@' }, StringSplitOptions.RemoveEmptyEntries );
             if ( emailParts.Length != 2 || !safeDomains.Contains( emailParts[1], StringComparer.OrdinalIgnoreCase ) )
             {
