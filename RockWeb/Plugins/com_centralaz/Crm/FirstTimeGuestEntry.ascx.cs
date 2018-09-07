@@ -157,9 +157,9 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 GroupLocation homeLocation = null;
                 bool isMatch = false;
 
-                var changes = new List<string>();
-                var spouseChanges = new List<string>();
-                var familyChanges = new List<string>();
+                var changes = new History.HistoryChangeList();
+                var spouseChanges = new History.HistoryChangeList();
+                var familyChanges = new History.HistoryChangeList();
 
                 var addedPeopleNames = string.Empty;
 
@@ -563,7 +563,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         /// <param name="cbSms">The cb SMS.</param>
         /// <param name="phoneTypeGuid">The phone type unique identifier.</param>
         /// <param name="changes">The changes.</param>
-        private void SetPhoneNumber( RockContext rockContext, Person person, PhoneNumberBox pnbNumber, RockCheckBox cbSms, Guid phoneTypeGuid, List<string> changes )
+        private void SetPhoneNumber( RockContext rockContext, Person person, PhoneNumberBox pnbNumber, RockCheckBox cbSms, Guid phoneTypeGuid, History.HistoryChangeList changes )
         {
             var phoneType = DefinedValueCache.Get( phoneTypeGuid );
             if ( phoneType != null )

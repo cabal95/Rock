@@ -223,7 +223,7 @@ namespace RockWeb.Plugins.com_centralaz.HumanResources
 
                     var rockContext = new RockContext();
 
-                    var changes = new List<string>();
+                    var changes = new History.HistoryChangeList();
                     foreach ( int attributeId in AttributeList )
                     {
                         var attribute = AttributeCache.Get( attributeId );

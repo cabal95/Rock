@@ -309,7 +309,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void cblApproval_SelectedIndexChanged( object sender, EventArgs e )
         {
-            this.SetUserPreference( "Approval State", cblApproval.Items.OfType<System.Web.UI.WebControls.ListItem>().Where( l => l.Selected ).Select( a => a.Value.ConvertToEnum<ReservationApprovalState>().ConvertToInt() ).Where( a => a != null ).ToList().AsDelimited( "," ) );
+            this.SetUserPreference( "Approval State", cblApproval.Items.OfType<System.Web.UI.WebControls.ListItem>().Where( l => l.Selected ).Select( a => a.Value.ConvertToEnum<ReservationApprovalState>().ConvertToInt() ).ToList().AsDelimited( "," ) );
             BindData();
         }
 
@@ -474,7 +474,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             }
 
             // Filter by Approval
-            List<ReservationApprovalState> approvalValues = cblApproval.Items.OfType<System.Web.UI.WebControls.ListItem>().Where( l => l.Selected ).Select( a => a.Value.ConvertToEnum<ReservationApprovalState>() ).Where( a => a != null ).ToList();
+            List<ReservationApprovalState> approvalValues = cblApproval.Items.OfType<System.Web.UI.WebControls.ListItem>().Where( l => l.Selected ).Select( a => a.Value.ConvertToEnum<ReservationApprovalState>() ).ToList();
             if ( approvalValues.Any() )
             {
                 qry = qry

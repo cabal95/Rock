@@ -110,7 +110,15 @@ namespace com.centralaz.GeneralJobs.Jobs
                 }
 
                 var appRoot = Rock.Web.Cache.GlobalAttributesCache.Value( "PublicApplicationRoot" );
-                Email.Send( emailFrom, emailSubject, recipients, message, appRoot );
+                var emailMessage = new RockEmailMessage();
+                emailMessage.FromEmail = emailFrom;
+                emailMessage.Subject = emailSubject;
+                emailMessage.SetRecipients( recipients );
+                emailMessage.Message = message;
+                emailMessage.AppRoot = appRoot;
+                emailMessage.CreateCommunicationRecord = true;
+                emailMessage.Send();
+
                 context.Result = string.Format( "{0} emails sent", recipients.Count() );
             }
         }

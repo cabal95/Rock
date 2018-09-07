@@ -166,7 +166,7 @@ namespace RockWeb.Plugins.com_centralaz.Baptism
                 }
             }
 
-            var changes = new List<string>();
+            var changes = new History.HistoryChangeList();
             BaptismContext baptismContext = new BaptismContext();
             BaptizeeService baptizeeService = new BaptizeeService( baptismContext );
             RockContext rockContext = new RockContext();
@@ -263,7 +263,7 @@ namespace RockWeb.Plugins.com_centralaz.Baptism
                     baptismContext.SaveChanges();
 
                     // Create the history records
-                    var changes = new List<string>();
+                    var changes = new History.HistoryChangeList();
 
                     History.EvaluateChange( changes, "Baptizer 1", ( _baptizee.Baptizer1 != null ) ? _baptizee.Baptizer1.Person.FullName : "", "" );
                     History.EvaluateChange( changes, "Baptizer 2", ( _baptizee.Baptizer2 != null ) ? _baptizee.Baptizer2.Person.FullName : "", "" );

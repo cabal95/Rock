@@ -742,8 +742,8 @@ namespace RockWeb.Plugins.com_CentralAZ.Event
                         return;
                     }
 
-                    var changes = new List<string>();
-                    changes.Add( "Deleted registration" );
+                    var changes = new History.HistoryChangeList();
+                    changes.Add( new History.HistoryChange( History.HistoryVerb.Delete, History.HistoryChangeType.Record, "Registration" ) );
 
                     rockContext.WrapTransaction( () =>
                     {

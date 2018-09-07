@@ -213,10 +213,10 @@ namespace RockWeb.Plugins.com_centralaz.LifeGroupFinder
                     Group family = null;
                     Group secondFamily = null;
 
-                    var changes = new List<string>();
-                    var secondPersonChanges = new List<string>();
-                    var familyChanges = new List<string>();
-                    var secondFamilyChanges = new List<string>();
+                    var changes = new History.HistoryChangeList();
+                    var secondPersonChanges = new History.HistoryChangeList();
+                    var familyChanges = new History.HistoryChangeList();
+                    var secondFamilyChanges = new History.HistoryChangeList();
 
                     // Only use current person if the name entered matches the current person's name
                     if ( CurrentPerson != null &&
@@ -448,8 +448,8 @@ namespace RockWeb.Plugins.com_centralaz.LifeGroupFinder
                 Person person = null;
                 Group family = null;
 
-                var changes = new List<string>();
-                var familyChanges = new List<string>();
+                var changes = new History.HistoryChangeList();
+                var familyChanges = new History.HistoryChangeList();
 
                 // Only use current person if the name entered matches the current person's name
                 if ( CurrentPerson != null &&
@@ -916,7 +916,7 @@ namespace RockWeb.Plugins.com_centralaz.LifeGroupFinder
         /// <param name="cbSms">The cb SMS.</param>
         /// <param name="phoneTypeGuid">The phone type unique identifier.</param>
         /// <param name="changes">The changes.</param>
-        private void SetPhoneNumber( RockContext rockContext, Person person, PhoneNumberBox pnbNumber, RockCheckBox cbSms, Guid phoneTypeGuid, List<string> changes )
+        private void SetPhoneNumber( RockContext rockContext, Person person, PhoneNumberBox pnbNumber, RockCheckBox cbSms, Guid phoneTypeGuid, History.HistoryChangeList changes )
         {
             var phoneType = DefinedValueCache.Get( phoneTypeGuid );
             if ( phoneType != null )

@@ -128,7 +128,7 @@ namespace RockWeb.Plugins.com_centralaz.Finance
             var batchService = new FinancialBatchService( rockContext );
 
             FinancialBatch oldBatch = null;
-            var changes = new List<string>();
+            var changes = new History.HistoryChangeList();
 
             int? oldBatchId = PageParameter( "batchId" ).AsIntegerOrNull();
             if ( oldBatchId != null )
@@ -137,7 +137,7 @@ namespace RockWeb.Plugins.com_centralaz.Finance
                 if ( oldBatch != null )
                 {
                     var batch = new FinancialBatch();
-                    changes.Add( "Created the batch" );
+                    changes.Add( new History.HistoryChange( History.HistoryVerb.Add, History.HistoryChangeType.Record, "Batch" ) );
 
                     BatchStatus batchStatus = BatchStatus.Pending;
                     CampusCache newCampus = oldBatch.CampusId.HasValue ? CampusCache.Get( oldBatch.CampusId.Value ) : null;

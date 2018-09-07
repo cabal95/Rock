@@ -334,7 +334,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 ReservationLocationService reservationLocationService = new ReservationLocationService( rockContext );
 
                 Reservation reservation = null;
-                var changes = new List<string>();
+                var changes = new History.HistoryChangeList();
 
                 if ( hfReservationId.Value.AsIntegerOrNull() != null )
                 {
@@ -346,14 +346,14 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     reservation = new Reservation { Id = 0 };
                     reservation.ApprovalState = ReservationApprovalState.Unapproved;
                     reservation.RequesterAliasId = CurrentPersonAliasId;
-                    changes.Add( "Created Reservation" );
+                    changes.Add( new History.HistoryChange( History.HistoryVerb.Add, History.HistoryChangeType.Record, "Reservation" ) );
                 }
                 else
                 {
                     var uiLocations = LocationsState.Select( l => l.Guid );
                     foreach ( var reservationLocation in reservation.ReservationLocations.Where( l => !uiLocations.Contains( l.Guid ) ).ToList() )
                     {
-                        changes.Add( String.Format( "Removed <span class='field-name'>{0}</span> from Reservation", reservationLocation.Location.Name ) );
+                        changes.Add( new History.HistoryChange( History.HistoryVerb.Delete, History.HistoryChangeType.Property, String.Format( "Location ({0})", reservationLocation.Location.Name ) ) );
                         reservation.ReservationLocations.Remove( reservationLocation );
                         reservationLocationService.Delete( reservationLocation );
                     }
@@ -361,7 +361,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     var uiResources = ResourcesState.Select( l => l.Guid );
                     foreach ( var reservationResource in reservation.ReservationResources.Where( l => !uiResources.Contains( l.Guid ) ).ToList() )
                     {
-                        changes.Add( String.Format( "Removed <span class='field-name'>{0} {1}</span> from Reservation", reservationResource.Quantity, reservationResource.Resource.Name ) );
+                        changes.Add( new History.HistoryChange( History.HistoryVerb.Delete, History.HistoryChangeType.Property, String.Format( "Resource ({0})", reservationResource.Resource.Name ) ) );
                         reservation.ReservationResources.Remove( reservationResource );
                         reservationResourceService.Delete( reservationResource );
                     }
@@ -459,16 +459,16 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     {
                         if ( reservation.SetupPhotoId.HasValue )
                         {
-                            changes.Add( "Modified the setup photo." );
+                            changes.Add( new History.HistoryChange( History.HistoryVerb.Modify, History.HistoryChangeType.Property, "setup photo." ) );
                         }
                         else
                         {
-                            changes.Add( "Deleted the setup photo." );
+                            changes.Add( new History.HistoryChange( History.HistoryVerb.Delete, History.HistoryChangeType.Property, "setup photo." ) );
                         }
                     }
                     else if ( reservation.SetupPhotoId.HasValue )
                     {
-                        changes.Add( "Added a setup photo." );
+                        changes.Add( new History.HistoryChange( History.HistoryVerb.Add, History.HistoryChangeType.Property, "setup photo." ) );
                     }
                 }
 
@@ -2373,7 +2373,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="oldReservation">The old reservation.</param>
         /// <param name="reservation">The reservation.</param>
         /// <returns></returns>
-        private List<string> EvaluateLocationAndResourceChanges( List<string> changes, Reservation oldReservation, Reservation reservation )
+        private History.HistoryChangeList EvaluateLocationAndResourceChanges( History.HistoryChangeList changes, Reservation oldReservation, Reservation reservation )
         {
             foreach ( var reservationLocation in reservation.ReservationLocations )
             {
@@ -2400,7 +2400,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 }
                 else
                 {
-                    changes.Add( String.Format( "Added <span class='field-name'>{0}</span>", reservationLocation.Location.Name ) );
+                    changes.Add( new History.HistoryChange( History.HistoryVerb.Add, History.HistoryChangeType.Property, String.Format( "Location ({0})", reservationLocation.Location.Name ) ) );
                 }
             }
 
@@ -2431,7 +2431,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 }
                 else
                 {
-                    changes.Add( String.Format( "Added <span class='field-name'>{0} {1}</span>", reservationResource.Quantity, reservationResource.Resource.Name ) );
+                    changes.Add( new History.HistoryChange( History.HistoryVerb.Add, History.HistoryChangeType.Property, String.Format( "Resource ({0} {1})", reservationResource.Quantity, reservationResource.Resource.Name ) ) );
                 }
             }
 

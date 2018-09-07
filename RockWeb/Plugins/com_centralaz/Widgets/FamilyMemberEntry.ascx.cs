@@ -86,7 +86,7 @@ namespace RockWeb.Plugins.com_centralaz.Widgets
                 var person = new PersonService( rockContext ).Get( personId.Value );
                 if ( person != null )
                 {
-                    var changes = new List<string>();
+                    var changes = new History.HistoryChangeList();
 
                     History.EvaluateChange( changes, "First Name", person.FirstName, tbFirstName.Text );
                     person.FirstName = tbFirstName.Text;

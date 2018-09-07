@@ -253,7 +253,10 @@ namespace com.centralaz.Calendar.Jobs
                         }
 
                         var appRoot = GlobalAttributesCache.Value( "ExternalApplicationRoot" );
-                        Email.Send( systemEmail.Guid, recipients, appRoot );
+                        var emailMessage = new RockEmailMessage( systemEmail.Guid );
+                        emailMessage.SetRecipients( recipients );
+                        emailMessage.AppRoot = appRoot;
+                        emailMessage.Send();
                     }
                 }
             }
