@@ -506,11 +506,12 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
 
                             foreach ( var schedule in GetSchedulesInCategory( scheduleService, weekendScheduleCategory.Id ) )
                             {
+                                var nextStartDateTime = schedule.GetNextStartDateTime( RockDateTime.Now );
                                 scheduleSummaryList.Add( new ScheduleSummary()
                                 {
                                     Schedule = schedule,
-                                    Date = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.Date : schedule.EffectiveStartDate.Value.Date,
-                                    Time = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.TimeOfDay : schedule.EffectiveStartDate.Value.TimeOfDay,
+                                    Date = nextStartDateTime != null ? nextStartDateTime.Value.Date : schedule.EffectiveStartDate.Value.Date,
+                                    Time = nextStartDateTime != null ? nextStartDateTime.Value.TimeOfDay : schedule.EffectiveStartDate.Value.TimeOfDay,
                                     ScheduleType = 0
                                 } );
                             }
@@ -528,11 +529,12 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
 
                             foreach ( var schedule in GetSchedulesInCategory( scheduleService, eventScheduleCategory.Id ) )
                             {
+                                var nextStartDateTime = schedule.GetNextStartDateTime( RockDateTime.Now );
                                 scheduleSummaryList.Add( new ScheduleSummary()
                                 {
                                     Schedule = schedule,
-                                    Date = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.Date : schedule.EffectiveStartDate.Value.Date,
-                                    Time = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.TimeOfDay : schedule.EffectiveStartDate.Value.TimeOfDay,
+                                    Date = nextStartDateTime != null ? nextStartDateTime.Value.Date : schedule.EffectiveStartDate.Value.Date,
+                                    Time = nextStartDateTime != null ? nextStartDateTime.Value.TimeOfDay : schedule.EffectiveStartDate.Value.TimeOfDay,
                                     ScheduleType = 1
                                 } );
                             }
@@ -556,11 +558,12 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                                      s.EffectiveStartDate.Value.Date >= RockDateTime.Now.Date.AddDays( -5 ) )
                                 .ToList() )
                             {
+                                var nextStartDateTime = schedule.GetNextStartDateTime( RockDateTime.Now );
                                 scheduleSummaryList.Add( new ScheduleSummary()
                                 {
                                     Schedule = schedule,
-                                    Date = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.Date : schedule.EffectiveStartDate.Value.Date,
-                                    Time = schedule.NextStartDateTime != null ? schedule.NextStartDateTime.Value.TimeOfDay : schedule.EffectiveStartDate.Value.TimeOfDay,
+                                    Date = nextStartDateTime != null ? nextStartDateTime.Value.Date : schedule.EffectiveStartDate.Value.Date,
+                                    Time = nextStartDateTime != null ? nextStartDateTime.Value.TimeOfDay : schedule.EffectiveStartDate.Value.TimeOfDay,
                                     ScheduleType = 2
                                 } );
                             }

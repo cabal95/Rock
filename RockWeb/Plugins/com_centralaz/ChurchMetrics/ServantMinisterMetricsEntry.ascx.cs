@@ -689,24 +689,31 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
         /// <returns></returns>
         private static List<Schedule> GetSchedulesInCategoriesOccurringToday( ScheduleService scheduleService, List<int> categoryIds )
         {
-            var schedules = scheduleService
-                                .Queryable().AsNoTracking()
-                                .Where( s =>
-                                    s.CategoryId.HasValue &&
-                                    s.IsActive &&
-                                    categoryIds.Contains( s.CategoryId.Value ) )
-                                .ToList() // We ToList() this query so that we can use the NextStartDate property
-                                .Where( s =>
-                                    /* 
-                                     * Here we grab schedules if
-                                     *  1) Their EffectiveStartDate (First time they occur) is the same as today's date. This
-                                     *      is used for non-reccurring schedules such as holiday schedules or one-off events.
-                                     *  2) Their NextStartDateTime DayOfWeek matches today's day of week. This is used for reccurring
-                                     *      schedules such as weekend schedules or Trek
-                                     */
-                                    ( s.EffectiveStartDate.HasValue && s.EffectiveStartDate.Value.Date == RockDateTime.Now.Date ) || 
-                                    ( s.NextStartDateTime.HasValue && s.NextStartDateTime.Value.DayOfWeek == RockDateTime.Now.DayOfWeek ) )
-                                .ToList();
+            var schedules = new List<Schedule>();
+
+            foreach ( var schedule in scheduleService.Queryable().AsNoTracking()
+                .Where( s =>
+                    s.CategoryId.HasValue &&
+                    s.IsActive &&
+                    categoryIds.Contains( s.CategoryId.Value ) )
+                .ToList() ) // We ToList() this query so that we can use the NextStartDate property 
+            {
+                var nextStartDate = schedule.GetNextStartDateTime( RockDateTime.Now );
+                if (
+                    /* 
+                        * Here we grab schedules if
+                        *  1) Their EffectiveStartDate (First time they occur) is the same as today's date. This
+                        *      is used for non-reccurring schedules such as holiday schedules or one-off events.
+                        *  2) Their NextStartDateTime DayOfWeek matches today's day of week. This is used for reccurring
+                        *      schedules such as weekend schedules or Trek
+                        */
+                    ( schedule.EffectiveStartDate.HasValue && schedule.EffectiveStartDate.Value.Date == RockDateTime.Now.Date ) ||
+                    ( nextStartDate.HasValue && nextStartDate.Value.DayOfWeek == RockDateTime.Now.DayOfWeek ) )
+                {
+                    schedules.Add( schedule );
+                }
+            }
+
             return schedules;
         }
 
