@@ -430,8 +430,7 @@ namespace RockWeb.Plugins.com_centralaz.Utility
         /// <returns></returns>
         private bool FoundExactMatch( ArrayList personIds, string firstOrNickName, string lastName, string email )
         {
-            var exactPeople = new PersonService( new RockContext() ).GetByMatch( firstOrNickName, lastName, email );
-
+            var exactPeople = new PersonService( new RockContext() ).FindPersons( firstOrNickName, lastName, email );
             if ( exactPeople.Count() == 1 )
             {
                 personIds.Add( exactPeople.FirstOrDefault().Id );

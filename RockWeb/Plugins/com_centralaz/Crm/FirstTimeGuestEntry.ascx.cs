@@ -174,7 +174,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                     if ( person == null )
                     {
                         // Try to find person by name/email 
-                        var matches = personService.GetByMatch( tbFirstName.Text.Trim(), tbLastName.Text.Trim(), tbEmail.Text.Trim() );
+                        var matches = personService.FindPersons( tbFirstName.Text.Trim(), tbLastName.Text.Trim(), tbEmail.Text.Trim() );
                         if ( matches.Count() == 1 )
                         {
                             person = matches.First();

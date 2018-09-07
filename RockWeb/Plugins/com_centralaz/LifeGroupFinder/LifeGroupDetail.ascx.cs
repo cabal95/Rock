@@ -229,7 +229,7 @@ namespace RockWeb.Plugins.com_centralaz.LifeGroupFinder
                     // Try to find person by name/email 
                     if ( person == null )
                     {
-                        var matches = personService.GetByMatch( tbFirstName.Text.Trim(), tbLastName.Text.Trim(), tbEmail.Text.Trim() );
+                        var matches = personService.FindPersons( tbFirstName.Text.Trim(), tbLastName.Text.Trim(), tbEmail.Text.Trim() );
                         if ( matches.Count() == 1 )
                         {
                             person = matches.First();
@@ -272,7 +272,7 @@ namespace RockWeb.Plugins.com_centralaz.LifeGroupFinder
                         // Try to find second person by name/email 
                         if ( secondPerson == null )
                         {
-                            var matches = personService.GetByMatch( tbSecondFirstName.Text.Trim(), tbSecondLastName.Text.Trim(), tbSecondEmail.Text.Trim() );
+                            var matches = personService.FindPersons( tbSecondFirstName.Text.Trim(), tbSecondLastName.Text.Trim(), tbSecondEmail.Text.Trim() );
                             if ( matches.Count() == 1 )
                             {
                                 secondPerson = matches.First();
@@ -462,7 +462,7 @@ namespace RockWeb.Plugins.com_centralaz.LifeGroupFinder
                 // Try to find person by name/email 
                 if ( person == null )
                 {
-                    var matches = personService.GetByMatch( tbFirstName.Text.Trim(), tbLastName.Text.Trim(), tbEmail.Text.Trim() );
+                    var matches = personService.FindPersons( tbFirstName.Text.Trim(), tbLastName.Text.Trim(), tbEmail.Text.Trim() );
                     if ( matches.Count() == 1 )
                     {
                         person = matches.First();
