@@ -328,12 +328,11 @@ namespace RockWeb.Plugins.com_centralaz.LifeGroupFinder
                     }
 
                     // Check to see if a workflow should be launched for each person
-                    WorkflowType workflowType = null;
+                    WorkflowTypeCache workflowType = null;
                     Guid? workflowTypeGuid = GetAttributeValue( "Workflow" ).AsGuidOrNull();
                     if ( workflowTypeGuid.HasValue )
                     {
-                        var workflowTypeService = new WorkflowTypeService( rockContext );
-                        workflowType = workflowTypeService.Get( workflowTypeGuid.Value );
+                        workflowType = WorkflowTypeCache.Get( workflowTypeGuid.Value );
                     }
 
                     // Save the registrations ( and launch workflows )
@@ -509,12 +508,11 @@ namespace RockWeb.Plugins.com_centralaz.LifeGroupFinder
                     Rock.SystemGuid.Category.HISTORY_PERSON_FAMILY_CHANGES.AsGuid(), person.Id, familyChanges );
 
                 // Check to see if a workflow should be launched for each person
-                WorkflowType workflowType = null;
+                WorkflowTypeCache workflowType = null;
                 Guid? workflowTypeGuid = GetAttributeValue( "EmailWorkflow" ).AsGuidOrNull();
                 if ( workflowTypeGuid.HasValue )
                 {
-                    var workflowTypeService = new WorkflowTypeService( rockContext );
-                    workflowType = workflowTypeService.Get( workflowTypeGuid.Value );
+                    workflowType = WorkflowTypeCache.Get( workflowTypeGuid.Value );
                 }
 
                 // Save the registrations ( and launch workflows )
@@ -778,7 +776,7 @@ namespace RockWeb.Plugins.com_centralaz.LifeGroupFinder
         /// <param name="person">The person.</param>
         /// <param name="workflowType">Type of the workflow.</param>
         /// <param name="groupMembers">The group members.</param>
-        private void AddPersonToGroup( RockContext rockContext, Person person, WorkflowType workflowType, List<GroupMember> groupMembers, bool emailOnly )
+        private void AddPersonToGroup( RockContext rockContext, Person person, WorkflowTypeCache workflowType, List<GroupMember> groupMembers, bool emailOnly )
         {
             if ( person != null )
             {
