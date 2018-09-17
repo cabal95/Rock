@@ -149,31 +149,29 @@ namespace com.centralaz.RoomManagement.Migrations
 
 
             // Update Approval Workflow
-            using ( var rockContext = new RockContext() )
+            var activityTypeIdSql = SqlScalar( @"
+                Select Id
+                From WorkflowActivityType
+                Where [Guid] = '6A396018-6CC1-4C41-8EF1-FB9779C0B04D'
+                " );
+
+            var activityTypeId = activityTypeIdSql.ToString().AsIntegerOrNull();
+            if ( activityTypeId != null )
             {
-                var workflowActivityType = new WorkflowActivityTypeService( rockContext ).Get( "6A396018-6CC1-4C41-8EF1-FB9779C0B04D".AsGuid() );
-                if ( workflowActivityType != null )
-                {
-                    foreach ( var workflowActionType in workflowActivityType.ActionTypes )
-                    {
-                        workflowActionType.Order++;
-                        Sql( String.Format( @"
-                            UPDATE [WorkflowActionType]
-                            SET [Order] = [Order] + 1
-                            Where [Guid] = '{0}'
-                            ", workflowActionType.Guid ) );
+                Sql( String.Format( @"
+                    UPDATE [WorkflowActionType]
+                    SET [Order] = [Order] + 1
+                    Where [ActivityTypeId] = {0}
+                    ", activityTypeId.Value ) );
 
-                    }
+                RockMigrationHelper.UpdateWorkflowActionType( "6A396018-6CC1-4C41-8EF1-FB9779C0B04D", "Set Final Approval Group from Entity", 0, "972F19B9-598B-474B-97A4-50E56E7B59D2", true, false, "", "", 1, "", "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity
+                RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "9392E3D7-A28B-4CD8-8B03-5E147B102EF1", @"False" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Active
+                RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "AD4EFAC4-E687-43DF-832F-0DC3856ABABB", @"" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Order
+                RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "61E6E1BC-E657-4F00-B2E9-769AAA25B9F7", @"653ce164-554a-4b22-a830-3e760da2023e" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Attribute
+                RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "83E27C1E-1491-4AE2-93F1-909791D4B70A", @"True" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Entity Is Required
+                RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "1246C53A-FD92-4E08-ABDE-9A6C37E70C7B", @"False" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Use Id instead of Guid
+                AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "972F19B9-598B-474B-97A4-50E56E7B59D2", "1D0D3794-C210-48A8-8C68-3FBEC08A6BA5", "Lava Template", "LavaTemplate", "By default this action will set the attribute value equal to the guid (or id) of the entity that was passed in for processing. If you include a lava template here, the action will instead set the attribute value to the output of this template. The mergefield to use for the entity is 'Entity.' For example, use {{ Entity.Name }} if the entity has a Name property. <span class='tip tip-lava'></span>", 4, @"", @"{{ Entity.ReservationType.FinalApprovalGroup.Guid }}" );
 
-                    RockMigrationHelper.UpdateWorkflowActionType( "6A396018-6CC1-4C41-8EF1-FB9779C0B04D", "Set Final Approval Group from Entity", 0, "972F19B9-598B-474B-97A4-50E56E7B59D2", true, false, "", "", 1, "", "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity
-                    RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "9392E3D7-A28B-4CD8-8B03-5E147B102EF1", @"False" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Active
-                    RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "AD4EFAC4-E687-43DF-832F-0DC3856ABABB", @"" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Order
-                    RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "61E6E1BC-E657-4F00-B2E9-769AAA25B9F7", @"653ce164-554a-4b22-a830-3e760da2023e" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Attribute
-                    RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "83E27C1E-1491-4AE2-93F1-909791D4B70A", @"True" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Entity Is Required
-                    RockMigrationHelper.AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "1246C53A-FD92-4E08-ABDE-9A6C37E70C7B", @"False" ); // Room Reservation Approval Notification:Set Attributes:Set Final Approval Group from Entity:Use Id instead of Guid
-                    AddActionTypeAttributeValue( "44D1AF13-D6D6-4ACF-8325-4EC63499A8FD", "972F19B9-598B-474B-97A4-50E56E7B59D2", "1D0D3794-C210-48A8-8C68-3FBEC08A6BA5", "Lava Template", "LavaTemplate", "By default this action will set the attribute value equal to the guid (or id) of the entity that was passed in for processing. If you include a lava template here, the action will instead set the attribute value to the output of this template. The mergefield to use for the entity is 'Entity.' For example, use {{ Entity.Name }} if the entity has a Name property. <span class='tip tip-lava'></span>", 4, @"", @"{{ Entity.ReservationType.FinalApprovalGroup.Guid }}" );
-
-                }
             }
 
             // Report Templates
@@ -267,9 +265,12 @@ namespace com.centralaz.RoomManagement.Migrations
             bool isContactDetailsRequired = true;
             bool isSetupTimeRequired = true;
 
-            var blockGuid = "65091E04-77CE-411C-989F-EAD7D15778A0".AsGuid();
-            var rockContext = new RockContext();
-            int? blockId = new BlockService( rockContext ).Queryable().Where( b => b.Guid == blockGuid ).Select( b => b.Id ).FirstOrDefault();
+            var blockIdSql = SqlScalar( @"
+                Select Id
+                From Block
+                Where [Guid] = '65091E04-77CE-411C-989F-EAD7D15778A0'
+                " );
+            int? blockId = blockIdSql.ToString().AsIntegerOrNull();
             if ( blockId.HasValue )
             {
                 finalApprovalGroupValue = GetAttributeValueFromBlock( blockId.Value, "E715D25F-CA53-4B16-B8B2-4A94FD3A3560".AsGuid() );
@@ -362,12 +363,23 @@ VALUES
 
         private string GetAttributeValueFromBlock( int blockId, Guid attributeGuid )
         {
-            var value = new AttributeValueService( new RockContext() ).Queryable().Where( av =>
-                   av.Attribute.Guid == attributeGuid &&
-                   av.EntityId == blockId )
-                .Select( av => av.Value )
-                .FirstOrDefault();
-            return value;
+            var valueSql = SqlScalar( String.Format( @"
+                Select av.Value
+                From AttributeValue av
+                Join Attribute a on av.AttributeId = a.Id
+                Where av.EntityId = {0}
+                And a.Guid = '{1}'
+                ",
+                blockId,
+                attributeGuid.ToString() ) );
+            if ( valueSql != null )
+            {
+                return valueSql.ToString();
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public void AddSecurityAuthForReservationType( string reservationTypeGuid, int order, string action, bool allow, string groupGuid, Rock.Model.SpecialRole specialRole, string authGuid )
