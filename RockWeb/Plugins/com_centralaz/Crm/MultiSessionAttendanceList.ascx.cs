@@ -44,37 +44,19 @@ namespace RockWeb.Plugins.com_centralaz.Crm
     [Description( "Block used to record attendance (via a set of DateTime attributes) for a multi-sessioned event.  The block lists all people registered for the configured event item who have not yet completed attendance for all attributes in the set." )]
     [LinkedPage( "Person Profile Page", "Page used for viewing a person's profile. If set a view profile button will show for each group member.", false, "", "", 2, "PersonProfilePage" )]
     [EventItemField( "Event Item", "The event item used to populate the list of people" )]
-    [AttributeField( Rock.SystemGuid.EntityType.PERSON, "Attended First Session Attribute", "", false, false, "" )]
-    [AttributeField( Rock.SystemGuid.EntityType.PERSON, "Attended Second Session Attribute", "", false, false, "" )]
-    [AttributeField( Rock.SystemGuid.EntityType.PERSON, "Attended Third Session Attribute", "", false, false, "" )]
-    [WorkflowTypeField( "Workflow Types", "The workflow types to be fired whenever someone completes all three sessions.", true )]
+    [AttributeField( Rock.SystemGuid.EntityType.PERSON, "Session Attributes", "", true, true, "" )]
+    [WorkflowTypeField( "Workflow Types", "The workflow types to be fired whenever someone completes all the sessions.", true )]
     public partial class MultiSessionAttendanceList : RockBlock
     {
         #region Properties
 
         /// <summary>
-        /// Gets or sets the first attributecache.
+        /// Gets or sets the attributecache.
         /// </summary>
         /// <value>
-        /// The AttributeCache object for the Date attribute representing when the person attended the first session.
+        /// The AttributeCache objects for the Date attributes representing when the person attended the sessions.
         /// </value>
-        public AttributeCache FirstAttributeCache { get; set; }
-
-        /// <summary>
-        /// Gets or sets the second attribute cache.
-        /// </summary>
-        /// <value>
-        /// The AttributeCache object for the Date attribute representing when the person attended the second session.
-        /// </value>
-        public AttributeCache SecondAttributeCache { get; set; }
-
-        /// <summary>
-        /// Gets or sets the third attribute cache.
-        /// </summary>
-        /// <value>
-        /// The AttributeCache object for the Date attribute representing when the person attended the third session.
-        /// </value>
-        public AttributeCache ThirdAttributeCache { get; set; }
+        public List<AttributeCache> AttributeCache { get; set; }
 
         #endregion
 
@@ -88,9 +70,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         {
             base.LoadViewState( savedState );
 
-            FirstAttributeCache = ViewState["FirstAttributeCache"] as AttributeCache;
-            SecondAttributeCache = ViewState["SecondAttributeCache"] as AttributeCache;
-            ThirdAttributeCache = ViewState["ThirdAttributeCache"] as AttributeCache;
+            AttributeCache = ViewState["AttributeCache"] as List<AttributeCache>;
         }
 
         /// <summary>
@@ -147,7 +127,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         {
             pnlPersonList.Visible = false;
             pnlNotification.Visible = true;
-            nbConfigError.Text = "Please configure the block settings by selecting a value for all session attributes.";
+            nbConfigError.Text = "Please configure the block settings by selecting at least one attribute.";
         }
 
         /// <summary>
@@ -158,9 +138,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         /// </returns>
         protected override object SaveViewState()
         {
-            ViewState["FirstAttributeCache"] = FirstAttributeCache;
-            ViewState["SecondAttributeCache"] = SecondAttributeCache;
-            ViewState["ThirdAttributeCache"] = ThirdAttributeCache;
+            ViewState["AttributeCache"] = AttributeCache;
 
             return base.SaveViewState();
         }
@@ -176,9 +154,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void Block_BlockUpdated( object sender, EventArgs e )
         {
-            FirstAttributeCache = null;
-            SecondAttributeCache = null;
-            ThirdAttributeCache = null;
+            AttributeCache = null;
 
             if ( CheckForAttributes() )
             {
@@ -211,28 +187,15 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             PersonAttendanceDataRow personAttendanceDataRow = e.Row.DataItem as PersonAttendanceDataRow;
             if ( personAttendanceDataRow != null )
             {
-                CheckBox checkBox_AttendedFirstSession = e.Row.FindControl( "checkBox_AttendedFirstSession" ) as CheckBox;
-                if ( checkBox_AttendedFirstSession != null && personAttendanceDataRow.AttendedFirstSession )
+                foreach ( var attribute in AttributeCache )
                 {
-                    checkBox_AttendedFirstSession.Enabled = false;
-                    checkBox_AttendedFirstSession.AddCssClass( "disabled" );
-                    checkBox_AttendedFirstSession.Attributes.Add( "disabled", "true" );
-                }
-
-                CheckBox checkBox_AttendedSecondSession = e.Row.FindControl( "checkBox_AttendedSecondSession" ) as CheckBox;
-                if ( checkBox_AttendedSecondSession != null && personAttendanceDataRow.AttendedSecondSession )
-                {
-                    checkBox_AttendedSecondSession.Enabled = false;
-                    checkBox_AttendedSecondSession.AddCssClass( "disabled" );
-                    checkBox_AttendedSecondSession.Attributes.Add( "disabled", "true" );
-                }
-
-                CheckBox checkBox_AttendedThirdSession = e.Row.FindControl( "checkBox_AttendedThirdSession" ) as CheckBox;
-                if ( checkBox_AttendedThirdSession != null && personAttendanceDataRow.AttendedThirdSession )
-                {
-                    checkBox_AttendedThirdSession.Enabled = false;
-                    checkBox_AttendedThirdSession.AddCssClass( "disabled" );
-                    checkBox_AttendedThirdSession.Attributes.Add( "disabled", "true" );
+                    CheckBox checkBox_Attended = e.Row.FindControl( string.Format( "checkBox_Attended_{0}", attribute.Id ) ) as CheckBox;
+                    if ( checkBox_Attended != null && personAttendanceDataRow.AttendedSessions.Any( a => a == attribute.Id ) )
+                    {
+                        checkBox_Attended.Enabled = false;
+                        checkBox_Attended.AddCssClass( "disabled" );
+                        checkBox_Attended.Attributes.Add( "disabled", "true" );
+                    }
                 }
             }
         }
@@ -359,7 +322,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                         }
 
                         // Fire any configured workflows if the person has completed all three sessions
-                        if ( checkCount == 3 )
+                        if ( checkCount == AttributeCache.Count )
                         {
                             var workflowService = new WorkflowService( rockContext );
 
@@ -438,11 +401,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             sdrpRegistrationDateRange.DelimitedValues = gfSettings.GetUserPreference( FilterSetting.DATE_RANGE );
 
             // Bind the attributes that represent the sessions for the class.
-            var attributeList = new List<AttributeCache>();
-            attributeList.Add( FirstAttributeCache );
-            attributeList.Add( SecondAttributeCache );
-            attributeList.Add( ThirdAttributeCache );
-            cblSessions.DataSource = attributeList;
+            cblSessions.DataSource = AttributeCache;
             cblSessions.DataBind();
         }
 
@@ -458,11 +417,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 AttributeValueService attributeValueService = new AttributeValueService( rockContext );
 
                 // Generate Attribute Values Qry
-                var attributeIds = new List<int>();
-                attributeIds.Add( FirstAttributeCache.Id );
-                attributeIds.Add( SecondAttributeCache.Id );
-                attributeIds.Add( ThirdAttributeCache.Id );
-
+                var attributeIds = AttributeCache.Select( a => a.Id ).ToList();
                 var qryAttributeValues = attributeValueService.Queryable().Where( av =>
                           attributeIds.Contains( av.AttributeId ) &&
                           av.EntityId != null );
@@ -508,15 +463,13 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                     // Build nice neat PersonAttendanceDataRow qry
                     var qry = qryRegistrations
                         .SelectMany( r => r.Registrants )
-                        .OrderBy( rr=> rr.Person.LastName ).ThenBy( rr => rr.Person.FirstName )
+                        .OrderBy( rr => rr.Person.LastName ).ThenBy( rr => rr.Person.FirstName )
                         .Select( rr => new PersonAttendanceDataRow
                         {
                             Id = rr.PersonId.Value,
                             FullName = rr.Person.FullName,
                             RegisteredDateTime = rr.Registration.CreatedDateTime.Value,
-                            AttendedFirstSession = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == FirstAttributeCache.Id ).FirstOrDefault() != null ? ( qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == FirstAttributeCache.Id ).FirstOrDefault().ValueAsDateTime.HasValue ? true : false ) : false,
-                            AttendedSecondSession = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == SecondAttributeCache.Id ).FirstOrDefault() != null ? ( qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == SecondAttributeCache.Id ).FirstOrDefault().ValueAsDateTime.HasValue ? true : false ) : false,
-                            AttendedThirdSession = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == ThirdAttributeCache.Id ).FirstOrDefault() != null ? ( qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.AttributeId == ThirdAttributeCache.Id ).FirstOrDefault().ValueAsDateTime.HasValue ? true : false ) : false
+                            AttendedSessions = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.ValueAsDateTime.HasValue ).Select( av => av.Id ).ToList()
                         } );
 
                     // Filter by Sessions (if the user is filtering by them)
@@ -526,13 +479,11 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                               .ToList();
                     if ( allChecked.Count() > 0 )
                     {
-                        qry = qry.Where( p => !allChecked.Contains( FirstAttributeCache.Id ) || !p.AttendedFirstSession )
-                            .Where( p => !allChecked.Contains( SecondAttributeCache.Id ) || !p.AttendedSecondSession )
-                            .Where( p => !allChecked.Contains( ThirdAttributeCache.Id ) || !p.AttendedThirdSession );
+                        qry = qry.Where( p => allChecked.Any( a => p.AttendedSessions.Contains( a ) ) );
                     }
 
                     // Filter out registrants who completed all sessions
-                    qry = qry.Where( p => !( p.AttendedFirstSession && p.AttendedSecondSession && p.AttendedThirdSession ) );
+                    qry = qry.Where( p => p.AttendedSessions.Count < AttributeCache.Count );
                     var x = qry.ToList();
 
                     gList.EntityTypeId = EntityTypeCache.Get<Rock.Model.Person>().Id;
@@ -570,19 +521,12 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         {
             var attributeKey = string.Empty;
 
-            if ( columnText == FirstAttributeCache.Name )
+            foreach( var attribute in AttributeCache )
             {
-                attributeKey = FirstAttributeCache.Key;
-            }
-
-            if ( columnText == SecondAttributeCache.Name )
-            {
-                attributeKey = SecondAttributeCache.Key;
-            }
-
-            if ( columnText == ThirdAttributeCache.Name )
-            {
-                attributeKey = ThirdAttributeCache.Key;
+                if ( columnText == attribute.Name )
+                {
+                    return attribute.Key;
+                }
             }
 
             return attributeKey;
@@ -594,29 +538,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         /// <returns></returns>
         private bool CheckForAttributes()
         {
-            bool allAttributesPresent = false;
-
-            if ( FirstAttributeCache == null )
-            {
-                FirstAttributeCache = AttributeCache.Get( GetAttributeValue( "AttendedFirstSessionAttribute" ).AsGuid() );
-            }
-
-            if ( SecondAttributeCache == null )
-            {
-                SecondAttributeCache = AttributeCache.Get( GetAttributeValue( "AttendedSecondSessionAttribute" ).AsGuid() );
-            }
-
-            if ( ThirdAttributeCache == null )
-            {
-                ThirdAttributeCache = AttributeCache.Get( GetAttributeValue( "AttendedThirdSessionAttribute" ).AsGuid() );
-            }
-
-            if ( FirstAttributeCache != null && SecondAttributeCache != null && ThirdAttributeCache != null )
-            {
-                allAttributesPresent = true;
-            }
-
-            return allAttributesPresent;
+            return AttributeCache != null && AttributeCache.Count > 0;
         }
 
         /// <summary>
@@ -630,9 +552,10 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 gList.Columns.Remove( field );
             }
 
-            gList.Columns.Add( new CheckBoxEditableField { HeaderText = FirstAttributeCache.Name, DataField = "AttendedFirstSession" } );
-            gList.Columns.Add( new CheckBoxEditableField { HeaderText = SecondAttributeCache.Name, DataField = "AttendedSecondSession" } );
-            gList.Columns.Add( new CheckBoxEditableField { HeaderText = ThirdAttributeCache.Name, DataField = "AttendedThirdSession" } );
+            foreach ( var attribute in AttributeCache )
+            {
+                gList.Columns.Add( new CheckBoxEditableField { HeaderText = attribute.Name } );
+            }
 
             // Add Link to Profile Page Column
             if ( !string.IsNullOrEmpty( GetAttributeValue( "PersonProfilePage" ) ) )
@@ -674,11 +597,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
 
             public DateTime RegisteredDateTime { get; set; }
 
-            public bool AttendedFirstSession { get; set; }
-
-            public bool AttendedSecondSession { get; set; }
-
-            public bool AttendedThirdSession { get; set; }
+            public List<int> AttendedSessions { get; set; }
         }
         #endregion
     }
