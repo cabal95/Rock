@@ -56,7 +56,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         /// <value>
         /// The AttributeCache objects for the Date attributes representing when the person attended the sessions.
         /// </value>
-        public List<AttributeCache> AttributeCache { get; set; }
+        public List<AttributeCache> SessionAttributes { get; set; }
 
         #endregion
 
@@ -70,7 +70,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         {
             base.LoadViewState( savedState );
 
-            AttributeCache = ViewState["AttributeCache"] as List<AttributeCache>;
+            SessionAttributes = ViewState["AttributeCache"] as List<AttributeCache>;
         }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         /// </returns>
         protected override object SaveViewState()
         {
-            ViewState["AttributeCache"] = AttributeCache;
+            ViewState["AttributeCache"] = SessionAttributes;
 
             return base.SaveViewState();
         }
@@ -154,7 +154,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void Block_BlockUpdated( object sender, EventArgs e )
         {
-            AttributeCache = null;
+            SessionAttributes = null;
 
             if ( CheckForAttributes() )
             {
@@ -187,15 +187,26 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             PersonAttendanceDataRow personAttendanceDataRow = e.Row.DataItem as PersonAttendanceDataRow;
             if ( personAttendanceDataRow != null )
             {
-                foreach ( var attribute in AttributeCache )
+                int columnIndex = 1; // Attributes start with column 1 (name is column 0)
+
+                foreach ( var attribute in SessionAttributes )
                 {
-                    CheckBox checkBox_Attended = e.Row.FindControl( string.Format( "checkBox_Attended_{0}", attribute.Id ) ) as CheckBox;
-                    if ( checkBox_Attended != null && personAttendanceDataRow.AttendedSessions.Any( a => a == attribute.Id ) )
+                    CheckBox checkBox_Attended = e.Row.FindControl( string.Format( "cbSelect_{0}", columnIndex ) ) as CheckBox;
+                    if ( checkBox_Attended != null )
                     {
-                        checkBox_Attended.Enabled = false;
-                        checkBox_Attended.AddCssClass( "disabled" );
-                        checkBox_Attended.Attributes.Add( "disabled", "true" );
+                        if ( personAttendanceDataRow.AttendedSessions.Any( a => a == attribute.Id ) )
+                        {
+                            checkBox_Attended.Checked = true;
+                            checkBox_Attended.Enabled = false;
+                            checkBox_Attended.AddCssClass( "disabled" );
+                            checkBox_Attended.Attributes.Add( "disabled", "true" );
+                        }
+                        else
+                        {
+                            checkBox_Attended.Checked = false;
+                        }
                     }
+                    columnIndex++;
                 }
             }
         }
@@ -300,8 +311,8 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                         // value for that key. If empty, save the current date to that attribute value.
                         foreach ( var fieldCell in row.Cells.OfType<DataControlFieldCell>() )
                         {
-                            CheckBoxEditableField checkBoxTemplateField = fieldCell.ContainingField as CheckBoxEditableField;
-                            if ( checkBoxTemplateField != null )
+                            SelectField selectField = fieldCell.ContainingField as SelectField;
+                            if ( selectField != null )
                             {
                                 CheckBox checkBox = fieldCell.Controls[0] as CheckBox;
 
@@ -309,7 +320,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                                 {
                                     checkCount++;
 
-                                    string attributeKey = GetAttributeKey( checkBoxTemplateField.HeaderText );
+                                    string attributeKey = GetAttributeKey( selectField.HeaderText );
                                     var attributeDate = person.GetAttributeValue( attributeKey );
                                     if ( attributeDate == null || attributeDate.AsDateTime() == null )
                                     {
@@ -322,7 +333,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                         }
 
                         // Fire any configured workflows if the person has completed all three sessions
-                        if ( checkCount == AttributeCache.Count )
+                        if ( checkCount == SessionAttributes.Count )
                         {
                             var workflowService = new WorkflowService( rockContext );
 
@@ -401,7 +412,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             sdrpRegistrationDateRange.DelimitedValues = gfSettings.GetUserPreference( FilterSetting.DATE_RANGE );
 
             // Bind the attributes that represent the sessions for the class.
-            cblSessions.DataSource = AttributeCache;
+            cblSessions.DataSource = SessionAttributes;
             cblSessions.DataBind();
         }
 
@@ -417,7 +428,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 AttributeValueService attributeValueService = new AttributeValueService( rockContext );
 
                 // Generate Attribute Values Qry
-                var attributeIds = AttributeCache.Select( a => a.Id ).ToList();
+                var attributeIds = SessionAttributes.Select( a => a.Id ).ToList();
                 var qryAttributeValues = attributeValueService.Queryable().Where( av =>
                           attributeIds.Contains( av.AttributeId ) &&
                           av.EntityId != null );
@@ -469,7 +480,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                             Id = rr.PersonId.Value,
                             FullName = rr.Person.FullName,
                             RegisteredDateTime = rr.Registration.CreatedDateTime.Value,
-                            AttendedSessions = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.ValueAsDateTime.HasValue ).Select( av => av.Id ).ToList()
+                            AttendedSessions = qryAttributeValues.Where( av => av.EntityId == rr.PersonId && av.ValueAsDateTime.HasValue ).Select( av => av.AttributeId ).ToList()
                         } );
 
                     // Filter by Sessions (if the user is filtering by them)
@@ -483,7 +494,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                     }
 
                     // Filter out registrants who completed all sessions
-                    qry = qry.Where( p => p.AttendedSessions.Count < AttributeCache.Count );
+                    qry = qry.Where( p => p.AttendedSessions.Count < SessionAttributes.Count );
                     var x = qry.ToList();
 
                     gList.EntityTypeId = EntityTypeCache.Get<Rock.Model.Person>().Id;
@@ -521,7 +532,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         {
             var attributeKey = string.Empty;
 
-            foreach( var attribute in AttributeCache )
+            foreach( var attribute in SessionAttributes )
             {
                 if ( columnText == attribute.Name )
                 {
@@ -538,7 +549,14 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         /// <returns></returns>
         private bool CheckForAttributes()
         {
-            return AttributeCache != null && AttributeCache.Count > 0;
+            SessionAttributes = new List<AttributeCache>();
+
+            GetAttributeValues( "SessionAttributes" ).AsGuidList().ForEach( a => SessionAttributes.Add( AttributeCache.Get( a ) ) );
+
+            // Order the attributes by key...
+            SessionAttributes = SessionAttributes.OrderBy( a => a.Key ).ToList();
+
+            return SessionAttributes != null && SessionAttributes.Count > 0;
         }
 
         /// <summary>
@@ -546,15 +564,23 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         /// </summary>
         private void AddColumns()
         {
-            var checkBoxEditableFields = gList.Columns.OfType<CheckBoxEditableField>().ToList();
+            var checkBoxEditableFields = gList.Columns.OfType<SelectField>().ToList();
             foreach ( var field in checkBoxEditableFields )
             {
                 gList.Columns.Remove( field );
             }
 
-            foreach ( var attribute in AttributeCache )
+            foreach ( var attribute in SessionAttributes )
             {
-                gList.Columns.Add( new CheckBoxEditableField { HeaderText = attribute.Name } );
+                var selectField = new SelectField {
+                    HeaderText = attribute.Name,
+                    ShowSelectAll = false
+                };
+
+                selectField.HeaderStyle.HorizontalAlign = HorizontalAlign.Center;
+                selectField.ItemStyle.HorizontalAlign = HorizontalAlign.Center;
+
+                gList.Columns.Add( selectField ); 
             }
 
             // Add Link to Profile Page Column
