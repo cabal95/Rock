@@ -136,50 +136,57 @@ SELECT '<a href="'+@InternalAppRoot+'/Person/'+CAST(p.Id as varchar)+'">' + p.La
 
 		(	SELECT top 1 ( SELECT CONVERT(VARCHAR(20), att.StartDateTime, 100) + ' ' + g.Name)
 			FROM   Attendance AS att 
-			INNER JOIN [Group] g ON att.GroupId = g.Id
-			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( att.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
+			INNER JOIN [AttendanceOccurrence] o ON o.Id = att.OccurrenceId
+			INNER JOIN [Group] g ON o.GroupId = g.Id
+			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( o.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
 			AND ( att.StartDateTime between @Wk2StartDate AND @Wk1StartDate ) AND att.DidAttend = 1
 		 ) AS 'Wk1'
 		 
 		 ,(	SELECT top 1 ( SELECT CONVERT(VARCHAR(20), att.StartDateTime, 100) + ' ' + g.Name)
 			FROM   Attendance AS att 
-			INNER JOIN [Group] g ON att.GroupId = g.Id
-			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( att.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
+			INNER JOIN [AttendanceOccurrence] o ON o.Id = att.OccurrenceId
+			INNER JOIN [Group] g ON o.GroupId = g.Id
+			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( o.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
 			AND ( att.StartDateTime between @Wk3StartDate AND @Wk2StartDate ) AND att.DidAttend = 1
 		 ) AS 'Wk2'
 
 		 ,(	SELECT top 1 ( SELECT CONVERT(VARCHAR(20), att.StartDateTime, 100) + ' ' + g.Name)
 			FROM   Attendance AS att 
-			INNER JOIN [Group] g ON att.GroupId = g.Id
-			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( att.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
+			INNER JOIN [AttendanceOccurrence] o ON o.Id = att.OccurrenceId
+			INNER JOIN [Group] g ON o.GroupId = g.Id
+			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( o.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
 			AND ( att.StartDateTime between @Wk4StartDate AND @Wk3StartDate ) AND att.DidAttend = 1
 		 ) AS 'Wk3'
 
 		 ,(	SELECT top 1 ( SELECT CONVERT(VARCHAR(20), att.StartDateTime, 100) + ' ' + g.Name)
 			FROM   Attendance AS att 
-			INNER JOIN [Group] g ON att.GroupId = g.Id
-			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( att.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
+			INNER JOIN [AttendanceOccurrence] o ON o.Id = att.OccurrenceId
+			INNER JOIN [Group] g ON o.GroupId = g.Id
+			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( o.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
 			AND ( att.StartDateTime between @Wk5StartDate AND @Wk4StartDate ) AND att.DidAttend = 1
 		 ) AS 'Wk4'
 
 		 ,(	SELECT top 1 ( SELECT CONVERT(VARCHAR(20), att.StartDateTime, 100) + ' ' + g.Name)
 			FROM   Attendance AS att 
-			INNER JOIN [Group] g ON att.GroupId = g.Id
-			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( att.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
+			INNER JOIN [AttendanceOccurrence] o ON o.Id = att.OccurrenceId
+			INNER JOIN [Group] g ON o.GroupId = g.Id
+			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( o.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
 			AND ( att.StartDateTime between @Wk6StartDate AND @Wk5StartDate ) AND att.DidAttend = 1
 		 ) AS 'Wk5'
 
 		 ,(	SELECT top 1 ( SELECT CONVERT(VARCHAR(20), att.StartDateTime, 100) + ' ' + g.Name)
 			FROM   Attendance AS att 
-			INNER JOIN [Group] g ON att.GroupId = g.Id
-			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( att.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
+			INNER JOIN [AttendanceOccurrence] o ON o.Id = att.OccurrenceId
+			INNER JOIN [Group] g ON o.GroupId = g.Id
+			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( o.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
 			AND ( att.StartDateTime between @Wk7StartDate AND @Wk6StartDate ) AND att.DidAttend = 1
 		 ) AS 'Wk6'
 
 		 ,(	SELECT top 1 ( SELECT CONVERT(VARCHAR(20), att.StartDateTime, 100) + ' ' + g.Name)
 			FROM   Attendance AS att 
-			INNER JOIN [Group] g ON att.GroupId = g.Id
-			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( att.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
+			INNER JOIN [AttendanceOccurrence] o ON o.Id = att.OccurrenceId
+			INNER JOIN [Group] g ON o.GroupId = g.Id
+			WHERE  att.PersonAliasId  IN (SELECT Id FROM PersonAlias alias WHERE alias.PersonId = p.id ) AND ( o.GroupId IN ( SELECT [GroupId] From @RelatedGroups ) ) 
 			AND ( att.StartDateTime between @Wk8StartDate AND @Wk7StartDate ) AND att.DidAttend = 1
 		 ) AS 'Wk7'
 
@@ -209,7 +216,8 @@ WHERE
                         FROM   (
 								SELECT DISTINCT pAlias.PersonId, COUNT(att.Id) AS number_attended, g.Id, g.Name
 								FROM   Attendance AS att WITH(NOLOCK) 
-								INNER JOIN [Group] AS g ON g.Id = att.GroupId
+								INNER JOIN [AttendanceOccurrence] o ON o.Id = att.OccurrenceId
+								INNER JOIN [Group] g ON o.GroupId = g.Id
 								INNER JOIN [PersonAlias] AS pAlias ON pAlias.Id = att.PersonAliasId
 								WHERE  ( g.Id IN ( SELECT [GroupId] From @RelatedGroups ) )
 										   AND ( att.StartDateTime between @AttendedStartDate and @AttendedEndDate )
@@ -230,7 +238,8 @@ WHERE
                         FROM   (
 								SELECT DISTINCT pAlias.PersonId, COUNT(att.Id) AS number_attended, g.Id, g.Name
 								FROM   Attendance AS att WITH(NOLOCK) 
-								INNER JOIN [Group] AS g ON g.Id = att.GroupId
+								INNER JOIN [AttendanceOccurrence] o ON o.Id = att.OccurrenceId
+								INNER JOIN [Group] g ON o.GroupId = g.Id
 								INNER JOIN [PersonAlias] AS pAlias ON pAlias.Id = att.PersonAliasId
 								WHERE  ( g.Id IN ( SELECT [GroupId] From @RelatedGroups ) )
 										   AND ( att.StartDateTime between @MissedStartDate and @MissedEndDate )
@@ -247,4 +256,5 @@ WHERE
 ORDER  BY p.LastName ASC
 -------------------------------------------------------------------
 END
+
 GO
