@@ -224,6 +224,20 @@ namespace com.centralaz.RoomManagement.Model
         [DataMember]
         public virtual PersonAlias AdministrativeContactPersonAlias { get; set; }
 
+        [LavaInclude]
+        [NotMapped]
+        public virtual string FriendlyReservationTime
+        {
+            get
+            {
+               return GetFriendlyReservationScheduleText();
+            }
+            private set
+            {
+
+            }
+        }
+
         #endregion
 
         #region Methods
