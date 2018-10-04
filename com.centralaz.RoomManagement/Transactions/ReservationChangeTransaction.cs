@@ -34,6 +34,7 @@ namespace com.centralaz.RoomManagement.Transactions
     {
         private EntityState State;
         private Guid? ReservationGuid;
+        private int ReservationTypeId;
         private ReservationApprovalState ApprovalState;
         private ReservationApprovalState PreviousApprovalState;
 
@@ -49,6 +50,7 @@ namespace com.centralaz.RoomManagement.Transactions
             {
                 State = entry.State;
                 ApprovalState = reservation.ApprovalState;
+                ReservationTypeId = reservation.ReservationTypeId;
 
                 // If this isn't a new reservation, get the previous state and role values
                 if ( State != EntityState.Added )
@@ -79,8 +81,8 @@ namespace com.centralaz.RoomManagement.Transactions
             // If any workflows exist
             if ( cachedWorkflowTriggers != null && cachedWorkflowTriggers.Any() )
             {
-                // Get the workflows associated to the connection
-                var reservationWorkflowTriggers = cachedWorkflowTriggers.ToList();
+                // Get the workflows associated to the reservation
+                var reservationWorkflowTriggers = cachedWorkflowTriggers.Where(t=> t.ReservationTypeId == ReservationTypeId).ToList();
 
                 if ( reservationWorkflowTriggers.Any() )
                 {
