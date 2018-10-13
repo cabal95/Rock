@@ -1,5 +1,10 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="MultiSessionAttendanceList.ascx.cs" Inherits="RockWeb.Plugins.com_centralaz.Crm.MultiSessionAttendanceList" %>
-
+<style>
+    .grid-select-field .checkbox .label-text::before,
+    .grid-select-field .checkbox .label-text::after {
+        left:auto;
+    }
+</style>
 <script type="text/javascript">
 
     function pageLoad() {
@@ -40,7 +45,7 @@
                             Help="Choose one or more sessions to only show people who have NOT taken that session. Leave all unchecked to show all matching people." />
                         </Rock:GridFilter>
                         <!-- Data/Grid -->
-                        <Rock:Grid ID="gList" runat="server" AllowSorting="true">
+                        <Rock:Grid ID="gList" runat="server" AllowSorting="true" RowItemText="Attendance">
                             <Columns>
                                 <Rock:SelectField></Rock:SelectField>
                                 <Rock:RockBoundField DataField="FullName" HeaderText="Name" />

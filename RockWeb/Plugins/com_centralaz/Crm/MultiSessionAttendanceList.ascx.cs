@@ -271,9 +271,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         {
             gfSettings.SaveUserPreference( FilterSetting.DATE_RANGE, sdrpRegistrationDateRange.DelimitedValues );
             gfSettings.SaveUserPreference( FilterSetting.CAMPUS, cpCampus.SelectedValues.AsDelimited( ";" ) );
-
-            // WE ARE PURPOSELY NOT saving what the user checked since it is a temporary selection they are making.
-            gfSettings.SaveUserPreference( FilterSetting.NOT_ATTENDED_SESSIONS, "0" );
+            gfSettings.SaveUserPreference( FilterSetting.NOT_ATTENDED_SESSIONS, cblSessions.SelectedValuesAsInt.AsDelimited( ";" ) );
 
             BindGrid();
         }
@@ -414,6 +412,8 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             // Bind the attributes that represent the sessions for the class.
             cblSessions.DataSource = SessionAttributes;
             cblSessions.DataBind();
+
+            cblSessions.SetValues( gfSettings.GetUserPreference( FilterSetting.NOT_ATTENDED_SESSIONS ).SplitDelimitedValues().AsIntegerList() );
         }
 
         /// <summary>
@@ -445,7 +445,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                     {
                         qryEventItemOccurrences = qryEventItemOccurrences
                             .Where( r =>
-                                r.Campus != null &&
+                                r.CampusId.HasValue &&
                                 campusIds.Contains( r.CampusId.Value ) );
                     }
 
@@ -484,17 +484,17 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                         } );
 
                     // Filter by Sessions (if the user is filtering by them)
-                    List<int> allChecked = cblSessions.Items.Cast<ListItem>()
+                    var onlySessions = cblSessions.Items.Cast<ListItem>()
                               .Where( i => i.Selected )
                               .Select( i => int.Parse( i.Value ) )
                               .ToList();
-                    if ( allChecked.Count() > 0 )
+                    if ( onlySessions.Any() )
                     {
-                        qry = qry.Where( p => allChecked.Any( a => p.AttendedSessions.Contains( a ) ) );
+                        qry = qry.Where( p =>
+                            onlySessions.Any( a => !p.AttendedSessions.Contains( a ) ) );
                     }
-
                     // Filter out registrants who completed all sessions
-                    qry = qry.Where( p => p.AttendedSessions.Count < SessionAttributes.Count );
+                    //qry = qry.Where( p => p.AttendedSessions.Count < SessionAttributes.Count );
                     var x = qry.ToList();
 
                     gList.EntityTypeId = EntityTypeCache.Get<Rock.Model.Person>().Id;
