@@ -48,28 +48,54 @@ namespace com.centralaz.RoomManagement.Model
             return true;
         }
 
+        /// <summary>
+        /// Determines whether the given person is active in the given group.
+        /// </summary>
+        /// <param name="person">The person.</param>
+        /// <param name="groupId">The group identifier.</param>
+        /// <returns>
+        ///   <c>true</c> if [is person in group with identifier] [the specified person]; otherwise, <c>false</c>.
+        /// </returns>
         public static bool IsPersonInGroupWithId( Person person, int? groupId )
         {
             bool isInGroup = false;
-            if ( groupId != null )
+            if ( groupId != null && person != null )
             {
-                if ( person.Members.Where( gm => gm.GroupMemberStatus == GroupMemberStatus.Active && gm.Group.IsActive == true ).Select( m => m.GroupId ).Distinct().ToList().Contains( groupId.Value ) )
+                using ( var rockContext = new RockContext() )
                 {
-                    isInGroup = true;
+                    var groupMemberService = new GroupMemberService( rockContext );
+                    if ( groupMemberService.GetByGroupIdAndPersonId( groupId.Value, person.Id, true )
+                        .AsNoTracking().Where( gm => gm.GroupMemberStatus == GroupMemberStatus.Active && gm.Group.IsActive == true ).Any() )
+                    {
+                        isInGroup = true;
+                    }
                 }
             }
 
             return isInGroup;
         }
 
+        /// <summary>
+        /// Determines whether the given person is active in the given group.
+        /// </summary>
+        /// <param name="person">The person.</param>
+        /// <param name="groupGuid">The group unique identifier.</param>
+        /// <returns>
+        ///   <c>true</c> if [is person in group with unique identifier] [the specified person]; otherwise, <c>false</c>.
+        /// </returns>
         public static bool IsPersonInGroupWithGuid( Person person, Guid? groupGuid )
         {
             bool isInGroup = false;
-            if ( groupGuid != null )
+            if ( groupGuid != null && person != null )
             {
-                if ( person.Members.Where( gm => gm.GroupMemberStatus == GroupMemberStatus.Active && gm.Group.IsActive == true ).Select( m => m.Group.Guid ).Distinct().ToList().Contains( groupGuid.Value ) )
+                using ( var rockContext = new RockContext() )
                 {
-                    isInGroup = true;
+                    var groupMemberService = new GroupMemberService( rockContext );
+                    if ( groupMemberService.Queryable().AsNoTracking()
+                        .Where( gm => gm.Group.Guid == groupGuid && gm.PersonId == person.Id && gm.GroupMemberStatus == GroupMemberStatus.Active && gm.Group.IsActive == true ).Any() )
+                    {
+                        isInGroup = true;
+                    }
                 }
             }
 

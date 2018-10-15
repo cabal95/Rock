@@ -1069,20 +1069,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 var canApprove = false;
 
-                if ( !canApprove )
-                {
-                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, reservationResource.Resource.ApprovalGroupId );
-                }
-
-                if ( !canApprove )
-                {
-                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId );
-                }
-
-                if ( !canApprove )
-                {
-                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
-                }
+                canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, reservationResource.Resource.ApprovalGroupId )
+                    || ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId )
+                    || ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
 
                 if ( e.Row.RowType == DataControlRowType.DataRow )
                 {
@@ -1316,7 +1305,6 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             var reservationLocation = e.Row.DataItem as ReservationLocationSummary;
             if ( reservationLocation != null )
             {
-                var canApprove = false;
 
                 var location = reservationLocation.Location;
                 // bug fix:
@@ -1326,20 +1314,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     approvalGroupGuid = location.GetAttributeValue( "ApprovalGroup" ).AsGuidOrNull();
                 }
 
-                if ( !canApprove )
-                {
-                    canApprove = ReservationTypeService.IsPersonInGroupWithGuid( CurrentPerson, approvalGroupGuid );
-                }
+                var canApprove = false;
 
-                if ( !canApprove )
-                {
-                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId );
-                }
-
-                if ( !canApprove )
-                {
-                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
-                }
+                canApprove = ReservationTypeService.IsPersonInGroupWithGuid( CurrentPerson, approvalGroupGuid )
+                    || ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId )
+                    || ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
 
                 if ( e.Row.RowType == DataControlRowType.DataRow )
                 {
@@ -1498,15 +1477,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
             bool canApprove = false;
 
-            if ( !canApprove )
-            {
-                canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId );
-            }
-
-            if ( !canApprove )
-            {
-                canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
-            }
+            canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId )
+                || ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
 
             // Show the delete button if the person is authorized to delete it
             if ( canApprove || CurrentPersonAliasId == reservation.CreatedByPersonAliasId || reservation.AdministrativeContactPersonAliasId == CurrentPersonAliasId )
@@ -1705,15 +1677,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
                 bool canApprove = false;
 
-                if ( !canApprove )
-                {
-                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId );
-                }
-
-                if ( !canApprove )
-                {
-                    canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
-                }
+                canApprove = ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.SuperAdminGroupId )
+                    || ReservationTypeService.IsPersonInGroupWithId( CurrentPerson, ReservationType.FinalApprovalGroupId );
 
                 if ( reservation.Id != 0 )
                 {
