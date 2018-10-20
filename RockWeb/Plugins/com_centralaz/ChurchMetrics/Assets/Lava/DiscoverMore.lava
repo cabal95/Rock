@@ -1,0 +1,41 @@
+{% assign red = "#ff8888" %}
+{% assign yellow = "#ffffa3" %}
+{% assign green = "#9FFF9F" %}
+{% assign betterGreen = "#6be56b" %}
+<style>
+	.grid .table > thead > tr > td, .grid .table > thead > tr > th {
+		padding: 18px 6px 18px 6px;
+	}
+</style>
+<h2>Interest and Engagement</h2>
+<div class="grid">
+	<table class="grid-table table table-bordered table-striped table-hover" style="background-color: #edeae6">
+		<thead>
+			<tr>
+				<th></th>
+				<th align="right">Monthly Interest</th>
+				<th align="right">Montly Engagement</th>
+				<th align="right">Monthly Percentage</th>
+				<th align="right">Year to Date Interest</th>
+				<th align="right">Year to Date Engagement</th>
+				<th align="right">Year to Date Percentage</th>
+				<th align="right">Time Frame Average in Days</th>
+			</tr>
+		</thead>
+		<tbody>
+        	<!-- Show row data -->
+    		{%for row in rows %}
+    			<tr>
+    				<td>{{row.Category}}</td>
+    				<td align="right">{{row.MonthlyInterest | Format:'N0'}}</td>
+    				<td align="right">{{row.MonthlyEngagement | Format:'N0'}}</td>
+    				<td align="right">{{row.MonthlyPercentage | Format:'P2'}}</td>
+    				<td align="right">{{row.YearlyInterest | Format:'N0'}}</td>
+    				<td align="right">{{row.YearlyEngagement | Format:'N0'}}</td>
+    				<td align="right">{{row.YearlyPercentage | Format:'P2'}}</td>
+    				<td align="right">{{row.YearlyAverageDays | Format:'N0'}}</td>
+				</tr>
+    		{% endfor %}
+		</tbody>
+	</table>
+</div>
