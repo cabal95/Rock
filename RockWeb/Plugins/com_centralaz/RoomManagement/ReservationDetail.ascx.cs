@@ -763,6 +763,22 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             // Reset the stored identifier for the active Reservation.
             hfReservationId.Value = "0";
 
+            LocationsState = new List<ReservationLocationSummary>();
+            foreach ( var reservationLocation in newItem.ReservationLocations.ToList() )
+            {
+                var rlSummary = new ReservationLocationSummary();
+                rlSummary.CopyPropertiesFrom( reservationLocation );
+                LocationsState.Add( rlSummary );
+            }
+
+            ResourcesState = new List<ReservationResourceSummary>();
+            foreach ( var reservationResource in newItem.ReservationResources.ToList() )
+            {
+                var rrSummary = new ReservationResourceSummary();
+                rrSummary.CopyPropertiesFrom( reservationResource );
+                ResourcesState.Add( rrSummary );
+            }
+
             btnCopy.Visible = false;
             btnDelete.Visible = false;
             ShowEditDetails( newItem );
