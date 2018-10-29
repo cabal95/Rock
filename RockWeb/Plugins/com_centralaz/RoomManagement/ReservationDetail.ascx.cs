@@ -693,7 +693,16 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void ddlReservationType_SelectedIndexChanged( object sender, EventArgs e )
         {
-            ReservationType = new ReservationTypeService( new RockContext() ).Get( ddlReservationType.SelectedValueAsId().Value );
+            var rockContext = new RockContext();
+            ReservationType = new ReservationTypeService( rockContext ).Get( ddlReservationType.SelectedValueAsId().Value );
+
+            ddlMinistry.Items.Clear();
+            ddlMinistry.Items.Add( new ListItem( string.Empty, string.Empty ) );
+
+            foreach ( var ministry in new ReservationMinistryService( rockContext ).Queryable().AsNoTracking().Where( m => m.ReservationTypeId == ReservationType.Id ).OrderBy( m => m.Name ).ToList() )
+            {
+                ddlMinistry.Items.Add( new ListItem( ministry.Name, ministry.Id.ToString().ToUpper() ) );
+            }
         }
 
         /// <summary>
@@ -1662,7 +1671,7 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 ddlMinistry.Items.Clear();
                 ddlMinistry.Items.Add( new ListItem( string.Empty, string.Empty ) );
 
-                foreach ( var ministry in new ReservationMinistryService( rockContext ).Queryable().AsNoTracking().OrderBy( m => m.Name ).ToList() )
+                foreach ( var ministry in new ReservationMinistryService( rockContext ).Queryable().AsNoTracking().Where( m => m.ReservationTypeId == ReservationType.Id ).OrderBy( m => m.Name ).ToList() )
                 {
                     ddlMinistry.Items.Add( new ListItem( ministry.Name, ministry.Id.ToString().ToUpper() ) );
                 }

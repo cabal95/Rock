@@ -157,7 +157,7 @@
                                     <Rock:DataTextBox ID="rtbName" runat="server" Label="Event Name" Required="true" SourceTypeName="com.centralaz.RoomManagement.Model.Reservation, com.centralaz.RoomManagement" PropertyName="Name" />
                                 </div>
                                 <div class="col-md-6">
-                                    <Rock:RockDropDownList ID="ddlReservationType" Label="Reservation Type" runat="server" OnSelectedIndexChanged="ddlReservationType_SelectedIndexChanged" />
+                                    <Rock:RockDropDownList ID="ddlReservationType" Label="Reservation Type" runat="server" AutoPostBack="true" OnSelectedIndexChanged="ddlReservationType_SelectedIndexChanged" />
                                 </div>
                             </div>
                             <div class="row">
