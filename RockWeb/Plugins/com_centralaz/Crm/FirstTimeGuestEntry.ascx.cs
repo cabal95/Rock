@@ -49,10 +49,11 @@ namespace RockWeb.Plugins.com_centralaz.Crm
     [DefinedValueField( "2E6540EA-63F0-40FE-BE50-F2A84735E600", "Connection Status", "The connection status to use for new individuals (default: 'Web Prospect'.)", true, false, Rock.SystemGuid.DefinedValue.PERSON_CONNECTION_STATUS_VISITOR, "Person Settings", 2 )]
     [DefinedValueField( "8522BADD-2871-45A5-81DD-C76DA07E2E7E", "Record Status", "The record status to use for new individuals (default: 'Pending'.)", true, false, "283999EC-7346-42E3-B807-BCE9B2BABB49", "Person Settings", 3 )]
     [BooleanField( "Is Sms Checked By Default ", "Is the 'Enable SMS' option checked by default.", true, "Person Settings", 4, "IsSmsChecked" )]
+    [DefinedValueField( "2E6540EA-63F0-40FE-BE50-F2A84735E600", "Child Connection Status", "The connection status to use for new children (default: 'Web Prospect'.)", true, false, Rock.SystemGuid.DefinedValue.PERSON_CONNECTION_STATUS_VISITOR, "Person Settings", 5 )]
 
     //Prayer Request Settings
-    [BooleanField( "Is Prayer Request Enabled", "Is the Prayer Request text box visible.", true, "Prayer Request Settings", 5 )]
-    [CategoryField( "Prayer Category", "The  category to use for all new prayer requests.", false, "Rock.Model.PrayerRequest", "", "", false, "4B2D88F5-6E45-4B4B-8776-11118C8E8269", "Prayer Request Settings", 6, "PrayerCategory" )]
+    [BooleanField( "Is Prayer Request Enabled", "Is the Prayer Request text box visible.", true, "Prayer Request Settings", 6 )]
+    [CategoryField( "Prayer Category", "The  category to use for all new prayer requests.", false, "Rock.Model.PrayerRequest", "", "", false, "4B2D88F5-6E45-4B4B-8776-11118C8E8269", "Prayer Request Settings", 7, "PrayerCategory" )]
 
     public partial class FirstTimeGuestEntry : Rock.Web.UI.RockBlock
     {
@@ -61,16 +62,30 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         ConnectionOpportunity _connectionOpportunity = null;
         RockContext _rockContext = null;
         DefinedValueCache _dvcConnectionStatus = null;
+        DefinedValueCache _dvcChildConnectionStatus = null;
         DefinedValueCache _dvcRecordStatus = null;
         DefinedValueCache _married = null;
         DefinedValueCache _homeAddressType = null;
         GroupTypeCache _familyType = null;
         GroupTypeRoleCache _adultRole = null;
+        GroupTypeRoleCache _childRole = null;
         bool _isValidSettings = true;
         bool _isPrayerRequestEnabled = false;
 
         private const string CAMPUS_SETTING = "FirstTimeGuestEntry_SelectedCampus";
         private const string SOURCE_SETTING = "FirstTimeGuestEntry_SelectedSource";
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// Gets or sets the child members that have been added by user
+        /// </summary>
+        /// <value>
+        /// The group members.
+        /// </value>
+        protected List<PreRegistrationChild> Children { get; set; }
 
         #endregion
 
@@ -110,9 +125,42 @@ namespace RockWeb.Plugins.com_centralaz.Crm
 
                 if ( !Page.IsPostBack )
                 {
+                    // Build the dynamic children controls
+                    Children = new List<PreRegistrationChild>();
+                    CreateChildrenControls( true );
+
                     ShowDetail();
                 }
+                else
+                {
+                    GetChildrenData();
+                }
             }
+        }
+
+        /// <summary>
+        /// Restores the view-state information from a previous user control request that was saved by the <see cref="M:System.Web.UI.UserControl.SaveViewState" /> method.
+        /// </summary>
+        /// <param name="savedState">An <see cref="T:System.Object" /> that represents the user control state to be restored.</param>
+        protected override void LoadViewState( object savedState )
+        {
+            base.LoadViewState( savedState );
+
+            Children = ViewState["Children"] as List<PreRegistrationChild> ?? new List<PreRegistrationChild>();
+            CreateChildrenControls( false );
+        }
+
+        /// <summary>
+        /// Saves any user control view-state changes that have occurred since the last page postback.
+        /// </summary>
+        /// <returns>
+        /// Returns the user control's current view state. If there is no view state associated with the control, it returns null.
+        /// </returns>
+        protected override object SaveViewState()
+        {
+            ViewState["Children"] = Children;
+
+            return base.SaveViewState();
         }
 
         #endregion
@@ -161,7 +209,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 var spouseChanges = new History.HistoryChangeList();
                 var familyChanges = new History.HistoryChangeList();
 
-                var addedPeopleNames = string.Empty;
+                var addedPeopleNames = new List<string>();
 
                 // First try to grab the person from the picker
                 if ( ppGuest.PersonId != null )
@@ -203,7 +251,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
 
                 if ( person != null )
                 {
-                    addedPeopleNames = person.FullName;
+                    addedPeopleNames.Add( person.FullName );
 
                     History.EvaluateChange( changes, "Connection Status", person.ConnectionStatusValueId, _dvcConnectionStatus.Id );
                     person.ConnectionStatusValueId = _dvcConnectionStatus.Id;
@@ -341,10 +389,61 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                                 SetPhoneNumber( rockContext, spouse, pnSpouseCell, cbSpouseSms, Rock.SystemGuid.DefinedValue.PERSON_PHONE_TYPE_MOBILE.AsGuid(), spouseChanges );
                             }
                         }
+
+                        // Add Children
+                        foreach ( var child in Children )
+                        {
+                            Person childPerson = personService.Get( child.Guid );
+
+
+                            // If person was not found, Look for existing person in same family with same name and birthdate
+                            if (person == null && child.BirthDate.HasValue)
+                            {
+                                var possibleMatch = new Person { NickName = child.NickName, LastName = child.LastName };
+                                possibleMatch.SetBirthDate( child.BirthDate );
+                                person = family.MatchingFamilyMember( possibleMatch );
+                            }
+
+                            // Create a new person
+                            if ( childPerson == null )
+                            {
+                                childPerson = new Person();
+                                personService.Add( childPerson );
+
+                                childPerson.Guid = child.Guid;
+                                childPerson.FirstName = child.NickName.FixCase();
+                                childPerson.LastName = child.LastName.FixCase();
+                                childPerson.RecordTypeValueId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_PERSON.AsGuid() ).Id;
+                                childPerson.RecordStatusValueId = _dvcRecordStatus.Id;
+                                childPerson.ConnectionStatusValueId = _dvcChildConnectionStatus.Id;
+
+                                if (child.Gender != Gender.Unknown)
+                                {
+                                    childPerson.Gender = child.Gender;
+                                }
+
+                                if (child.BirthDate.HasValue)
+                                {
+                                    childPerson.SetBirthDate( child.BirthDate );
+                                }
+
+                                if (child.GradeOffset.HasValue)
+                                {
+                                    childPerson.GradeOffset = child.GradeOffset;
+                                }
+
+                                var groupMember = new GroupMember();
+                                groupMember.GroupRoleId = _childRole.Id;
+                                groupMember.Person = childPerson;
+
+                                family.Members.Add( groupMember );
+                                addedPeopleNames.Add( childPerson.FirstName + " " + childPerson.LastName );
+                            }
+                        }
                     }
                 }
 
-                // Save the person/spouse and change history 
+                // Save the person/spouse/children and change history 
                 rockContext.SaveChanges();
                 HistoryService.SaveChanges( rockContext, typeof( Person ),
                     Rock.SystemGuid.Category.HISTORY_PERSON_DEMOGRAPHIC_CHANGES.AsGuid(), person.Id, changes );
@@ -352,7 +451,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                     Rock.SystemGuid.Category.HISTORY_PERSON_FAMILY_CHANGES.AsGuid(), person.Id, familyChanges );
                 if ( spouse != null )
                 {
-                    addedPeopleNames += " and " + spouse.FullName;
+                    addedPeopleNames.Add( spouse.FullName );
                     HistoryService.SaveChanges( rockContext, typeof( Person ),
                         Rock.SystemGuid.Category.HISTORY_PERSON_DEMOGRAPHIC_CHANGES.AsGuid(), spouse.Id, spouseChanges );
                     HistoryService.SaveChanges( rockContext, typeof( Person ),
@@ -370,12 +469,41 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 }
 
                 // Reload page
-                nbMessage.Text = string.Format( "New entry for {0} saved.", addedPeopleNames );
+                nbMessage.Text = string.Format( "New entry for {0} saved.", addedPeopleNames.AsDelimited( ", ", " and ") );
                 nbMessage.Visible = true;
                 hfShowSuccess.Value = "true";
                 ClearControls();
                 ShowDetail();
             }
+        }
+
+        /// <summary>
+        /// Handles the AddChildClick event of the prChildren control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        protected void prChildren_AddChildClick( object sender, EventArgs e )
+        {
+            AddChild();
+            CreateChildrenControls( true );
+        }
+
+        /// <summary>
+        /// Handles the DeleteClick event of the ChildRow control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void ChildRow_DeleteClick( object sender, EventArgs e )
+        {
+            var row = sender as PreRegistrationChildRow;
+            var child = Children.FirstOrDefault( m => m.Guid.Equals( row.PersonGuid ) );
+            if (child != null)
+            {
+                Children.Remove( child );
+            }
+
+            CreateChildrenControls( true );
         }
 
         /// <summary>
@@ -390,7 +518,72 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             tbComments.Text = tbPrayerRequests.Text = string.Empty;
             acAddress.Street1 = acAddress.Street2 = acAddress.City = acAddress.PostalCode = string.Empty;
             pnlNewPerson.Enabled = tbFirstName.Required = tbLastName.Required = true;
+
+            Children = new List<PreRegistrationChild>();
+            prChildren.ClearRows();
         }
+
+        /// <summary>
+        /// Creates the children controls.
+        /// </summary>
+        private void CreateChildrenControls( bool setSelection )
+        {
+            prChildren.ClearRows();
+
+            foreach (var child in Children)
+            {
+                if (child != null)
+                {
+                    var childRow = new PreRegistrationChildRow();
+                    childRow.ValidationGroup = this.BlockValidationGroup;
+
+                    prChildren.Controls.Add( childRow );
+
+                    childRow.DeleteClick += ChildRow_DeleteClick;
+                    string childGuidString = child.Guid.ToString().Replace( "-", "_" );
+                    childRow.ID = string.Format( "row_{0}", childGuidString );
+                    childRow.PersonId = child.Id;
+                    childRow.PersonGuid = child.Guid;
+
+                    childRow.ShowSuffix = false;
+                    childRow.ShowGender = true;
+                    childRow.RequireGender = false;
+                    childRow.ShowBirthDate = true;
+                    childRow.RequireBirthDate = false;
+                    childRow.ShowGrade = true;
+                    childRow.RequireGrade = false;
+                    childRow.ShowMobilePhone = false;
+                    childRow.RequireMobilePhone = false;
+
+                    var _relationshipTypes = new Dictionary<int, string>();
+                    _relationshipTypes.Add( 0, "Child" );
+                    childRow.RelationshipTypeList = _relationshipTypes;
+
+                    // Hide relationship role since is it not needed.
+                    var relationshipDropDown = childRow.FindControl( "_ddlRelationshipType" ) as RockDropDownList;
+                    relationshipDropDown.Visible = false;
+
+                    childRow.ValidationGroup = BlockValidationGroup;
+
+                    if (setSelection)
+                    {
+                        childRow.NickName = child.NickName;
+                        childRow.LastName = child.LastName;
+                        childRow.SuffixValueId = child.SuffixValueId;
+                        childRow.Gender = child.Gender;
+                        childRow.BirthDate = child.BirthDate;
+                        childRow.GradeOffset = child.GradeOffset;
+                        childRow.RelationshipType = child.RelationshipType;
+                        childRow.MobilePhone = child.MobilePhoneNumber;
+                        childRow.MobilePhoneCountryCode = child.MobileCountryCode;
+
+                        childRow.SetAttributeValues( child );
+                    }
+
+                }
+            }
+        }
+
 
         /// <summary>
         /// Handles the SelectPerson event of the ppGuest control.
@@ -402,6 +595,9 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             if ( ppGuest.PersonId.HasValue )
             {
                 pnlNewPerson.Enabled = tbFirstName.Required = tbLastName.Required = tbEmail.Required = false;
+
+                Children = new List<PreRegistrationChild>();
+                prChildren.ClearRows();
             }
             else
             {
@@ -529,6 +725,14 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 return false;
             }
 
+            _dvcChildConnectionStatus = DefinedValueCache.Get( GetAttributeValue( "ChildConnectionStatus" ).AsGuid() );
+            if ( _dvcChildConnectionStatus == null )
+            {
+                nbNotice.Heading = "Invalid Child Connection Status";
+                nbNotice.Text = "<p>The selected Child Connection Status setting does not exist.</p>";
+                return false;
+            }
+
             _dvcRecordStatus = DefinedValueCache.Get( GetAttributeValue( "RecordStatus" ).AsGuid() );
             if ( _dvcRecordStatus == null )
             {
@@ -541,8 +745,9 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             _homeAddressType = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.GROUP_LOCATION_TYPE_HOME.AsGuid() );
             _familyType = GroupTypeCache.Get( Rock.SystemGuid.GroupType.GROUPTYPE_FAMILY.AsGuid() );
             _adultRole = _familyType.Roles.FirstOrDefault( r => r.Guid.Equals( Rock.SystemGuid.GroupRole.GROUPROLE_FAMILY_MEMBER_ADULT.AsGuid() ) );
+            _childRole = _familyType.Roles.FirstOrDefault( r => r.Guid.Equals( Rock.SystemGuid.GroupRole.GROUPROLE_FAMILY_MEMBER_CHILD.AsGuid() ) );
 
-            if ( _married == null || _homeAddressType == null || _familyType == null || _adultRole == null )
+            if ( _married == null || _homeAddressType == null || _familyType == null || _adultRole == null || _childRole == null )
             {
                 nbNotice.Heading = "Missing System Value";
                 nbNotice.Text = "<p>There is a missing or invalid system value. Check the settings for Marital Status of 'Married', Location Type of 'Home', Group Type of 'Family', and Family Group Role of 'Adult'.</p>";
@@ -687,6 +892,63 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 rockContext.SaveChanges();
             }
         }
+
+        /// <summary>
+        /// Adds a new child.
+        /// </summary>
+        private void AddChild()
+        {
+            var person = new Person();
+            person.Guid = Guid.NewGuid();
+            person.Gender = Gender.Unknown;
+            person.LastName = tbLastName.Text;
+            person.GradeOffset = null;
+
+            _dvcChildConnectionStatus = DefinedValueCache.Get( GetAttributeValue( "ChildConnectionStatus" ).AsGuid() );
+            if ( _dvcChildConnectionStatus != null )
+            {
+                person.ConnectionStatusValueId = _dvcChildConnectionStatus.Id;
+            }
+            else
+            {
+                _dvcChildConnectionStatus = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_CONNECTION_STATUS_VISITOR.AsGuid() );
+            }
+
+            var child = new PreRegistrationChild( person );
+
+            Children.Add( child );
+        }
+
+        /// <summary>
+        /// Gets the children data.
+        /// </summary>
+        private void GetChildrenData()
+        {
+            Children = new List<PreRegistrationChild>();
+
+            foreach (var childRow in prChildren.ChildRows)
+            {
+                var person = new Person();
+                person.Id = childRow.PersonId;
+                person.Guid = childRow.PersonGuid ?? Guid.NewGuid();
+                person.NickName = childRow.NickName;
+                person.LastName = childRow.LastName;
+                person.SuffixValueId = childRow.SuffixValueId;
+                person.Gender = childRow.Gender;
+                person.SetBirthDate( childRow.BirthDate );
+                person.GradeOffset = childRow.GradeOffset;
+
+                var child = new PreRegistrationChild( person );
+
+                child.MobilePhoneNumber = childRow.MobilePhone;
+                child.MobileCountryCode = childRow.MobilePhoneCountryCode;
+
+                child.RelationshipType = childRow.RelationshipType;
+
+                Children.Add( child );
+            }
+        }
+
         #endregion
     }
 }

@@ -89,6 +89,14 @@
 
                             </div>
                         </div>
+                       <asp:Panel ID="pnlChildren" runat="server" CssClass="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Children</h3>
+                            </div>
+                            <div class="panel-body">
+                                <Rock:PreRegistrationChildren ID="prChildren" runat="server" OnAddChildClick="prChildren_AddChildClick" />
+                            </div>
+                        </asp:Panel>
                     </div>
                 </asp:Panel>
 
