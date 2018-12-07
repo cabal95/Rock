@@ -356,6 +356,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                                 }
                                 History.EvaluateChange( spouseChanges, "Last Name", string.Empty, spouse.LastName );
 
+                                spouse.RecordTypeValueId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_PERSON.AsGuid() ).Id;
                                 spouse.ConnectionStatusValueId = _dvcConnectionStatus.Id;
                                 spouse.RecordStatusValueId = _dvcRecordStatus.Id;
                                 spouse.Gender = Gender.Unknown;
