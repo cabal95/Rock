@@ -49,11 +49,16 @@ namespace RockWeb.Plugins.com_centralaz.Crm
     [DefinedValueField( "2E6540EA-63F0-40FE-BE50-F2A84735E600", "Connection Status", "The connection status to use for new individuals (default: 'Web Prospect'.)", true, false, Rock.SystemGuid.DefinedValue.PERSON_CONNECTION_STATUS_VISITOR, "Person Settings", 2 )]
     [DefinedValueField( "8522BADD-2871-45A5-81DD-C76DA07E2E7E", "Record Status", "The record status to use for new individuals (default: 'Pending'.)", true, false, "283999EC-7346-42E3-B807-BCE9B2BABB49", "Person Settings", 3 )]
     [BooleanField( "Is Sms Checked By Default ", "Is the 'Enable SMS' option checked by default.", true, "Person Settings", 4, "IsSmsChecked" )]
-    [DefinedValueField( "2E6540EA-63F0-40FE-BE50-F2A84735E600", "Child Connection Status", "The connection status to use for new children (default: 'Web Prospect'.)", true, false, Rock.SystemGuid.DefinedValue.PERSON_CONNECTION_STATUS_VISITOR, "Person Settings", 5 )]
+
+    // Child Settings
+    [DefinedValueField( "2E6540EA-63F0-40FE-BE50-F2A84735E600", "Child Connection Status", "The connection status to use for new children (default: 'Web Prospect'.)", true, false, Rock.SystemGuid.DefinedValue.PERSON_CONNECTION_STATUS_VISITOR, "Child Settings", 5 )]
 
     //Prayer Request Settings
     [BooleanField( "Is Prayer Request Enabled", "Is the Prayer Request text box visible.", true, "Prayer Request Settings", 6 )]
     [CategoryField( "Prayer Category", "The  category to use for all new prayer requests.", false, "Rock.Model.PrayerRequest", "", "", false, "4B2D88F5-6E45-4B4B-8776-11118C8E8269", "Prayer Request Settings", 7, "PrayerCategory" )]
+
+    // Misc
+    [LinkedPage( "Person Profile Page", "The person profile page.", false, "", "", 8 )]
 
     public partial class FirstTimeGuestEntry : Rock.Web.UI.RockBlock
     {
@@ -71,6 +76,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         GroupTypeRoleCache _childRole = null;
         bool _isValidSettings = true;
         bool _isPrayerRequestEnabled = false;
+        int? _personProfilePage;
 
         private const string CAMPUS_SETTING = "FirstTimeGuestEntry_SelectedCampus";
         private const string SOURCE_SETTING = "FirstTimeGuestEntry_SelectedSource";
@@ -111,6 +117,13 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         protected override void OnLoad( EventArgs e )
         {
             base.OnLoad( e );
+
+            Guid? personProfilePageGuid = GetAttributeValue( "PersonProfilePage" ).AsGuidOrNull();
+            if ( personProfilePageGuid != null )
+            {
+                _personProfilePage = PageCache.Get( personProfilePageGuid.Value ).Id;
+            }
+            
 
             if ( !CheckSettings() )
             {
@@ -599,10 +612,21 @@ namespace RockWeb.Plugins.com_centralaz.Crm
 
                 Children = new List<PreRegistrationChild>();
                 prChildren.ClearRows();
+
+                if ( _personProfilePage.HasValue )
+                {
+                    lbPersonProfile.Visible = true;
+                    var queryParams = new Dictionary<string, string>();
+                    queryParams.Add( "PersonId", ppGuest.PersonId.ToString() );
+                    lbPersonProfile.NavigateUrl = LinkedPageUrl( "PersonProfilePage", queryParams );
+                }               
             }
             else
             {
                 pnlNewPerson.Enabled = tbFirstName.Required = tbLastName.Required = true;
+
+                lbPersonProfile.Visible = false;
+                lbPersonProfile.NavigateUrl = "";
             }
         }
 

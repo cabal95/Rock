@@ -42,6 +42,7 @@
                     <div class="col-md-12">
                         <div class="pull-left">
                             <Rock:PersonPicker ID="ppGuest" runat="server" Label="Choose an existing person" OnSelectPerson="ppGuest_SelectPerson" />
+                            <asp:HyperLink ID="lbPersonProfile" runat="server" CssClass="btn btn-default" Visible="false" Target="_blank"><i class="fa fa-user"></i> View Profile</asp:HyperLink>
                         </div>
                         <div class="pull-right">
                                 <Rock:CampusPicker ID="cpCampus" runat="server" CssClass="input-width-lg" Label="Campus" Required="true" AutoPostBack="true" OnSelectedIndexChanged="cpCampus_SelectedIndexChanged" />
