@@ -69,6 +69,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
         DefinedValueCache _dvcConnectionStatus = null;
         DefinedValueCache _dvcChildConnectionStatus = null;
         DefinedValueCache _dvcRecordStatus = null;
+        DefinedValueCache _single = null;
         DefinedValueCache _married = null;
         DefinedValueCache _homeAddressType = null;
         GroupTypeCache _familyType = null;
@@ -212,14 +213,14 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 var rockContext = new RockContext();
                 var personService = new PersonService( rockContext );
 
-                Person person = null;
-                Person spouse = null;
+                Person firstAdult = null;
+                Person secondAdult = null;
                 Group family = null;
                 GroupLocation homeLocation = null;
                 bool isMatch = false;
 
-                var changes = new History.HistoryChangeList();
-                var spouseChanges = new History.HistoryChangeList();
+                var firstAdultChanges = new History.HistoryChangeList();
+                var secondAdultChanges = new History.HistoryChangeList();
                 var familyChanges = new History.HistoryChangeList();
 
                 var addedPeopleNames = new List<string>();
@@ -227,50 +228,50 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 // First try to grab the person from the picker
                 if ( ppGuest.PersonId != null )
                 {
-                    person = new PersonService( rockContext ).Get( ppGuest.PersonId.Value );
+                    firstAdult = new PersonService( rockContext ).Get( ppGuest.PersonId.Value );
                 }
 
                 if ( pnlNewPerson.Enabled )
                 {
-                    if ( person == null )
+                    if ( firstAdult == null )
                     {
                         // Try to find person by name/email 
                         var matches = personService.FindPersons( tbFirstName.Text.Trim(), tbLastName.Text.Trim(), tbEmail.Text.Trim() );
                         if ( matches.Count() == 1 )
                         {
-                            person = matches.First();
+                            firstAdult = matches.First();
                             isMatch = true;
                         }
                     }
 
                     // Check to see if this is a new person
-                    if ( person == null )
+                    if ( firstAdult == null )
                     {
                         // If so, create the person and family record for the new person
-                        person = new Person();
-                        person.FirstName = tbFirstName.Text.Trim();
-                        person.LastName = tbLastName.Text.Trim();
-                        person.Email = tbEmail.Text.Trim();
-                        person.IsEmailActive = true;
-                        person.EmailPreference = EmailPreference.EmailAllowed;
-                        person.RecordTypeValueId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_PERSON.AsGuid() ).Id;
-                        person.ConnectionStatusValueId = _dvcConnectionStatus.Id;
-                        person.RecordStatusValueId = _dvcRecordStatus.Id;
-                        person.Gender = Gender.Unknown;
+                        firstAdult = new Person();
+                        firstAdult.FirstName = tbFirstName.Text.Trim();
+                        firstAdult.LastName = tbLastName.Text.Trim();
+                        firstAdult.Email = tbEmail.Text.Trim();
+                        firstAdult.IsEmailActive = true;
+                        firstAdult.EmailPreference = EmailPreference.EmailAllowed;
+                        firstAdult.RecordTypeValueId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_PERSON.AsGuid() ).Id;
+                        firstAdult.ConnectionStatusValueId = _dvcConnectionStatus.Id;
+                        firstAdult.RecordStatusValueId = _dvcRecordStatus.Id;
+                        firstAdult.Gender = Gender.Unknown;
 
-                        family = PersonService.SaveNewPerson( person, rockContext, cpCampus.SelectedCampusId, false );
+                        family = PersonService.SaveNewPerson( firstAdult, rockContext, cpCampus.SelectedCampusId, false );
                     }
                 }
 
-                if ( person != null )
+                if ( firstAdult != null )
                 {
-                    addedPeopleNames.Add( person.FullName );
+                    addedPeopleNames.Add( firstAdult.FullName );
 
-                    History.EvaluateChange( changes, "Connection Status", person.ConnectionStatusValueId, _dvcConnectionStatus.Id );
-                    person.ConnectionStatusValueId = _dvcConnectionStatus.Id;
+                    History.EvaluateChange( firstAdultChanges, "Connection Status", firstAdult.ConnectionStatusValueId, _dvcConnectionStatus.Id );
+                    firstAdult.ConnectionStatusValueId = _dvcConnectionStatus.Id;
 
                     // Get the current person's families
-                    var families = person.GetFamilies( rockContext );
+                    var families = firstAdult.GetFamilies( rockContext );
 
                     // If address can being entered, look for first family with a home location
                     foreach ( var aFamily in families )
@@ -293,22 +294,22 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                         family = families.FirstOrDefault();
                     }
 
-                    History.EvaluateChange( changes, "Campus", family.CampusId, cpCampus.SelectedCampusId );
+                    History.EvaluateChange( firstAdultChanges, "Campus", family.CampusId, cpCampus.SelectedCampusId );
                     family.CampusId = cpCampus.SelectedCampusId;
 
                     if ( pnlNewPerson.Enabled )
                     {
                         // Save the contact info
-                        History.EvaluateChange( changes, "Email", person.Email, tbEmail.Text );
-                        person.Email = tbEmail.Text;
+                        History.EvaluateChange( firstAdultChanges, "Email", firstAdult.Email, tbEmail.Text );
+                        firstAdult.Email = tbEmail.Text;
 
                         if ( !isMatch || !string.IsNullOrWhiteSpace( pnHome.Number ) )
                         {
-                            SetPhoneNumber( rockContext, person, pnHome, null, Rock.SystemGuid.DefinedValue.PERSON_PHONE_TYPE_HOME.AsGuid(), changes );
+                            SetPhoneNumber( rockContext, firstAdult, pnHome, null, Rock.SystemGuid.DefinedValue.PERSON_PHONE_TYPE_HOME.AsGuid(), firstAdultChanges );
                         }
                         if ( !isMatch || !string.IsNullOrWhiteSpace( pnHome.Number ) )
                         {
-                            SetPhoneNumber( rockContext, person, pnCell, cbSms, Rock.SystemGuid.DefinedValue.PERSON_PHONE_TYPE_MOBILE.AsGuid(), changes );
+                            SetPhoneNumber( rockContext, firstAdult, pnCell, cbSms, Rock.SystemGuid.DefinedValue.PERSON_PHONE_TYPE_MOBILE.AsGuid(), firstAdultChanges );
                         }
 
                         if ( !isMatch || !string.IsNullOrWhiteSpace( acAddress.Street1 ) )
@@ -346,61 +347,72 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                             History.EvaluateChange( familyChanges, "Home Location", oldLocation, newLocation );
                         }
 
-                        // Check for the spouse
-                        if ( !string.IsNullOrWhiteSpace( tbSpouseFirstName.Text ) )
+                        // Check for the second adult
+                        if ( !string.IsNullOrWhiteSpace( tbSecondAdultFirstName.Text ) )
                         {
-                            spouse = person.GetSpouse( rockContext );
+                            secondAdult = firstAdult.GetSpouse( rockContext );
                             bool isSpouseMatch = true;
 
-                            if ( spouse == null ||
-                                !tbSpouseFirstName.Text.Trim().Equals( spouse.FirstName.Trim(), StringComparison.OrdinalIgnoreCase ) ||
-                                !tbSpouseLastName.Text.Trim().Equals( spouse.LastName.Trim(), StringComparison.OrdinalIgnoreCase ) )
+                            if ( secondAdult == null ||
+                                !tbSecondAdultFirstName.Text.Trim().Equals( secondAdult.FirstName.Trim(), StringComparison.OrdinalIgnoreCase ) ||
+                                !tbSecondAdultLastName.Text.Trim().Equals( secondAdult.LastName.Trim(), StringComparison.OrdinalIgnoreCase ) )
                             {
-                                spouse = new Person();
+                                secondAdult = new Person();
                                 isSpouseMatch = false;
 
-                                spouse.FirstName = tbSpouseFirstName.Text.FixCase();
-                                History.EvaluateChange( spouseChanges, "First Name", string.Empty, spouse.FirstName );
+                                secondAdult.FirstName = tbSecondAdultFirstName.Text.FixCase();
+                                History.EvaluateChange( secondAdultChanges, "First Name", string.Empty, secondAdult.FirstName );
 
-                                spouse.LastName = tbSpouseLastName.Text.FixCase();
-                                if ( spouse.LastName.IsNullOrWhiteSpace() )
+                                secondAdult.LastName = tbSecondAdultLastName.Text.FixCase();
+                                if ( secondAdult.LastName.IsNullOrWhiteSpace() )
                                 {
-                                    spouse.LastName = person.LastName;
+                                    secondAdult.LastName = firstAdult.LastName;
                                 }
-                                History.EvaluateChange( spouseChanges, "Last Name", string.Empty, spouse.LastName );
+                                History.EvaluateChange( secondAdultChanges, "Last Name", string.Empty, secondAdult.LastName );
 
-                                spouse.RecordTypeValueId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_PERSON.AsGuid() ).Id;
-                                spouse.ConnectionStatusValueId = _dvcConnectionStatus.Id;
-                                spouse.RecordStatusValueId = _dvcRecordStatus.Id;
-                                spouse.Gender = Gender.Unknown;
+                                secondAdult.RecordTypeValueId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_PERSON.AsGuid() ).Id;
+                                secondAdult.ConnectionStatusValueId = _dvcConnectionStatus.Id;
+                                secondAdult.RecordStatusValueId = _dvcRecordStatus.Id;
+                                secondAdult.Gender = Gender.Unknown;
 
-                                spouse.IsEmailActive = true;
-                                spouse.EmailPreference = EmailPreference.EmailAllowed;
+                                secondAdult.IsEmailActive = true;
+                                secondAdult.EmailPreference = EmailPreference.EmailAllowed;
 
                                 var groupMember = new GroupMember();
                                 groupMember.GroupRoleId = _adultRole.Id;
-                                groupMember.Person = spouse;
+                                groupMember.Person = secondAdult;
 
                                 family.Members.Add( groupMember );
 
-                                spouse.MaritalStatusValueId = _married.Id;
-                                person.MaritalStatusValueId = _married.Id;
+                                // set marital status
+                                bool? isMarried = rbMarried.SelectedValue.AsBooleanOrNull();
+                                if ( isMarried.HasValue && isMarried.Value )
+                                {
+                                    secondAdult.MaritalStatusValueId = _married.Id;
+                                    firstAdult.MaritalStatusValueId = _married.Id;
+                                }
+                                else
+                                {
+                                    secondAdult.MaritalStatusValueId = _single.Id;
+                                    firstAdult.MaritalStatusValueId = _single.Id;
+                                }
+                                
                             }
 
-                            History.EvaluateChange( changes, "Email", person.Email, tbEmail.Text );
-                            spouse.Email = tbSpouseEmail.Text;
+                            History.EvaluateChange( firstAdultChanges, "Email", firstAdult.Email, tbEmail.Text );
+                            secondAdult.Email = tbSecondAdultEmail.Text;
 
-                            History.EvaluateChange( changes, "Connection Status", spouse.ConnectionStatusValueId, _dvcConnectionStatus.Id );
-                            spouse.ConnectionStatusValueId = _dvcConnectionStatus.Id;
+                            History.EvaluateChange( firstAdultChanges, "Connection Status", secondAdult.ConnectionStatusValueId, _dvcConnectionStatus.Id );
+                            secondAdult.ConnectionStatusValueId = _dvcConnectionStatus.Id;
 
                             if ( !isSpouseMatch || !string.IsNullOrWhiteSpace( pnHome.Number ) )
                             {
-                                SetPhoneNumber( rockContext, spouse, pnHome, null, Rock.SystemGuid.DefinedValue.PERSON_PHONE_TYPE_HOME.AsGuid(), spouseChanges );
+                                SetPhoneNumber( rockContext, secondAdult, pnHome, null, Rock.SystemGuid.DefinedValue.PERSON_PHONE_TYPE_HOME.AsGuid(), secondAdultChanges );
                             }
 
-                            if ( !isSpouseMatch || !string.IsNullOrWhiteSpace( pnSpouseCell.Number ) )
+                            if ( !isSpouseMatch || !string.IsNullOrWhiteSpace( pnSecondAdultCell.Number ) )
                             {
-                                SetPhoneNumber( rockContext, spouse, pnSpouseCell, cbSpouseSms, Rock.SystemGuid.DefinedValue.PERSON_PHONE_TYPE_MOBILE.AsGuid(), spouseChanges );
+                                SetPhoneNumber( rockContext, secondAdult, pnSecondAdultCell, cbSecondAdultSms, Rock.SystemGuid.DefinedValue.PERSON_PHONE_TYPE_MOBILE.AsGuid(), secondAdultChanges );
                             }
                         }
 
@@ -411,11 +423,11 @@ namespace RockWeb.Plugins.com_centralaz.Crm
 
 
                             // If person was not found, Look for existing person in same family with same name and birthdate
-                            if (person == null && child.BirthDate.HasValue)
+                            if (firstAdult == null && child.BirthDate.HasValue)
                             {
                                 var possibleMatch = new Person { NickName = child.NickName, LastName = child.LastName };
                                 possibleMatch.SetBirthDate( child.BirthDate );
-                                person = family.MatchingFamilyMember( possibleMatch );
+                                firstAdult = family.MatchingFamilyMember( possibleMatch );
                             }
 
                             // Create a new person
@@ -457,29 +469,29 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                     }
                 }
 
-                // Save the person/spouse/children and change history 
+                // Save the first adult/second adult/children and change history 
                 rockContext.SaveChanges();
                 HistoryService.SaveChanges( rockContext, typeof( Person ),
-                    Rock.SystemGuid.Category.HISTORY_PERSON_DEMOGRAPHIC_CHANGES.AsGuid(), person.Id, changes );
+                    Rock.SystemGuid.Category.HISTORY_PERSON_DEMOGRAPHIC_CHANGES.AsGuid(), firstAdult.Id, firstAdultChanges );
                 HistoryService.SaveChanges( rockContext, typeof( Person ),
-                    Rock.SystemGuid.Category.HISTORY_PERSON_FAMILY_CHANGES.AsGuid(), person.Id, familyChanges );
-                if ( spouse != null )
+                    Rock.SystemGuid.Category.HISTORY_PERSON_FAMILY_CHANGES.AsGuid(), firstAdult.Id, familyChanges );
+                if ( secondAdult != null )
                 {
-                    addedPeopleNames.Add( spouse.FullName );
+                    addedPeopleNames.Add( secondAdult.FullName );
                     HistoryService.SaveChanges( rockContext, typeof( Person ),
-                        Rock.SystemGuid.Category.HISTORY_PERSON_DEMOGRAPHIC_CHANGES.AsGuid(), spouse.Id, spouseChanges );
+                        Rock.SystemGuid.Category.HISTORY_PERSON_DEMOGRAPHIC_CHANGES.AsGuid(), secondAdult.Id, secondAdultChanges );
                     HistoryService.SaveChanges( rockContext, typeof( Person ),
-                        Rock.SystemGuid.Category.HISTORY_PERSON_FAMILY_CHANGES.AsGuid(), spouse.Id, familyChanges );
+                        Rock.SystemGuid.Category.HISTORY_PERSON_FAMILY_CHANGES.AsGuid(), secondAdult.Id, familyChanges );
                 }
 
                 // Save the Connection Requests
-                CreateConnectionRequest( rockContext, person );
-                CreateConnectionRequest( rockContext, spouse );
+                CreateConnectionRequest( rockContext, firstAdult );
+                CreateConnectionRequest( rockContext, secondAdult );
 
                 // Save the Prayer Request
                 if ( _isPrayerRequestEnabled )
                 {
-                    CreatePrayerRequest( rockContext, person );
+                    CreatePrayerRequest( rockContext, firstAdult );
                 }
 
                 // Reload page
@@ -528,7 +540,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
             ppGuest.PersonId = null;
             ppGuest.SetValue( null );
             tbFirstName.Text = tbLastName.Text = pnCell.Text = tbEmail.Text = pnHome.Text = string.Empty;
-            tbSpouseFirstName.Text = tbSpouseLastName.Text = pnSpouseCell.Text = tbSpouseEmail.Text = string.Empty;
+            tbSecondAdultFirstName.Text = tbSecondAdultLastName.Text = pnSecondAdultCell.Text = tbSecondAdultEmail.Text = string.Empty;
             tbComments.Text = tbPrayerRequests.Text = string.Empty;
             acAddress.Street1 = acAddress.Street2 = acAddress.City = acAddress.PostalCode = string.Empty;
             pnlNewPerson.Enabled = tbFirstName.Required = tbLastName.Required = true;
@@ -671,7 +683,7 @@ namespace RockWeb.Plugins.com_centralaz.Crm
 
             // Set SMS Checkbox
             bool IsSmsChecked = GetAttributeValue( "IsSmsChecked" ).AsBoolean( true );
-            cbSpouseSms.Checked = cbSms.Checked = IsSmsChecked;
+            cbSecondAdultSms.Checked = cbSms.Checked = IsSmsChecked;
 
             // Build Interests list...
             var interestList = GetAttributeValue( "Interests" ).SplitDelimitedValues( false );
@@ -766,16 +778,17 @@ namespace RockWeb.Plugins.com_centralaz.Crm
                 return false;
             }
 
+            _single = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_MARITAL_STATUS_SINGLE.AsGuid() );
             _married = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_MARITAL_STATUS_MARRIED.AsGuid() );
             _homeAddressType = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.GROUP_LOCATION_TYPE_HOME.AsGuid() );
             _familyType = GroupTypeCache.Get( Rock.SystemGuid.GroupType.GROUPTYPE_FAMILY.AsGuid() );
             _adultRole = _familyType.Roles.FirstOrDefault( r => r.Guid.Equals( Rock.SystemGuid.GroupRole.GROUPROLE_FAMILY_MEMBER_ADULT.AsGuid() ) );
             _childRole = _familyType.Roles.FirstOrDefault( r => r.Guid.Equals( Rock.SystemGuid.GroupRole.GROUPROLE_FAMILY_MEMBER_CHILD.AsGuid() ) );
 
-            if ( _married == null || _homeAddressType == null || _familyType == null || _adultRole == null || _childRole == null )
+            if ( _single == null || _married == null || _homeAddressType == null || _familyType == null || _adultRole == null || _childRole == null )
             {
                 nbNotice.Heading = "Missing System Value";
-                nbNotice.Text = "<p>There is a missing or invalid system value. Check the settings for Marital Status of 'Married', Location Type of 'Home', Group Type of 'Family', and Family Group Role of 'Adult'.</p>";
+                nbNotice.Text = "<p>There is a missing or invalid system value. Check the settings for Marital Status of 'Single'/'Married', Location Type of 'Home', Group Type of 'Family', and Family Group Role of 'Adult'.</p>";
                 return false;
             }
 

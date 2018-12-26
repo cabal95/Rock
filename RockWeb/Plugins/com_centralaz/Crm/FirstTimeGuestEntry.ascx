@@ -55,6 +55,7 @@
                         <p><i>Or if you can't find a person, add them as new:</i></p>
                         <div class="row">
                             <div class="col-md-6">
+                                <h4>First Adult</h4>
                                 <Rock:RockTextBox ID="tbFirstName" runat="server" Label="First Name" Required="true"></Rock:RockTextBox>
                                 <Rock:RockTextBox ID="tbLastName" runat="server" Label="Last Name" Required="true"></Rock:RockTextBox>
                                 <asp:Panel ID="pnlCellPhone" runat="server" CssClass="row">
@@ -66,6 +67,25 @@
                                     </div>
                                 </asp:Panel>
                                 <Rock:EmailBox ID="tbEmail" runat="server" Label="Email" Required="false"></Rock:EmailBox>
+                            </div>
+                            <div class="col-md-6">
+                                <h4>Second Adult</h4>
+                                <Rock:RockTextBox ID="tbSecondAdultFirstName" runat="server" Label="First Name"></Rock:RockTextBox>
+                                <Rock:RockTextBox ID="tbSecondAdultLastName" runat="server" Label="Last Name"></Rock:RockTextBox>
+                                <div class="row">
+                                    <div class="col-sm-7">
+                                        <Rock:PhoneNumberBox ID="pnSecondAdultCell" runat="server" Label="Cell Phone" />
+                                    </div>
+                                    <div class="col-sm-5">
+                                        <Rock:RockCheckBox ID="cbSecondAdultSms" runat="server" Label="&nbsp;" Text="Enable SMS" />
+                                    </div>
+                                </div>
+                                <Rock:EmailBox ID="tbSecondAdultEmail" runat="server" Label="Email" />
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div class="col-md-6">
                                 <asp:Panel ID="pnlHomePhone" runat="server" CssClass="row">
                                     <div class="col-sm-7">
                                         <Rock:PhoneNumberBox ID="pnHome" runat="server" Label="Home Phone" />
@@ -76,18 +96,10 @@
                                 <Rock:AddressControl ID="acAddress" Label="Address" runat="server" />
                             </div>
                             <div class="col-md-6">
-                                <Rock:RockTextBox ID="tbSpouseFirstName" runat="server" Label="Spouse First Name"></Rock:RockTextBox>
-                                <Rock:RockTextBox ID="tbSpouseLastName" runat="server" Label="Spouse Last Name"></Rock:RockTextBox>
-                                <div class="row">
-                                    <div class="col-sm-7">
-                                        <Rock:PhoneNumberBox ID="pnSpouseCell" runat="server" Label="Spouse Cell Phone" />
-                                    </div>
-                                    <div class="col-sm-5">
-                                        <Rock:RockCheckBox ID="cbSpouseSms" runat="server" Label="&nbsp;" Text="Enable SMS" />
-                                    </div>
-                                </div>
-                                <Rock:EmailBox ID="tbSpouseEmail" runat="server" Label="Email" />
-
+                                <Rock:RockRadioButtonList ID="rbMarried" runat="server" Label="Adults Married?" RepeatDirection="Horizontal">
+                                    <asp:ListItem Text="Yes" Value="True" />
+                                    <asp:ListItem Text="No" Value="False" Selected="True" />
+                                </Rock:RockRadioButtonList>
                             </div>
                         </div>
                        <asp:Panel ID="pnlChildren" runat="server" CssClass="panel panel-default">
