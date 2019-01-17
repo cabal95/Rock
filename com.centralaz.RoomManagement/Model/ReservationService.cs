@@ -320,8 +320,6 @@ namespace com.centralaz.RoomManagement.Model
 
             if ( reservation.ApprovalState == ReservationApprovalState.Approved )
             {
-                reservation.ApproverAliasId = person.PrimaryAliasId;
-
                 foreach ( var reservationLocation in reservation.ReservationLocations )
                 {
                     reservationLocation.ApprovalState = ReservationLocationApprovalState.Approved;

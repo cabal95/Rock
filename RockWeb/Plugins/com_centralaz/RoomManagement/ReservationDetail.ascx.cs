@@ -569,6 +569,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
 
                 History.EvaluateChange( changes, "Approval State", oldReservation.ApprovalState.ToString(), reservation.ApprovalState.ToString() );
 
+                if ( reservation.ApprovalState == ReservationApprovalState.Approved && oldReservation.ApprovalState != ReservationApprovalState.Approved )
+                {
+                    reservation.ApproverAliasId = CurrentPerson.PrimaryAliasId;
+                }
+
                 if ( reservation.Id.Equals( 0 ) )
                 {
                     reservationService.Add( reservation );
