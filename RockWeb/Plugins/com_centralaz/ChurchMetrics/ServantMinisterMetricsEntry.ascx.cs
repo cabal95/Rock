@@ -111,6 +111,7 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                 if ( CheckSelection() )
                 {
                     DisplayLeadTeamMessage();
+                    DisplayAdminMessage();
                     LoadDropDowns();
                     BindMetrics();
                 }
@@ -410,6 +411,70 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
             }
 
             divLeadTeamMessage.Visible = displayMessage;
+        }
+
+        /// <summary>
+        /// Displays a message to admins if there are future holiday schedules configured for the week.
+        /// </summary>
+        private void DisplayAdminMessage()
+        {
+            if ( IsUserAuthorized( "Administrate" ) )
+            {
+                var schedules = new List<Schedule>();
+                using ( var rockContext = new RockContext() )
+                {
+                    var scheduleService = new ScheduleService( rockContext );
+
+                    // check the holiday schedule categories for any schedules that will be active for the current week.
+                    var holidayScheduleCategory = CategoryCache.Get( GetAttributeValue( "HolidayScheduleCategory" ).AsGuid() );
+                    if ( holidayScheduleCategory != null )
+                    {
+                        var holidayCategoryIds = new List<int>();
+                        holidayCategoryIds.Add( holidayScheduleCategory.Id );
+                        if ( holidayScheduleCategory.Categories.Any() )
+                        {
+                            holidayCategoryIds.AddRange( holidayScheduleCategory.Categories.Select( c => c.Id ).ToList() );
+                        }
+
+                        foreach ( var schedule in scheduleService.Queryable().AsNoTracking()
+                            .Where( s =>
+                                s.CategoryId.HasValue &&
+                                s.IsActive &&
+                                holidayCategoryIds.Contains( s.CategoryId.Value ) )
+                            .ToList() )
+                        {
+                            // Here we grab schedules if their EffectiveStartDate( First time they occur ) will occur any day
+                            //   for the current week.  We only check for non-reoccuring schedules since holidays only use one
+                            //   off schedules.
+                            if (  
+                                schedule.EffectiveStartDate.HasValue &&
+                                schedule.EffectiveStartDate.Value.Date >= RockDateTime.Now.StartOfWeek( RockDateTime.FirstDayOfWeek ) &&
+                                schedule.EffectiveStartDate.Value.Date <= RockDateTime.Now.EndOfWeek( RockDateTime.FirstDayOfWeek )
+                                )
+                            {
+                                schedules.Add( schedule );
+                            }
+                        }
+                    }
+
+                    if ( schedules.Any() )
+                    {
+                        StringBuilder sb = new StringBuilder();
+
+                        sb.AppendLine( "Admins, the following Holiday schedules will be available for entry this week:<br/>" );
+                        sb.AppendLine( "<ul>" );
+
+                        foreach ( var schedule in schedules )
+                        {
+                            sb.AppendLine( "<li>" + schedule.Name + "</li>" );
+                        }
+
+                        sb.AppendLine( "</ul>" );
+                        nbFutureMetrics.Text = sb.ToString();
+                        nbFutureMetrics.Visible = true; 
+                    }
+                }
+            }
         }
 
         /// <summary>
