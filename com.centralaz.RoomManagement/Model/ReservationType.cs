@@ -117,7 +117,24 @@ namespace com.centralaz.RoomManagement.Model
             get { return _reservationWorkflowTriggers ?? ( _reservationWorkflowTriggers = new Collection<ReservationWorkflowTrigger>() ); }
             set { _reservationWorkflowTriggers = value; }
         }
-        private ICollection<ReservationWorkflowTrigger> _reservationWorkflowTriggers;        
+        private ICollection<ReservationWorkflowTrigger> _reservationWorkflowTriggers;
+
+        /// <summary>
+        /// Gets the supported actions.
+        /// </summary>
+        /// <value>
+        /// The supported actions.
+        /// </value>
+        [NotMapped]
+        public override Dictionary<string, string> SupportedActions
+        {
+            get
+            {
+                var supportedActions = base.SupportedActions;
+                supportedActions.AddOrReplace( Rock.Security.Authorization.DELETE, "Additional roles and/or users that have access to delete reservations outside of the traditional approval process." );
+                return supportedActions;
+            }
+        }
 
         #endregion
 

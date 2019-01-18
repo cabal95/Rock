@@ -1517,6 +1517,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 btnDelete.Visible = true;
             }
 
+            if ( reservation.IsAuthorized( Authorization.DELETE, CurrentPerson ) )
+            {
+                btnDelete.Visible = true;
+            }
+
             lApproval.Text = hlStatus.Text = reservation.ApprovalState.ConvertToString();
             switch ( reservation.ApprovalState )
             {
