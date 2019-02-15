@@ -50,6 +50,7 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
     [TextField( "Authorized Campuses Attribute Key", "The key to the groupmember attribute that dictates which campuses the person can enter metrics for.", true, "Campuses", "Permission Settings", 2 )]
     [TextField( "Notes Visible Attribute Key", "The key to the groupmember attribute that dictates whether the person can see the notes field.", true, "CanSeeNotes", "Permission Settings", 3 )]
     [IntegerField( "Number of Months until Notification displayed again.", "", true, 3, "Permission Settings", 4, "Months" )]
+    [KeyValueListField( "Metric Entry Blacklist", "A key/value list of metrics that can't be saved together.  This prevents users from saving values of two metrics when they should only be able to update one or the other.", false, "", "Metric Id", "Metric Id", "", "", "Permission Settings" )]
 
     // Schedule Categories
     [CategoryField( "Holiday Schedule Category", "The schedule category to use for list of holiday service times. If this category has child categories, Rock will use those too.", false, "Rock.Model.Schedule", "", "", false, "", "Schedule Categories", 5 )]
@@ -197,103 +198,113 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void btnSave_Click( object sender, EventArgs e )
         {
-            int campusEntityTypeId = EntityTypeCache.Get( typeof( Rock.Model.Campus ) ).Id;
-            int scheduleEntityTypeId = EntityTypeCache.Get( typeof( Rock.Model.Schedule ) ).Id;
+            nbMetricErrors.Visible = false;
+            nbMetricErrors.Text = "";
 
-            int? campusId = bddlCampus.SelectedValueAsInt();
-            int? scheduleId = bddlService.SelectedValueAsInt();
-            DateTime? weekend = bddlWeekend.SelectedValue.AsDateTime();
-
-            StringBuilder sb = new StringBuilder();
-            if ( campusId.HasValue && scheduleId.HasValue && weekend.HasValue )
+            if ( !MetricValuesValid() )
             {
-                using ( var rockContext = new RockContext() )
+                nbMetricErrors.Visible = true;
+            }
+            else
+            {
+                int campusEntityTypeId = EntityTypeCache.Get( typeof( Rock.Model.Campus ) ).Id;
+                int scheduleEntityTypeId = EntityTypeCache.Get( typeof( Rock.Model.Schedule ) ).Id;
+
+                int? campusId = bddlCampus.SelectedValueAsInt();
+                int? scheduleId = bddlService.SelectedValueAsInt();
+                DateTime? weekend = bddlWeekend.SelectedValue.AsDateTime();
+
+                StringBuilder sb = new StringBuilder();
+                if ( campusId.HasValue && scheduleId.HasValue && weekend.HasValue )
                 {
-                    var metricService = new MetricService( rockContext );
-                    var metricValueService = new MetricValueService( rockContext );
-
-                    foreach ( RepeaterItem item in rptrMetric.Items )
+                    using ( var rockContext = new RockContext() )
                     {
-                        var hfMetricIId = item.FindControl( "hfMetricId" ) as HiddenField;
-                        var hfModifiedDateTime = item.FindControl( "hfModifiedDateTime" ) as HiddenField;
-                        var nbMetricValue = item.FindControl( "nbMetricValue" ) as NumberBox;
+                        var metricService = new MetricService( rockContext );
+                        var metricValueService = new MetricValueService( rockContext );
 
-                        if ( hfMetricIId != null && nbMetricValue != null )
+                        foreach ( RepeaterItem item in rptrMetric.Items )
                         {
-                            int metricId = hfMetricIId.ValueAsInt();
-                            DateTime? modifiedDateTime = hfModifiedDateTime.Value.AsDateTime();
-                            var metric = new MetricService( rockContext ).Get( metricId );
+                            var hfMetricIId = item.FindControl( "hfMetricId" ) as HiddenField;
+                            var hfModifiedDateTime = item.FindControl( "hfModifiedDateTime" ) as HiddenField;
+                            var nbMetricValue = item.FindControl( "nbMetricValue" ) as NumberBox;
 
-                            if ( metric != null )
+                            if ( hfMetricIId != null && nbMetricValue != null )
                             {
-                                int campusPartitionId = metric.MetricPartitions.Where( p => p.EntityTypeId.HasValue && p.EntityTypeId.Value == campusEntityTypeId ).Select( p => p.Id ).FirstOrDefault();
-                                int schedulePartitionId = metric.MetricPartitions.Where( p => p.EntityTypeId.HasValue && p.EntityTypeId.Value == scheduleEntityTypeId ).Select( p => p.Id ).FirstOrDefault();
+                                int metricId = hfMetricIId.ValueAsInt();
+                                DateTime? modifiedDateTime = hfModifiedDateTime.Value.AsDateTime();
+                                var metric = new MetricService( rockContext ).Get( metricId );
 
-                                var metricValue = metricValueService
-                                    .Queryable()
-                                    .Where( v =>
-                                        v.MetricId == metric.Id &&
-                                        v.MetricValueDateTime.HasValue && v.MetricValueDateTime.Value == weekend.Value &&
-                                        v.MetricValuePartitions.Count == 2 &&
-                                        v.MetricValuePartitions.Any( p => p.MetricPartitionId == campusPartitionId && p.EntityId.HasValue && p.EntityId.Value == campusId.Value ) &&
-                                        v.MetricValuePartitions.Any( p => p.MetricPartitionId == schedulePartitionId && p.EntityId.HasValue && p.EntityId.Value == scheduleId.Value ) )
-                                    .FirstOrDefault();
-
-                                if ( metricValue == null )
+                                if ( metric != null )
                                 {
-                                    metricValue = new MetricValue();
-                                    metricValue.MetricValueType = MetricValueType.Measure;
-                                    metricValue.MetricId = metric.Id;
-                                    metricValue.MetricValueDateTime = weekend.Value;
-                                    metricValueService.Add( metricValue );
+                                    int campusPartitionId = metric.MetricPartitions.Where( p => p.EntityTypeId.HasValue && p.EntityTypeId.Value == campusEntityTypeId ).Select( p => p.Id ).FirstOrDefault();
+                                    int schedulePartitionId = metric.MetricPartitions.Where( p => p.EntityTypeId.HasValue && p.EntityTypeId.Value == scheduleEntityTypeId ).Select( p => p.Id ).FirstOrDefault();
 
-                                    var campusValuePartition = new MetricValuePartition();
-                                    campusValuePartition.MetricPartitionId = campusPartitionId;
-                                    campusValuePartition.EntityId = campusId.Value;
-                                    metricValue.MetricValuePartitions.Add( campusValuePartition );
+                                    var metricValue = metricValueService
+                                        .Queryable()
+                                        .Where( v =>
+                                            v.MetricId == metric.Id &&
+                                            v.MetricValueDateTime.HasValue && v.MetricValueDateTime.Value == weekend.Value &&
+                                            v.MetricValuePartitions.Count == 2 &&
+                                            v.MetricValuePartitions.Any( p => p.MetricPartitionId == campusPartitionId && p.EntityId.HasValue && p.EntityId.Value == campusId.Value ) &&
+                                            v.MetricValuePartitions.Any( p => p.MetricPartitionId == schedulePartitionId && p.EntityId.HasValue && p.EntityId.Value == scheduleId.Value ) )
+                                        .FirstOrDefault();
 
-                                    var scheduleValuePartition = new MetricValuePartition();
-                                    scheduleValuePartition.MetricPartitionId = schedulePartitionId;
-                                    scheduleValuePartition.EntityId = scheduleId.Value;
-                                    metricValue.MetricValuePartitions.Add( scheduleValuePartition );
-
-                                    metricValue.YValue = nbMetricValue.Text.AsDecimalOrNull();
-                                    metricValue.Note = tbNote.Text;
-                                }
-                                else
-                                {
-                                    if ( nbMetricValue.Text.AsDecimalOrNull() != metricValue.YValue )
+                                    if ( metricValue == null )
                                     {
-                                        if ( modifiedDateTime.ToString() == metricValue.ModifiedDateTime.ToString() || metricValue.YValue == null )
+                                        metricValue = new MetricValue();
+                                        metricValue.MetricValueType = MetricValueType.Measure;
+                                        metricValue.MetricId = metric.Id;
+                                        metricValue.MetricValueDateTime = weekend.Value;
+                                        metricValueService.Add( metricValue );
+
+                                        var campusValuePartition = new MetricValuePartition();
+                                        campusValuePartition.MetricPartitionId = campusPartitionId;
+                                        campusValuePartition.EntityId = campusId.Value;
+                                        metricValue.MetricValuePartitions.Add( campusValuePartition );
+
+                                        var scheduleValuePartition = new MetricValuePartition();
+                                        scheduleValuePartition.MetricPartitionId = schedulePartitionId;
+                                        scheduleValuePartition.EntityId = scheduleId.Value;
+                                        metricValue.MetricValuePartitions.Add( scheduleValuePartition );
+
+                                        metricValue.YValue = nbMetricValue.Text.AsDecimalOrNull();
+                                        metricValue.Note = tbNote.Text;
+                                    }
+                                    else
+                                    {
+                                        if ( nbMetricValue.Text.AsDecimalOrNull() != metricValue.YValue )
                                         {
-                                            metricValue.YValue = nbMetricValue.Text.AsDecimalOrNull();
-                                            metricValue.Note = tbNote.Text;
-                                        }
-                                        else
-                                        {
-                                            sb.AppendFormat( "<li>{0}, last updated by {1}</li>", metric.Title, metricValue.ModifiedByPersonName );
+                                            if ( modifiedDateTime.ToString() == metricValue.ModifiedDateTime.ToString() || metricValue.YValue == null )
+                                            {
+                                                metricValue.YValue = nbMetricValue.Text.AsDecimalOrNull();
+                                                metricValue.Note = tbNote.Text;
+                                            }
+                                            else
+                                            {
+                                                sb.AppendFormat( "<li>{0}, last updated by {1}</li>", metric.Title, metricValue.ModifiedByPersonName );
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
+
+                        rockContext.SaveChanges();
                     }
 
-                    rockContext.SaveChanges();
+                    nbMetricsSaved.Text = string.Format( "Your metrics for the {0} service on {1} at the {2} Campus have been saved.",
+                        bddlService.SelectedItem.Text, bddlWeekend.SelectedItem.Text, bddlCampus.SelectedItem.Text );
+                    nbMetricsSaved.Visible = true;
+
+                    if ( sb.ToString().IsNotNullOrWhiteSpace() )
+                    {
+                        nbMetricsSkipped.Text = string.Format( "The following metrics were not saved, due to another user saving a more recent version:</br><ul>{0}</ul>", sb.ToString() );
+                        nbMetricsSkipped.Visible = true;
+                    }
+
+                    BindMetrics();
+
                 }
-
-                nbMetricsSaved.Text = string.Format( "Your metrics for the {0} service on {1} at the {2} Campus have been saved.",
-                    bddlService.SelectedItem.Text, bddlWeekend.SelectedItem.Text, bddlCampus.SelectedItem.Text );
-                nbMetricsSaved.Visible = true;
-
-                if ( sb.ToString().IsNotNullOrWhiteSpace() )
-                {
-                    nbMetricsSkipped.Text = string.Format( "The following metrics were not saved, due to another user saving a more recent version:</br><ul>{0}</ul>", sb.ToString() );
-                    nbMetricsSkipped.Visible = true;
-                }
-
-                BindMetrics();
-
             }
         }
 
@@ -886,7 +897,69 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
             }
         }
 
+        /// <summary>
+        /// Verifies that the metric values can be saved based on the metric entry blacklist.
+        /// </summary>
+        private bool MetricValuesValid()
+        {
+            bool noConflicts = true;
+
+            var metricEntryBlacklist = GetAttributeValue( "MetricEntryBlacklist" ).AsDictionaryOrNull();
+            if ( metricEntryBlacklist != null )
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine( "The following Metrics can't be saved together.  Please only save one or the other:<br/>" );
+
+                List<ServiceMetricItem> metricItems = new List<ServiceMetricItem>();
+
+                // get a list of entered metric values
+                foreach ( RepeaterItem item in rptrMetric.Items )
+                {
+                    var hfMetricIId = item.FindControl( "hfMetricId" ) as HiddenField;
+                    var lMetricTitle = item.FindControl( "lMetricTitle" ) as Label;
+                    var nbMetricValue = item.FindControl( "nbMetricValue" ) as NumberBox;
+
+                    if ( nbMetricValue.Text.AsDecimalOrNull().HasValue && hfMetricIId.ValueAsInt() > 0 )
+                    {
+                        var metricItem = new ServiceMetricItem();
+                        metricItem.MetricId = hfMetricIId.ValueAsInt();
+                        metricItem.MetricTitle = lMetricTitle.Text;
+                        metricItem.MetricValue = nbMetricValue.Text.AsDecimal();
+
+                        metricItems.Add( metricItem );
+                    }                 
+                }
+
+                // check to see if there are any conflicts
+                foreach ( var blacklistItem in metricEntryBlacklist )
+                {
+                    var metrics = metricItems.Where( i => i.MetricId == blacklistItem.Key.AsInteger() || i.MetricId == blacklistItem.Value.AsInteger() );
+
+                    if ( metrics.Count() > 1)
+                    {
+                        noConflicts = false;
+
+                        sb.AppendLine( metrics.Select( m => m.MetricTitle ).ToList().AsDelimited( ","," & " ) + "<br/>" );
+                    }
+                }
+
+                nbMetricErrors.Text = sb.ToString();
+            }
+           
+            return noConflicts;
+        }
+
         #endregion
+    }
+
+    /// <summary>
+    /// Helper class for checking metric ids and values.
+    /// </summary>
+    public class ServiceMetricItem
+    {
+        public int MetricId { get; set; }
+        public string MetricTitle { get; set; }
+        public decimal MetricValue { get; set; }
     }
 
     /// <summary>
