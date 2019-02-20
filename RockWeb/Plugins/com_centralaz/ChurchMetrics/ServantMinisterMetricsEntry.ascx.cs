@@ -50,7 +50,8 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
     [TextField( "Authorized Campuses Attribute Key", "The key to the groupmember attribute that dictates which campuses the person can enter metrics for.", true, "Campuses", "Permission Settings", 2 )]
     [TextField( "Notes Visible Attribute Key", "The key to the groupmember attribute that dictates whether the person can see the notes field.", true, "CanSeeNotes", "Permission Settings", 3 )]
     [IntegerField( "Number of Months until Notification displayed again.", "", true, 3, "Permission Settings", 4, "Months" )]
-    [KeyValueListField( "Metric Entry Blacklist", "A key/value list of metrics that can't be saved together.  This prevents users from saving values of two metrics when they should only be able to update one or the other.", false, "", "Metric Id", "Metric Id", "", "", "Permission Settings" )]
+    [KeyValueListField( "Metric Entry Blacklist", "A key/value list of metrics that can't be saved together.  This prevents users from saving values of two metrics when they should only be able to update one or the other.", false, "", "Metric Id", "Metric Id", "", "", "Permission Settings", 5 )]
+    [CodeEditorField( "Blacklist Custom Message", "A custom message to be displayed instead of the default blacklist message.", CodeEditorMode.Html, CodeEditorTheme.Rock, 200, false, "", "Permission Settings", 6 )]
 
     // Schedule Categories
     [CategoryField( "Holiday Schedule Category", "The schedule category to use for list of holiday service times. If this category has child categories, Rock will use those too.", false, "Rock.Model.Schedule", "", "", false, "", "Schedule Categories", 5 )]
@@ -907,9 +908,6 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
             var metricEntryBlacklist = GetAttributeValue( "MetricEntryBlacklist" ).AsDictionaryOrNull();
             if ( metricEntryBlacklist != null )
             {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine( "The following Metrics can't be saved together.  Please only save one or the other:<br/>" );
-
                 List<ServiceMetricItem> metricItems = new List<ServiceMetricItem>();
 
                 // get a list of entered metric values
@@ -930,6 +928,9 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                     }                 
                 }
 
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine( "The following Metrics can't be saved together.  Please only save one or the other:<br/>" );
+
                 // check to see if there are any conflicts
                 foreach ( var blacklistItem in metricEntryBlacklist )
                 {
@@ -943,7 +944,15 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                     }
                 }
 
-                nbMetricErrors.Text = sb.ToString();
+                string customMessage = GetAttributeValue( "BlacklistCustomMessage" );
+                if ( customMessage.IsNotNullOrWhiteSpace() )
+                {
+                    nbMetricErrors.Text = customMessage;
+                }
+                else
+                {
+                    nbMetricErrors.Text = sb.ToString();
+                }
             }
            
             return noConflicts;
