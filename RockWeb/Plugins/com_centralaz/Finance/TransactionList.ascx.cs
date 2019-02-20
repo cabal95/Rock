@@ -1609,7 +1609,7 @@ namespace RockWeb.Plugins.com_centralaz.Finance
                     var campusOfPerson = CampusCache.Get( gfTransactions.GetUserPreference( "CampusPerson" ).AsInteger() );
                     if ( campusOfPerson != null )
                     {
-                        var personAliasIds = new PersonAliasService( rockContext ).Queryable().Where( a => a.Person.PrimaryFamily.CampusId == campusOfPerson.Id ).Select( a => a.Id ).ToList();
+                        var personAliasIds = new PersonAliasService( rockContext ).Queryable().Where( a => a.Person.PrimaryFamily.CampusId == campusOfPerson.Id ).Select( a => a.Id );
                         qry = qry.Where( a => a.AuthorizedPersonAliasId.HasValue && personAliasIds.Contains( a.AuthorizedPersonAliasId.Value ) );
                     }
                 }
