@@ -60,7 +60,11 @@ namespace Rock.Rest.Controllers
         /// <param name="value">The value.</param>
         /// <returns></returns>
         [Authenticate, Secured]
+#if IS_NET_CORE
+        public override Microsoft.AspNetCore.Mvc.IActionResult Post( [FromBody] Model.Attribute value )
+#else
         public override HttpResponseMessage Post( [FromBody] Model.Attribute value )
+#endif
         {
             // if any Categories are included in the Post, we'll need to fetch them from the database so that that EF inserts them into AttributeCategory correct
             if ( value.Categories != null && value.Categories.Any())
@@ -91,6 +95,9 @@ namespace Rock.Rest.Controllers
             base.Delete( id );
         }
 
+#if !IS_NET_CORE
+        // EFTODO: Umm, not needed?
+
         /// <summary>
         /// Puts the specified identifier.
         /// </summary>
@@ -101,5 +108,6 @@ namespace Rock.Rest.Controllers
         {
             base.Put( id, value );
         }
+#endif
     }
 }

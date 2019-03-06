@@ -21,7 +21,12 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+#if !IS_NET_CORE
 using System.Web.Http.OData;
+
+#else
+using Microsoft.AspNet.OData;
+#endif
 using Rock;
 using Rock.BulkExport;
 using Rock.Data;
@@ -46,7 +51,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpPost]
         [System.Web.Http.Route( "api/FinancialTransactions/PostScanned" )]
+#if IS_NET_CORE
+        public Microsoft.AspNetCore.Mvc.IActionResult PostScanned( [FromBody]FinancialTransactionScannedCheck financialTransactionScannedCheck )
+#else
         public HttpResponseMessage PostScanned( [FromBody]FinancialTransactionScannedCheck financialTransactionScannedCheck )
+#endif
         {
             FinancialTransaction financialTransaction = financialTransactionScannedCheck.FinancialTransaction;
             financialTransaction.CheckMicrEncrypted = Encryption.EncryptString( financialTransactionScannedCheck.ScannedCheckMicrData );
@@ -71,7 +80,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpPost]
         [System.Web.Http.Route( "api/FinancialTransactions/Process" )]
+#if IS_NET_CORE
+        public Microsoft.AspNetCore.Mvc.IActionResult ProcessPayment( [FromBody]AutomatedPaymentArgs automatedPaymentArgs, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
+#else
         public HttpResponseMessage ProcessPayment( [FromBody]AutomatedPaymentArgs automatedPaymentArgs, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
+#endif
         {
             var errorMessage = string.Empty;
             
@@ -82,26 +95,42 @@ namespace Rock.Rest.Controllers
                 automatedPaymentProcessor.IsRepeatCharge( out errorMessage ) ||
                 !automatedPaymentProcessor.IsAccordingToSchedule( out errorMessage ) )
             {
+#if IS_NET_CORE
+                return BadRequest( errorMessage );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.BadRequest, errorMessage );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
             var transaction = automatedPaymentProcessor.ProcessCharge( out errorMessage );
 
             if ( !string.IsNullOrEmpty( errorMessage ) )
             {
+#if IS_NET_CORE
+                return BadRequest( errorMessage );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.InternalServerError, errorMessage );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
             if ( transaction == null )
             {
+#if IS_NET_CORE
+                return StatusCode( ( int ) HttpStatusCode.InternalServerError, "No transaction was created" );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.InternalServerError, "No transaction was created" );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
+#if IS_NET_CORE
+            return StatusCode( ( int ) HttpStatusCode.Created, transaction.Id );
+#else
             var response = ControllerContext.Request.CreateResponse( HttpStatusCode.Created, transaction.Id );
             return response;
+#endif
         }
 
         /// <summary>
@@ -113,7 +142,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpPost]
         [System.Web.Http.Route( "api/FinancialTransactions/Refund/{transactionId}" )]
+#if IS_NET_CORE
+        public Microsoft.AspNetCore.Mvc.IActionResult Refund( int transactionId )
+#else
         public System.Net.Http.HttpResponseMessage Refund( int transactionId )
+#endif
         {
             SetProxyCreation( true );
 
@@ -126,12 +159,20 @@ namespace Rock.Rest.Controllers
             if ( refundTransaction != null )
             {
                 Service.Context.SaveChanges();
+#if IS_NET_CORE
+                return StatusCode( ( int ) HttpStatusCode.Created, refundTransaction.Id );
+#else
                 return ControllerContext.Request.CreateResponse( HttpStatusCode.Created, refundTransaction.Id );
+#endif
             }
             else
             {
+#if IS_NET_CORE
+                return BadRequest( errorMessage );
+#else
                 var response = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.BadRequest, errorMessage );
                 throw new HttpResponseException( response );
+#endif
             }
         }
 
@@ -140,15 +181,23 @@ namespace Rock.Rest.Controllers
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public override Microsoft.AspNetCore.Mvc.IActionResult Post( FinancialTransaction value )
+#else
         public override HttpResponseMessage Post( FinancialTransaction value )
+#endif
         {
             if ( !value.FinancialPaymentDetailId.HasValue )
             {
                 //// manually enforce that FinancialPaymentDetailId has a value so that Pre-V4 check
                 //// scanners (that don't know about the new FinancialPaymentDetailId) can't post
+#if IS_NET_CORE
+                return BadRequest( "FinancialPaymentDetailId cannot be null" );
+#else
                 return ControllerContext.Request.CreateErrorResponse(
                     HttpStatusCode.BadRequest,
                     "FinancialPaymentDetailId cannot be null" );
+#endif
             }
 
             return base.Post( value );

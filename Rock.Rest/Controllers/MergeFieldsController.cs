@@ -19,7 +19,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Web.Http;
+#if !IS_NET_CORE
 using System.Web.Routing;
+#endif
 using Rock.Model;
 using Rock.Rest.Filters;
 using Rock.Web.Cache;
@@ -33,6 +35,9 @@ namespace Rock.Rest.Controllers
     /// </summary>
     public partial class MergeFieldsController : ApiControllerBase
     {
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Gets the specified identifier.
         /// </summary>
@@ -44,6 +49,7 @@ namespace Rock.Rest.Controllers
         {
             return Rock.Web.UI.Controls.MergeFieldPicker.FormatSelectedValue( id );
         }
+#endif
 
         /// <summary>
         /// Gets the children.

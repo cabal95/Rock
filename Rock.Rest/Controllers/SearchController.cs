@@ -17,7 +17,13 @@
 using System.Linq;
 using System.Net;
 using System.Web.Http;
+#if !IS_NET_CORE
 using System.Web.Http.OData;
+#else
+
+using Microsoft.AspNet.OData;
+using Rock.Rest;
+#endif
 using Rock.Rest.Filters;
 
 namespace Rock.Controllers
@@ -25,7 +31,11 @@ namespace Rock.Controllers
     /// <summary>
     /// Search REST API
     /// </summary>
+#if IS_NET_CORE
+    public partial class SearchController : Microsoft.AspNetCore.Mvc.ControllerBase
+#else
     public partial class SearchController : ApiController
+#endif
     {
         /// <summary>
         /// GET that returns a list of results based on the Search Type and Term
@@ -37,9 +47,14 @@ namespace Rock.Controllers
         [EnableQuery]
         public IQueryable<string> Get()
         {
+#if IS_NET_CORE
+            string type = Request.Query["type"];
+            string term = Request.Query["term"];
+#else
             string queryString = Request.RequestUri.Query;
             string type = System.Web.HttpUtility.ParseQueryString( queryString ).Get( "type" );
             string term = System.Web.HttpUtility.ParseQueryString( queryString ).Get( "term" );
+#endif
 
             int key = int.MinValue;
             if (int.TryParse(type, out key))

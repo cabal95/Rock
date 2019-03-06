@@ -26,6 +26,10 @@ namespace Rock.Rest
         /// Adds the routes.
         /// </summary>
         /// <param name="routes">The routes.</param>
+#if IS_NET_CORE
+        void AddRoutes( Microsoft.AspNetCore.Routing.IRouteBuilder routes );
+#else
         void AddRoutes( System.Web.Routing.RouteCollection routes );
+#endif
     }
 }

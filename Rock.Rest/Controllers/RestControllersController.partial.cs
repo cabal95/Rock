@@ -33,7 +33,11 @@ namespace Rock.Rest.Controllers
         [System.Web.Http.Route( "api/RestControllers/EnsureRestControllers" )]
         public bool EnsureRestControllers()
         {
+#if !IS_NET_CORE
+            // EFTODO: Implement this.
+
             RestControllerService.RegisterControllers();
+#endif
 
             return true;
         }

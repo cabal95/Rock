@@ -17,7 +17,9 @@
 using System.Linq;
 using System.Web;
 using System.Web.Http;
+#if !IS_NET_CORE
 using System.Web.Routing;
+#endif
 
 using Rock.Model;
 using Rock.Rest.Filters;

@@ -17,6 +17,9 @@
 using System.Net;
 using System.Web.Http;
 
+#if IS_NET_CORE
+using Microsoft.AspNetCore.Authentication;
+#endif
 using Rock.Model;
 using Rock.Security;
 
@@ -25,7 +28,11 @@ namespace Rock.Rest.Controllers
     /// <summary>
     /// 
     /// </summary>
+#if IS_NET_CORE
+    public class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
+#else
     public class AuthController : ApiController
+#endif
     {
         /// <summary>
         /// Use this to Login a user and return an AuthCookie which can be used in subsequent REST calls
@@ -47,8 +54,21 @@ namespace Rock.Rest.Controllers
                 {
                     if ( component.Authenticate( userLogin, loginParameters.Password ) )
                     {
+#if IS_NET_CORE
+                        // EFTODO: Move this into the SetAuthCookie method.
+
                         valid = true;
+                        var claims = new System.Collections.Generic.List<System.Security.Claims.Claim>
+                        {
+                            new System.Security.Claims.Claim( System.Security.Claims.ClaimTypes.Name, userLogin.UserName )
+                        };
+                        var userIdentity = new System.Security.Claims.ClaimsIdentity( claims, "login" );
+                        var principal = new System.Security.Claims.ClaimsPrincipal( userIdentity );
+
+                        HttpContext.SignInAsync( principal );
+#else
                         Rock.Security.Authorization.SetAuthCookie( loginParameters.Username, loginParameters.Persisted, false );
+#endif
                     }
                 }
             }

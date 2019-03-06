@@ -29,7 +29,12 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+#if !IS_NET_CORE
 using System.Web.Http.OData;
+
+#else
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock;
 using Rock.Data;
 using Rock.Financial;
@@ -91,7 +96,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpPost]
         [System.Web.Http.Route( "api/FinancialScheduledTransactions/Process/{scheduledTransactionId}" )]
+#if IS_NET_CORE
+        public Microsoft.AspNetCore.Mvc.IActionResult ProcessPayment( int scheduledTransactionId, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
+#else
         public System.Net.Http.HttpResponseMessage ProcessPayment( int scheduledTransactionId, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
+#endif
         {
             var financialScheduledTransactionService = Service as FinancialScheduledTransactionService;
             var financialScheduledTransaction = financialScheduledTransactionService.Queryable()
@@ -101,14 +110,22 @@ namespace Rock.Rest.Controllers
 
             if ( financialScheduledTransaction == null )
             {
+#if IS_NET_CORE
+                return NotFound( "The scheduledTransactionId did not resolve" );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.NotFound, "The scheduledTransactionId did not resolve" );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
             if ( !financialScheduledTransaction.FinancialGatewayId.HasValue )
             {
+#if IS_NET_CORE
+                return BadRequest( "The scheduled transaction does not have an assigned gateway ID" );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.BadRequest, "The scheduled transaction does not have an assigned gateway ID" );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
             var details = financialScheduledTransaction.ScheduledTransactionDetails.Select( d =>
@@ -136,26 +153,42 @@ namespace Rock.Rest.Controllers
                 automatedPaymentProcessor.IsRepeatCharge( out errorMessage ) ||
                 !automatedPaymentProcessor.IsAccordingToSchedule( out errorMessage ) )
             {
+#if IS_NET_CORE
+                return BadRequest( errorMessage );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.BadRequest, errorMessage );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
             var transaction = automatedPaymentProcessor.ProcessCharge( out errorMessage );
 
             if ( !string.IsNullOrEmpty( errorMessage ) )
             {
+#if IS_NET_CORE
+                return StatusCode( 500, errorMessage );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.InternalServerError, errorMessage );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
             if ( transaction == null )
             {
+#if IS_NET_CORE
+                return StatusCode( 500, "No transaction was created" );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.InternalServerError, "No transaction was created" );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
+#if IS_NET_CORE
+            return StatusCode( ( int ) HttpStatusCode.Created, transaction.Id );
+#else
             var response = ControllerContext.Request.CreateResponse( HttpStatusCode.Created, transaction.Id );
             return response;
+#endif
         }
 
         /// <summary>
@@ -169,7 +202,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpGet]
         [System.Web.Http.Route( "api/FinancialScheduledTransactions/WithPreviousTransaction" )]
+#if IS_NET_CORE
+        public Microsoft.AspNetCore.Mvc.IActionResult GetWithPreviousTransaction( [FromUri]int skip, [FromUri]int top )
+#else
         public System.Net.Http.HttpResponseMessage GetWithPreviousTransaction( [FromUri]int skip, [FromUri]int top )
+#endif
         {
             var now = RockDateTime.Now;
 
@@ -206,8 +243,12 @@ namespace Rock.Rest.Controllers
                 MostRecentTransaction = mostRecentTransactions.GetValueOrNull( s.Id )
             } ).ToList();
 
+#if IS_NET_CORE
+            return Ok( schedulesWithMostRecentTransaction );
+#else
             var response = ControllerContext.Request.CreateResponse( HttpStatusCode.OK, schedulesWithMostRecentTransaction );
             return response;
+#endif
         }
     }
 }

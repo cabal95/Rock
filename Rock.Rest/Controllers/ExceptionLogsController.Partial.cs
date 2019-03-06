@@ -38,10 +38,18 @@ namespace Rock.Rest.Controllers
         public IEnumerable<IChartData> GetChartData()
         {
             var exceptionList = this.Get().Where( x => x.HasInnerException == false && x.CreatedDateTime != null )
+#if IS_NET_CORE
+            .GroupBy( x => x.CreatedDateTime.Value.Date )
+#else
             .GroupBy( x => DbFunctions.TruncateTime( x.CreatedDateTime.Value ) )
+#endif
             .Select( eg => new
             {
+#if IS_NET_CORE
+                DateValue = eg.Key,
+#else
                 DateValue = eg.Key.Value,
+#endif
                 ExceptionCount = eg.Count(),
                 UniqueExceptionCount = eg.Select( y => y.ExceptionType ).Distinct().Count()
             } )

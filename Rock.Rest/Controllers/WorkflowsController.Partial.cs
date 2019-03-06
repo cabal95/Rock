@@ -43,7 +43,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpPost]
         [System.Web.Http.Route( "api/Workflows/WorkflowEntry/{workflowTypeId}" )]
+#if IS_NET_CORE
+        public Microsoft.AspNetCore.Mvc.IActionResult WorkflowEntry( int workflowTypeId )
+#else
         public Rock.Model.Workflow WorkflowEntry( int workflowTypeId )
+#endif
         {
             var rockContext = new Rock.Data.RockContext();
             var workflowType = WorkflowTypeCache.Get( workflowTypeId );
@@ -53,7 +57,12 @@ namespace Rock.Rest.Controllers
                 var workflow = Rock.Model.Workflow.Activate( workflowType, "Workflow From REST" );
 
                 // set workflow attributes from querystring
+#if IS_NET_CORE
+                foreach ( var parm in Request.Query )
+                {
+#else
                 foreach(var parm in Request.GetQueryStrings()){
+#endif
                     workflow.SetAttributeValue( parm.Key, parm.Value );
                 }
 
@@ -61,12 +70,20 @@ namespace Rock.Rest.Controllers
                 List<string> workflowErrors;
                 new Rock.Model.WorkflowService( rockContext ).Process( workflow, out workflowErrors );
 
+#if IS_NET_CORE
+                return StatusCode( ( int ) HttpStatusCode.Created, string.Empty );
+#else
                 var response = ControllerContext.Request.CreateResponse( HttpStatusCode.Created );
                 return workflow;
+#endif
             }
             else 
             {
+#if IS_NET_CORE
+                return NotFound();
+#else
                 var response = ControllerContext.Request.CreateResponse( HttpStatusCode.NotFound );
+#endif
             }
 
             return null;

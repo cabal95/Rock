@@ -17,9 +17,15 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+#if !IS_NET_CORE
 using System.Data.Entity.SqlServer;
+#endif
 using System.Linq;
 using System.Runtime.Serialization;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Newtonsoft.Json;
 using Rock.Data;
 using Rock.Model;
@@ -49,7 +55,24 @@ namespace Rock.Rest.Controllers
 
                 string liquidTemplate = block.GetAttributeValue( "LiquidTemplate" );
 
+#if IS_NET_CORE
+                var metricCategoryPairList = ( block.GetAttributeValue( "MetricCategories" ) ?? string.Empty ).Split( ',' ).Select( a =>
+                {
+                    var parts = a.Split( '|' );
+
+                    if ( parts.Length == 2 )
+                    {
+                        return new { MetricGuid = parts[0].AsGuid(), CategoryGuid = parts[1].AsGuidOrNull() };
+                    }
+                    else
+                    {
+                        return null;
+                    }
+
+                } ).Where( a => a != null ).ToList();
+#else
                 var metricCategoryPairList = Rock.Attribute.MetricCategoriesFieldAttribute.GetValueAsGuidPairs( block.GetAttributeValue( "MetricCategories" ) );
+#endif
 
                 var metricGuids = metricCategoryPairList.Select( a => a.MetricGuid ).ToList();
 

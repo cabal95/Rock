@@ -21,6 +21,10 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Model;
 using Rock.Rest.Filters;
@@ -40,7 +44,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpPost]
         [System.Web.Http.Route( "api/Presence" )]
+#if IS_NET_CORE
+        public Microsoft.AspNetCore.Mvc.IActionResult Post( List<MACPresence> presenceList )
+#else
         public HttpResponseMessage Post( List<MACPresence> presenceList )
+#endif
         {
             using ( var rockContext = new RockContext() )
             {
@@ -126,13 +134,21 @@ namespace Rock.Rest.Controllers
                         }
                     }
 
+#if IS_NET_CORE
+                    return StatusCode( ( int ) HttpStatusCode.Created, string.Empty );
+#else
                     var response = ControllerContext.Request.CreateResponse( HttpStatusCode.Created );
                     return response;
+#endif
                 }
                 else
                 {
+#if IS_NET_CORE
+                    return BadRequest( "A WiFi Presense Interaction Channel Was Not Found!" );
+#else
                     var response = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.BadRequest, "A WiFi Presense Interaction Channel Was Not Found!" );
                     throw new HttpResponseException( response );
+#endif
                 }
             }
         }

@@ -19,6 +19,9 @@ using System.Net;
 using System.Web.Http;
 using System.Linq;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Model;
 using Rock.Rest.Filters;
 using Rock.Web.Cache;
@@ -297,6 +300,9 @@ namespace Rock.Rest.Controllers
             return attendanceSummary.AsQueryable();
         }
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Gets the the number of interactions in a given date range
         /// </summary>
@@ -328,6 +334,7 @@ namespace Rock.Rest.Controllers
 
             return interactionQry.Count();
         }
+#endif
 
         /// <summary>
         /// Result set for group of type badge

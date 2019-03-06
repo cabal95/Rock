@@ -15,18 +15,79 @@
 // </copyright>
 //
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Security.Principal;
+#if !IS_NET_CORE
 using System.ServiceModel.Channels;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
+#else
+using System.Threading.Tasks;
+
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Filters;
+#endif
 
 using Rock.Model;
 
 namespace Rock.Rest.Filters
 {
+#if IS_NET_CORE
+    public class AuthenticateAttribute : Microsoft.AspNetCore.Authorization.AuthorizeAttribute { }
+
+    public class ApiKeyMiddleware
+    {
+        private readonly RequestDelegate _next;
+
+        public ApiKeyMiddleware( RequestDelegate next )
+        {
+            _next = next;
+        }
+
+        public async Task InvokeAsync( HttpContext context )
+        {
+            if ( !string.IsNullOrEmpty( context.User.Identity.Name ) )
+            {
+                await _next( context );
+                return;
+            }
+
+            string authToken = null;
+
+            if ( context.Request.Headers.Keys.Contains( "Authorization-Token" ) )
+            {
+                authToken = context.Request.Headers["Authorization-Token"];
+            }
+
+            if ( string.IsNullOrWhiteSpace( authToken ) )
+            {
+                authToken = context.Request.Query["apikey"];
+            }
+
+            if ( !string.IsNullOrWhiteSpace( authToken ) )
+            {
+                var userLoginService = new UserLoginService( new Rock.Data.RockContext() );
+                var userLogin = userLoginService.Queryable().Where( u => u.ApiKey == authToken ).FirstOrDefault();
+                if ( userLogin != null )
+                {
+                    var claims = new List<Claim>
+                        {
+                            new Claim( ClaimTypes.Name, userLogin.UserName )
+                        };
+
+                    context.User = new ClaimsPrincipal( new ClaimsIdentity( claims, "login" ) );
+                }
+            }
+
+            await _next( context );
+        }
+    }
+#else
     /// <summary>
     /// 
     /// </summary>
@@ -76,4 +137,5 @@ namespace Rock.Rest.Filters
             }
         }
     }
+#endif
 }

@@ -18,8 +18,12 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+#if !IS_NET_CORE
 using System.Web.Http.OData;
 
+#else
+using Microsoft.AspNet.OData;
+#endif
 using Rock.Data;
 using Rock.Model;
 using Rock.Rest.Filters;

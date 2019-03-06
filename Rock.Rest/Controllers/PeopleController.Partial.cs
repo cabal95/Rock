@@ -24,7 +24,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Http;
+#if !IS_NET_CORE
 using System.Web.Http.OData;
+#else
+
+using Microsoft.AspNet.OData;
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.BulkExport;
 using Rock.Data;
 using Rock.Model;
@@ -47,7 +53,11 @@ namespace Rock.Rest.Controllers
         /// <returns></returns>
         /// <exception cref="HttpResponseException"></exception>
         [Authenticate, Secured]
+#if IS_NET_CORE
+        [Microsoft.AspNetCore.Mvc.ActionName( "GetById" )]
+#else
         [ActionName( "GetById" )]
+#endif
         public override Person GetById( int id )
         {
             // NOTE: We want PrimaryAliasId to be populated, so call this.Get( true ) which includes "Aliases"
@@ -309,7 +319,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpPost]
         [System.Web.Http.Route( "api/People" )]
+#if IS_NET_CORE
+        public override Microsoft.AspNetCore.Mvc.IActionResult Post( Person person )
+#else
         public override System.Net.Http.HttpResponseMessage Post( Person person )
+#endif
         {
             SetProxyCreation( true );
 
@@ -317,9 +331,13 @@ namespace Rock.Rest.Controllers
 
             if ( !person.IsValid )
             {
+#if IS_NET_CORE
+                return BadRequest( string.Join( ",", person.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
+#else
                 return ControllerContext.Request.CreateErrorResponse(
                     HttpStatusCode.BadRequest,
                     string.Join( ",", person.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
+#endif
             }
 
             System.Web.HttpContext.Current.Items.Add( "CurrentPerson", GetPerson() );
@@ -330,12 +348,20 @@ namespace Rock.Rest.Controllers
 
             if (matchPerson != null)
             {
+#if IS_NET_CORE
+                return Ok( matchPerson.Id );
+#else
                 return ControllerContext.Request.CreateResponse( HttpStatusCode.OK, matchPerson.Id );
+#endif
             }
 
             PersonService.SaveNewPerson( person, rockContext, null, false );
 
+#if IS_NET_CORE
+            return StatusCode( ( int ) HttpStatusCode.Created, person.Id );
+#else
             return ControllerContext.Request.CreateResponse( HttpStatusCode.Created, person.Id );
+#endif
         }
 
         /// <summary>
@@ -348,7 +374,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpPost]
         [System.Web.Http.Route( "api/People/AddNewPersonToFamily/{familyId}" )]
+#if IS_NET_CORE
+        public Microsoft.AspNetCore.Mvc.IActionResult AddNewPersonToFamily( [Microsoft.AspNetCore.Mvc.FromBody]Person person, int familyId, int groupRoleId )
+#else
         public System.Net.Http.HttpResponseMessage AddNewPersonToFamily( Person person, int familyId, int groupRoleId )
+#endif
         {
             SetProxyCreation( true );
 
@@ -356,16 +386,24 @@ namespace Rock.Rest.Controllers
 
             if ( !person.IsValid )
             {
+#if IS_NET_CORE
+                return BadRequest( string.Join( ",", person.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
+#else
                 return ControllerContext.Request.CreateErrorResponse(
                     HttpStatusCode.BadRequest,
                     string.Join( ",", person.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
+#endif
             }
 
             System.Web.HttpContext.Current.Items.Add( "CurrentPerson", GetPerson() );
 
             PersonService.AddPersonToFamily( person, person.Id == 0, familyId, groupRoleId, ( Rock.Data.RockContext ) Service.Context );
 
+#if IS_NET_CORE
+            return StatusCode( ( int ) HttpStatusCode.Created, person.Id );
+#else
             return ControllerContext.Request.CreateResponse( HttpStatusCode.Created, person.Id );
+#endif
         }
 
         /// <summary>
@@ -379,7 +417,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpPost]
         [System.Web.Http.Route( "api/People/AddExistingPersonToFamily" )]
+#if IS_NET_CORE
+        public Microsoft.AspNetCore.Mvc.IActionResult AddExistingPersonToFamily( int personId, int familyId, int groupRoleId, bool removeFromOtherFamilies )
+#else
         public System.Net.Http.HttpResponseMessage AddExistingPersonToFamily( int personId, int familyId, int groupRoleId, bool removeFromOtherFamilies )
+#endif
         {
             SetProxyCreation( true );
 
@@ -394,7 +436,11 @@ namespace Rock.Rest.Controllers
                 PersonService.RemovePersonFromOtherFamilies( familyId, personId, ( Rock.Data.RockContext ) Service.Context );
             }
 
+#if IS_NET_CORE
+            return StatusCode( ( int ) HttpStatusCode.Created, person.Id );
+#else
             return ControllerContext.Request.CreateResponse( HttpStatusCode.Created, person.Id );
+#endif
         }
 
         #endregion

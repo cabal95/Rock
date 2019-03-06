@@ -19,8 +19,13 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+#if !IS_NET_CORE
 using System.Web.Cors;
 using System.Web.Http.Cors;
+#else
+using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.Http;
+#endif
 using Rock.Web.Cache;
 
 namespace Rock.Rest
@@ -40,16 +45,32 @@ namespace Rock.Rest
         /// <returns>
         /// The <see cref="T:System.Web.Cors.CorsPolicy" />.
         /// </returns>
+#if IS_NET_CORE
+        public async Task<CorsPolicy> GetPolicyAsync( HttpContext context, string policyName )
+#else
         public async Task<CorsPolicy> GetCorsPolicyAsync( HttpRequestMessage request, CancellationToken cancellationToken )
+#endif
         {
+#if IS_NET_CORE
+            var origin = context.Request.Headers[CorsConstants.Origin].ToString();
+#else
             var requestInfo = request.GetCorsRequestContext();
             var origin = requestInfo.Origin;
+#endif
 
             // Check if request is from an authorized origin
             if ( await IsOriginValid(origin))
             {
                 // Valid request
+#if IS_NET_CORE
+                var policy = new CorsPolicyBuilder()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()
+                    .Build();
+#else
                 var policy = new CorsPolicy { AllowAnyHeader = true, AllowAnyMethod = true, SupportsCredentials = true };
+#endif
 
                 /*
                   9/27/2018 - JME 

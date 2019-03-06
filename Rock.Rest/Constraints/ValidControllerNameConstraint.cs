@@ -15,14 +15,25 @@
 // </copyright>
 //
 using System.Collections.Generic;
+#if !IS_NET_CORE
 using System.Web.Http.Routing;
+#else
+using System.Threading.Tasks;
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+#endif
 
 namespace Rock.Rest.Constraints
 {
     /// <summary>
     /// 
     /// </summary>
+#if IS_NET_CORE
+    public class ValidControllerNameConstraint : IRouteConstraint
+#else
     public class ValidControllerNameConstraint : IHttpRouteConstraint
+#endif
     {
         /// <summary>
         /// Determines whether this instance equals a specified route.
@@ -35,7 +46,11 @@ namespace Rock.Rest.Constraints
         /// <returns>
         /// True if this instance equals a specified route; otherwise, false.
         /// </returns>
+#if IS_NET_CORE
+        public bool Match( HttpContext httpContext, IRouter route, string routeKey, RouteValueDictionary values, RouteDirection routeDirection )
+#else
         public bool Match( System.Net.Http.HttpRequestMessage request, IHttpRoute route, string parameterName, IDictionary<string, object> values, HttpRouteDirection routeDirection )
+#endif
         {
             if (values.ContainsKey("controller"))
             {

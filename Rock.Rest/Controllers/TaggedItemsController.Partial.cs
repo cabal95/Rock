@@ -46,7 +46,11 @@ namespace Rock.Rest.Controllers
         /// <param name="includeInactive">The include inactive.</param>
         /// <returns></returns>
         [Authenticate, Secured]
+#if IS_NET_CORE
+        public Microsoft.AspNetCore.Mvc.IActionResult Post( int entityTypeId, int ownerId, Guid entityGuid, string name, string entityQualifier = null, string entityQualifierValue = null, Guid? categoryGuid = null, bool? includeInactive = null )
+#else
         public HttpResponseMessage Post( int entityTypeId, int ownerId, Guid entityGuid, string name, string entityQualifier = null, string entityQualifierValue = null, Guid? categoryGuid = null, bool? includeInactive = null )
+#endif
         {
             SetProxyCreation( true );
 
@@ -89,7 +93,11 @@ namespace Rock.Rest.Controllers
             System.Web.HttpContext.Current.Items.Add( "CurrentPerson", person );
             Service.Context.SaveChanges();
 
+#if IS_NET_CORE
+            return StatusCode( ( int ) HttpStatusCode.Created, tag.Id );
+#else
             return ControllerContext.Request.CreateResponse( HttpStatusCode.Created, tag.Id );
+#endif
         }
 
         /// <summary>

@@ -19,12 +19,18 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+#if !IS_NET_CORE
 using System.Web.Http;
 using System.Web.Http.ExceptionHandling;
 using System.Web.Http.OData.Builder;
 using System.Web.Http.OData.Extensions;
 using System.Web.Routing;
 
+#else
+using Microsoft.AspNet.OData.Builder;
+using Microsoft.AspNet.OData.Extensions;
+using Microsoft.AspNetCore.Builder;
+#endif
 using Rock;
 
 namespace Rock.Rest
@@ -38,8 +44,13 @@ namespace Rock.Rest
         /// Maps ODataService Route and registers routes for any controller actions that use a [Route] attribute
         /// </summary>
         /// <param name="config">The configuration.</param>
+#if IS_NET_CORE
+        public static void UseRockApi( this IApplicationBuilder app )
+#else
         public static void Register( HttpConfiguration config )
+#endif
         {
+#if !IS_NET_CORE
             config.EnableCors( new Rock.Rest.EnableCorsFromOriginAttribute() );
             config.Filters.Add( new Rock.Rest.Filters.ValidateAttribute() );
             config.Services.Replace( typeof( IExceptionLogger ), new RockApiExceptionLogger() );
@@ -52,6 +63,14 @@ namespace Rock.Rest
 
             // register Swagger and its routes first
             Rock.Rest.Swagger.SwaggerConfig.Register( config );
+#else
+            app.UseMvc( routeBuilder =>
+            {
+                var config = new
+                {
+                    Routes = routeBuilder
+                };
+#endif
 
             // Add API route for dataviews
             config.Routes.MapHttpRoute(
@@ -114,8 +133,10 @@ namespace Rock.Rest
                     httpMethod = new HttpMethodConstraint( new string[] { "PUT", "OPTIONS" } ),
                 } );
 
+#if !IS_NET_CORE
             // finds all [Route] attributes on REST controllers and creates the routes
             config.MapHttpAttributeRoutes();
+#endif
 
             // Add any custom api routes
             foreach ( var type in Rock.Reflection.FindTypes(
@@ -126,7 +147,11 @@ namespace Rock.Rest
                     var controller = (Rock.Rest.IHasCustomRoutes)Activator.CreateInstance( type.Value );
                     if ( controller != null )
                     {
+#if IS_NET_CORE
+                        controller.AddRoutes( routeBuilder );
+#else
                         controller.AddRoutes( RouteTable.Routes );
+#endif
                     }
                 }
                 catch
@@ -234,6 +259,10 @@ namespace Rock.Rest
                     controllerName = new Rock.Rest.Constraints.ValidControllerNameConstraint()
                 } );
 
+#if IS_NET_CORE
+            } );
+#endif
+
             // build OData model and create service route (mainly for metadata)
             ODataConventionModelBuilder builder = new ODataConventionModelBuilder();
 
@@ -243,7 +272,11 @@ namespace Rock.Rest
 
             foreach ( var entityType in entityTypeList )
             {
+#if IS_NET_CORE
+                var entityTypeConfig = builder.AddEntityType( entityType );
+#else
                 var entityTypeConfig = builder.AddEntity( entityType );
+#endif
                 
                 var tableAttribute = entityType.GetCustomAttribute<TableAttribute>();
                 string name;
@@ -256,10 +289,32 @@ namespace Rock.Rest
                     name = entityType.Name.Pluralize();
                 }
 
+#if IS_NET_CORE
+                foreach ( var ignoredProperties in entityType.GetCustomAttributes<Rock.Data.IgnorePropertiesAttribute>( true ) )
+                {
+                    foreach ( var propertyName in ignoredProperties.Properties )
+                    {
+                        var pi = entityType.GetProperty( propertyName );
+                        if ( pi != null )
+                        {
+                            entityTypeConfig.RemoveProperty( pi );
+                        }
+                    }
+                }
+#endif
+
                 var entitySetConfig = builder.AddEntitySet( name, entityTypeConfig );
             }
 
+#if IS_NET_CORE
+            app.UseMvc( routeBuilder =>
+            {
+                routeBuilder.Count().Filter().OrderBy().Expand().Select().MaxTop( null );
+                routeBuilder.MapODataServiceRoute( "api", "api", builder.GetEdmModel() );
+            } );
+#else
             config.Routes.MapODataServiceRoute( "api", "api", builder.GetEdmModel() );
+#endif
         }
     }
 }

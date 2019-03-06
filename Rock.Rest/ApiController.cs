@@ -22,10 +22,14 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
+#if !IS_NET_CORE
 using System.ServiceModel.Channels;
 using System.Web.Http;
 using System.Web.Http.OData;
 
+#endif
+using Microsoft.AspNet.OData;
+using Microsoft.AspNetCore.Mvc;
 using Rock;
 using Rock.Attribute;
 using Rock.Data;
@@ -108,6 +112,11 @@ namespace Rock.Rest
         /// <exception cref="HttpResponseException"></exception>
         [Authenticate, Secured]
         [EnableQuery]
+#if IS_NET_CORE
+        // EFTODO: Duplicate route.. not sure how this one is supposed to work? Probably need an action constraint.
+
+        [NonAction]
+#endif
         public virtual T Get( [FromODataUri] int key )
         {
             T model;
@@ -126,11 +135,19 @@ namespace Rock.Rest
         /// <returns></returns>
         /// <exception cref="HttpResponseException"></exception>
         [Authenticate, Secured]
+#if IS_NET_CORE
+        public virtual IActionResult Post( [FromBody]T value )
+#else
         public virtual HttpResponseMessage Post( [FromBody]T value )
+#endif
         {
             if ( value == null )
             {
+#if IS_NET_CORE
+                return BadRequest( ModelState );
+#else
                 throw new HttpResponseException( HttpStatusCode.BadRequest );
+#endif
             }
 
             SetProxyCreation( true );
@@ -141,19 +158,31 @@ namespace Rock.Rest
 
             if ( !value.IsValid )
             {
+#if IS_NET_CORE
+                return BadRequest( string.Join( ",", value.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
+#else
                 return ControllerContext.Request.CreateErrorResponse(
                     HttpStatusCode.BadRequest,
                     string.Join( ",", value.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
+#endif
             }
 
+#if IS_NET_CORE
+            EnsureHttpContextHasCurrentPerson();
+#else
             if ( !System.Web.HttpContext.Current.Items.Contains( "CurrentPerson" ) )
             {
                 System.Web.HttpContext.Current.Items.Add( "CurrentPerson", GetPerson() );
             }
+#endif
 
             Service.Context.SaveChanges();
 
+#if IS_NET_CORE
+            var response = StatusCode( ( int ) HttpStatusCode.Created, value.Id );
+#else
             var response = ControllerContext.Request.CreateResponse( HttpStatusCode.Created, value.Id );
+#endif
 
             //// TODO set response.Headers.Location as per REST POST convention
             // response.Headers.Location = new Uri( Request.RequestUri, "/api/pages/" + page.Id.ToString() );
@@ -168,11 +197,19 @@ namespace Rock.Rest
         /// <exception cref="HttpResponseException">
         /// </exception>
         [Authenticate, Secured]
+#if IS_NET_CORE
+        public virtual IActionResult Put( int id, [FromBody]T value )
+#else
         public virtual void Put( int id, [FromBody]T value )
+#endif
         {
             if ( value == null )
             {
+#if IS_NET_CORE
+                return BadRequest( ModelState );
+#else
                 throw new HttpResponseException( HttpStatusCode.BadRequest );
+#endif
             }
 
             SetProxyCreation( true );
@@ -189,19 +226,31 @@ namespace Rock.Rest
 
             if ( targetModel.IsValid )
             {
+#if IS_NET_CORE
+                EnsureHttpContextHasCurrentPerson();
+#else
                 if ( !System.Web.HttpContext.Current.Items.Contains( "CurrentPerson" ) )
                 {
                     System.Web.HttpContext.Current.Items.Add( "CurrentPerson", GetPerson() );
                 }
+#endif
 
                 Service.Context.SaveChanges();
+
+#if IS_NET_CORE
+                return Ok();
+#endif
             }
             else
             {
+#if IS_NET_CORE
+                return BadRequest( string.Join( ",", targetModel.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
+#else
                 var response = ControllerContext.Request.CreateErrorResponse(
                     HttpStatusCode.BadRequest,
                     string.Join( ",", targetModel.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
                 throw new HttpResponseException( response );
+#endif
             }
         }
 
@@ -213,20 +262,32 @@ namespace Rock.Rest
         /// <exception cref="HttpResponseException">
         /// </exception>
         [Authenticate, Secured]
+#if IS_NET_CORE
+        public virtual IActionResult Patch( int id, [FromBody]Dictionary<string, object> values )
+#else
         public virtual void Patch( int id, [FromBody]Dictionary<string, object> values )
+#endif
         {
             // Check that something was sent in the body
             if ( values == null || !values.Keys.Any() )
             {
+#if IS_NET_CORE
+                return BadRequest( "No values were sent in the body" );
+#else
                 var response = ControllerContext.Request.CreateErrorResponse(
                     HttpStatusCode.BadRequest, "No values were sent in the body" );
                 throw new HttpResponseException( response );
+#endif
             }
             else if ( values.ContainsKey( "Id" ) )
             {
+#if IS_NET_CORE
+                return BadRequest( "Cannot set Id" );
+#else
                 var response = ControllerContext.Request.CreateErrorResponse(
                     HttpStatusCode.BadRequest, "Cannot set Id" );
                 throw new HttpResponseException( response );
+#endif
             }
 
             SetProxyCreation( true );
@@ -273,10 +334,14 @@ namespace Rock.Rest
                                 }
                                 catch ( OverflowException )
                                 {
+#if IS_NET_CORE
+                                    return BadRequest( $"Cannot cast {key} to int32" );
+#else
                                     var response = ControllerContext.Request.CreateErrorResponse(
                                         HttpStatusCode.BadRequest,
                                         string.Format( "Cannot cast {0} to int32", key ) );
                                     throw new HttpResponseException( response );
+#endif
                                 }
                             }
                             else
@@ -287,47 +352,71 @@ namespace Rock.Rest
                         }
                         else
                         {
+#if IS_NET_CORE
+                            return BadRequest( $"Cannot write {key}" );
+#else
                             var response = ControllerContext.Request.CreateErrorResponse(
                                 HttpStatusCode.BadRequest,
                                 string.Format( "Cannot write {0}", key ) );
                             throw new HttpResponseException( response );
+#endif
                         }
                     }
                     else
                     {
+#if IS_NET_CORE
+                        return BadRequest( $"Cannot find property {key}" );
+#else
                         // This shouldn't happen because we are checking that the property exists.
                         // Just to make sure reflection doesn't fail
                         var response = ControllerContext.Request.CreateErrorResponse(
                             HttpStatusCode.BadRequest,
                             string.Format( "Cannot find property {0}", key ) );
                         throw new HttpResponseException( response );
+#endif
                     }
                 }
                 else
                 {
+#if IS_NET_CORE
+                    return BadRequest( $"{type.BaseType.Name} does not have attribute {key}" );
+#else
                     var response = ControllerContext.Request.CreateErrorResponse(
                         HttpStatusCode.BadRequest,
                         string.Format( "{0} does not have attribute {1}", type.BaseType.Name, key ) );
                     throw new HttpResponseException( response );
+#endif
                 }
             }
 
             // Verify model is valid before saving
             if ( targetModel.IsValid )
             {
+#if IS_NET_CORE
+                EnsureHttpContextHasCurrentPerson();
+#else
                 if ( !System.Web.HttpContext.Current.Items.Contains( "CurrentPerson" ) )
                 {
                     System.Web.HttpContext.Current.Items.Add( "CurrentPerson", GetPerson() );
                 }
+#endif
 
                 Service.Context.SaveChanges();
+
+#if IS_NET_CORE
+                return Ok();
+#endif
             }
             else
             {
+#if IS_NET_CORE
+                return BadRequest( string.Join( ",", targetModel.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
+#else
                 var response = ControllerContext.Request.CreateErrorResponse(
                     HttpStatusCode.BadRequest,
                     string.Join( ",", targetModel.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
                 throw new HttpResponseException( response );
+#endif
             }
         }
 
@@ -386,6 +475,9 @@ namespace Rock.Rest
             return null;
         }
 
+#if !IS_NET_CORE
+        // EFTODO: Duplicate routes not supported.
+
         /// <summary>
         /// Launches a workflow. And optionally passes the entity with selected id as the entity for the workflow
         /// </summary>
@@ -419,6 +511,7 @@ namespace Rock.Rest
                 Rock.Transactions.RockQueue.TransactionQueue.Enqueue( transaction );
             }
         }
+#endif
 
         /// <summary>
         /// Launches a workflow. And optionally passes the entity with selected id as the entity for the workflow
@@ -462,7 +555,11 @@ namespace Rock.Rest
         /// <returns></returns>
         [Authenticate, Secured]
         [HttpDelete]
+#if IS_NET_CORE
+        public virtual IActionResult DeleteAttributeValue( int id, string attributeKey )
+#else
         public virtual HttpResponseMessage DeleteAttributeValue( int id, string attributeKey )
+#endif
         {
             return SetAttributeValue( id, attributeKey, string.Empty );
         }
@@ -480,7 +577,11 @@ namespace Rock.Rest
         /// </exception>
         [Authenticate, Secured]
         [HttpPost]
+#if IS_NET_CORE
+        public virtual IActionResult SetAttributeValue( int id, string attributeKey, string attributeValue )
+#else
         public virtual HttpResponseMessage SetAttributeValue( int id, string attributeKey, string attributeValue )
+#endif
         {
             T model;
             if ( !Service.TryGet( id, out model ) )
@@ -506,8 +607,12 @@ namespace Rock.Rest
                         }
 
                         Rock.Attribute.Helper.SaveAttributeValue( modelWithAttributes, attributeCache, attributeValue, rockContext );
+#if IS_NET_CORE
+                        return Accepted( modelWithAttributes.Id );
+#else
                         var response = ControllerContext.Request.CreateResponse( HttpStatusCode.Accepted, modelWithAttributes.Id );
                         return response;
+#endif
                     }
                     else
                     {
@@ -531,7 +636,11 @@ namespace Rock.Rest
         [Authenticate, Secured]
         [HttpPut, HttpOptions]
         [ActionName( "SetContext" )]
+#if IS_NET_CORE
+        public virtual IActionResult SetContext( int id )
+#else
         public virtual HttpResponseMessage SetContext( int id )
+#endif
         {
             Guid? guid = Service.GetGuid( id );
             if ( !guid.HasValue )
@@ -548,12 +657,22 @@ namespace Rock.Rest
                 guid.ToString();
             string contextValue = Rock.Security.Encryption.EncryptString( identifier );
 
+#if IS_NET_CORE
+            var httpContext = HttpContext;
+#else
             var httpContext = System.Web.HttpContext.Current;
+#endif
             if ( httpContext == null )
             {
                 throw new HttpResponseException( HttpStatusCode.BadRequest );
             }
 
+#if IS_NET_CORE
+            httpContext.Response.Cookies.Append( cookieName, contextValue, new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                Expires = RockDateTime.Now.AddYears( 1 )
+            } );
+#else
             var contextCookie = httpContext.Request.Cookies[cookieName];
             if ( contextCookie == null )
             {
@@ -563,8 +682,13 @@ namespace Rock.Rest
             contextCookie.Values[typeName] = contextValue;
             contextCookie.Expires = RockDateTime.Now.AddYears( 1 );
             httpContext.Response.Cookies.Add( contextCookie );
+#endif
 
+#if IS_NET_CORE
+            return Ok();
+#else
             return ControllerContext.Request.CreateResponse( HttpStatusCode.OK );
+#endif
         }
 
         /// <summary>
@@ -660,7 +784,11 @@ namespace Rock.Rest
         /// </value>
         protected void SetProxyCreation( bool enabled )
         {
+#if IS_NET_CORE
+            Service.Context.ChangeTracker.LazyLoadingEnabled = enabled;
+#else
             Service.Context.Configuration.ProxyCreationEnabled = enabled;
+#endif
         }
 
         /// <summary>
@@ -670,7 +798,11 @@ namespace Rock.Rest
         /// <returns></returns>
         protected bool IsProxy( object type )
         {
+#if IS_NET_CORE
+            return type.GetType().Namespace == "Castle.Proxies";
+#else
             return type != null && System.Data.Entity.Core.Objects.ObjectContext.GetObjectType( type.GetType() ) != type.GetType();
+#endif
         }
     }
 }

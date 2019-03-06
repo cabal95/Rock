@@ -52,11 +52,19 @@ namespace Rock.Rest.Controllers
         /// <returns></returns>
         [HttpPost]
         [Authenticate, Secured]
+#if IS_NET_CORE
+        public override Microsoft.AspNetCore.Mvc.IActionResult Post( UserLogin value )
+#else
         public override System.Net.Http.HttpResponseMessage Post( UserLogin value )
+#endif
         {
             if ( ( ( UserLoginService ) Service ).GetByUserName( value.UserName ) != null )
             {
+#if IS_NET_CORE
+                return Conflict( "The username already exists." );
+#else
                 return ControllerContext.Request.CreateResponse( HttpStatusCode.Conflict, "The username already exists." );
+#endif
             }
 
             SetPasswordFromRest( value );
@@ -70,10 +78,18 @@ namespace Rock.Rest.Controllers
         /// <param name="id">The identifier.</param>
         /// <param name="value">The value.</param>
         [Authenticate, Secured]
+#if IS_NET_CORE
+        public override Microsoft.AspNetCore.Mvc.IActionResult Put( int id, UserLogin value )
+#else
         public override void Put( int id, UserLogin value )
+#endif
         {
             SetPasswordFromRest( value );
+#if IS_NET_CORE
+            return base.Put( id, value );
+#else
             base.Put( id, value );
+#endif
         }
 
         /// <summary>
@@ -85,6 +101,12 @@ namespace Rock.Rest.Controllers
             UserLoginWithPlainTextPassword userLoginWithPlainTextPassword = null;
             string json = string.Empty;
 
+#if IS_NET_CORE
+            StreamReader sr = new StreamReader( Request.Body );
+
+            json = sr.ReadToEnd();
+            userLoginWithPlainTextPassword = JsonConvert.DeserializeObject<UserLoginWithPlainTextPassword>( json );
+#else
             this.ActionContext.Request.Content.ReadAsStreamAsync().ContinueWith( a =>
             {
                 // to allow PUT and POST to work with either UserLogin or UserLoginWithPlainTextPassword, read the the stream into a UserLoginWithPlainTextPassword record to see if that's what we got
@@ -94,6 +116,7 @@ namespace Rock.Rest.Controllers
                 json = sr.ReadToEnd();
                 userLoginWithPlainTextPassword = JsonConvert.DeserializeObject( json, typeof( UserLoginWithPlainTextPassword ) ) as UserLoginWithPlainTextPassword;
             } ).Wait();
+#endif
 
             if ( userLoginWithPlainTextPassword != null )
             {

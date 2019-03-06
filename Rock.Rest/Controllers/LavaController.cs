@@ -39,8 +39,19 @@ namespace Rock.Rest.Controllers
         [System.Web.Http.Route( "api/Lava/RenderTemplate" )]
         [HttpPost]
         [Authenticate, Secured]
+#if IS_NET_CORE
+        public string RenderTemplate( [Microsoft.AspNetCore.Mvc.FromQuery] string additionalMergeObjects = null )
+#else
         public string RenderTemplate( [NakedBody] string template, [FromUri] string additionalMergeObjects = null )
+#endif
         {
+#if IS_NET_CORE
+            string template;
+            using ( var reader = new System.IO.StreamReader( Request.Body, System.Text.Encoding.UTF8 ) )
+            {
+                template = reader.ReadToEnd();
+            }
+#endif
             Rock.Lava.CommonMergeFieldsOptions lavaOptions = new Lava.CommonMergeFieldsOptions();
             lavaOptions.GetPageContext = false;
             lavaOptions.GetPageParameters = false;

@@ -28,8 +28,15 @@ namespace Rock.Rest.Controllers
     /// <summary>
     /// Controller of misc utility functions that are used by Rock controls
     /// </summary>
+#if IS_NET_CORE
+    public class UtilityController : Microsoft.AspNetCore.Mvc.ControllerBase
+#else
     public class UtilityController : ApiController
+#endif
     {
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Calculates the sliding date range for the SlidingDateRange control (called from client side) and returns a string representing the date range
         /// </summary>
@@ -93,6 +100,7 @@ namespace Rock.Rest.Controllers
             string textValue = SlidingDateRangePicker.FormatDelimitedValues( string.Format( "{0}|{1}|{2}|{3}|{4}", slidingDateRangeType, number, timeUnitType, startDate, endDate ) );
             return textValue;
         }
+#endif
 
         /// <summary>
         /// Gets the campus context.
@@ -103,6 +111,18 @@ namespace Rock.Rest.Controllers
         public int GetCampusContext()
         {
             string campusCookieCypher = null;
+#if IS_NET_CORE
+            if ( Request.Cookies.Keys.Contains( "Rock_Context" ) )
+            {
+                var contextCookie = System.Web.HttpContext.Current.Request.Cookies["Rock_Context"];
+                var contextCookies = contextCookie.Split( '&' ).Select( s => s.Split( '=' ) ).ToDictionary( kvp => kvp[0], kvp => kvp[1] );
+
+                if ( contextCookie.Contains( "Rock.Model.Campus" ) )
+                {
+                    campusCookieCypher = contextCookies["Rock.Model.Campus"];
+                }
+            }
+#else
             if ( System.Web.HttpContext.Current.Request.Cookies.AllKeys.Contains( "Rock_Context" ) )
             {
                 var contextCookie = System.Web.HttpContext.Current.Request.Cookies["Rock_Context"];
@@ -111,6 +131,7 @@ namespace Rock.Rest.Controllers
                     campusCookieCypher = contextCookie.Values["Rock.Model.Campus"];
                 }
             }
+#endif
 
             if ( campusCookieCypher == null )
             {
@@ -166,7 +187,11 @@ namespace Rock.Rest.Controllers
         {
             var processResponse = string.Empty;
 
+#if !IS_NET_CORE
+            // EFTODO: Implement this.
+
             Utility.TextToWorkflow.MessageRecieved( toNumber, fromNumber, message, out processResponse );
+#endif
 
             return processResponse;
         }

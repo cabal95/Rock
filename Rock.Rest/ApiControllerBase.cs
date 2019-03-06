@@ -19,10 +19,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+#if !IS_NET_CORE
 using System.ServiceModel.Channels;
 using System.Web.Http;
 using System.Web.Http.OData;
+#endif
 
+#if IS_NET_CORE
+using Microsoft.AspNet.OData;
+using Microsoft.AspNetCore.Mvc;
+#endif
 using Rock.Data;
 using Rock.Model;
 using Rock.Rest.Filters;
@@ -42,7 +48,11 @@ namespace Rock.Rest
     /// </summary>
     /// <seealso cref="System.Web.Http.ApiController" />
     [ODataRouting]
+#if IS_NET_CORE
+    public class ApiControllerBase : ControllerBase
+#else
     public class ApiControllerBase : ApiController
+#endif
     {
         /// <summary>
         /// Gets the currently logged in Person
@@ -60,12 +70,23 @@ namespace Rock.Rest
         /// <returns></returns>
         protected virtual Rock.Model.Person GetPerson( RockContext rockContext )
         {
+#if IS_NET_CORE
+            if ( HttpContext.Items.ContainsKey( "Person" ) )
+            {
+                return HttpContext.Items["Person"] as Person;
+            }
+#else
             if ( Request.Properties.Keys.Contains( "Person" ) )
             {
                 return Request.Properties["Person"] as Person;
             }
+#endif
 
+#if IS_NET_CORE
+            var principal = User;
+#else
             var principal = ControllerContext.Request.GetUserPrincipal();
+#endif
             if ( principal != null && principal.Identity != null )
             {
                 if ( principal.Identity.Name.StartsWith( "rckipid=" ) )
@@ -85,7 +106,11 @@ namespace Rock.Rest
                     if ( userLogin != null )
                     {
                         var person = userLogin.Person;
+#if IS_NET_CORE
+                        HttpContext.Items.Add( "Person", person );
+#else
                         Request.Properties.Add( "Person", person );
+#endif
                         return userLogin.Person;
                     }
                 }
@@ -93,6 +118,19 @@ namespace Rock.Rest
 
             return null;
         }
+
+#if IS_NET_CORE
+        /// <summary>
+        /// Ensures that the HttpContext has a CurrentPerson value.
+        /// </summary>
+        protected virtual void EnsureHttpContextHasCurrentPerson()
+        {
+            if ( !HttpContext.Items.ContainsKey( "CurrentPerson" ) )
+            {
+                HttpContext.Items.Add( "CurrentPerson", GetPerson() );
+            }
+        }
+#endif
 
         /// <summary>
         /// Gets the primary person alias of the currently logged in person

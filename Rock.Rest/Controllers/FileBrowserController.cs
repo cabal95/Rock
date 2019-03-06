@@ -23,8 +23,10 @@ using System.Net;
 using System.Net.Http;
 using System.Web;
 using System.Web.Http;
+#if !IS_NET_CORE
 using System.Web.Routing;
 using ImageResizer;
+#endif
 using Rock.Rest.Filters;
 
 namespace Rock.Rest.Controllers
@@ -32,8 +34,15 @@ namespace Rock.Rest.Controllers
     /// <summary>
     /// 
     /// </summary>
+#if IS_NET_CORE
+    public class FileBrowserController : Microsoft.AspNetCore.Mvc.ControllerBase
+#else
     public class FileBrowserController : ApiController
+#endif
     {
+#if !IS_NET_CORE
+        // EFTODO: Implement this with different image library.
+
         /// <summary>
         /// Gets the file thumbnail
         /// </summary>
@@ -167,5 +176,6 @@ namespace Rock.Rest.Controllers
                 }
             }
         }
+#endif
     }
 }

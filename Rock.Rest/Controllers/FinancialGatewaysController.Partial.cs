@@ -41,30 +41,59 @@ namespace Rock.Rest.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route( "api/FinancialGateways/Webhook" )]
+#if IS_NET_CORE
+        public Microsoft.AspNetCore.Mvc.IActionResult HandleWebhook( [FromUri]Guid guid )
+#else
         public HttpResponseMessage HandleWebhook( [FromUri]Guid guid )
+#endif
         {
             if ( guid.IsEmpty() )
             {
+#if IS_NET_CORE
+                return NotFound();
+#else
                 return ControllerContext.Request.CreateResponse( HttpStatusCode.NotFound );
+#endif
             }
 
             var financialGateway = Service.Get( guid );
 
             if ( financialGateway == null || !financialGateway.IsActive )
             {
+#if IS_NET_CORE
+                return NotFound();
+#else
                 return ControllerContext.Request.CreateResponse( HttpStatusCode.NotFound );
+#endif
             }
 
             var webhookGatewayComponent = financialGateway.GetGatewayComponent() as IWebhookGatewayComponent;
 
             if ( webhookGatewayComponent == null )
             {
+#if IS_NET_CORE
+                return NotFound();
+#else
                 return ControllerContext.Request.CreateResponse( HttpStatusCode.NotFound );
+#endif
             }
 
+#if IS_NET_CORE
+            var success = webhookGatewayComponent.HandleWebhook( financialGateway, Request.Headers, Request );
+
+            if ( success )
+            {
+                return Ok();
+            }
+            else
+            {
+                return BadRequest();
+            }
+#else
             var success = webhookGatewayComponent.HandleWebhook( financialGateway, Request.Headers, HttpContext.Current.Request );
             var statusCode = success ? HttpStatusCode.OK : HttpStatusCode.BadRequest;
             return ControllerContext.Request.CreateResponse( statusCode );
+#endif
         }
     }
 }

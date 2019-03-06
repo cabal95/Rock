@@ -81,9 +81,13 @@ namespace Rock.Rest.Controllers
             try
             {
                 var rockContext = new RockContext();
+#if IS_NET_CORE
+                var uploadedFile = HttpContext.Request.Form.Files.FirstOrDefault();
+#else
                 var context = HttpContext.Current;
                 var files = context.Request.Files;
                 var uploadedFile = files.AllKeys.Select( fk => files[fk] ).FirstOrDefault();
+#endif
                 var binaryFileType = new BinaryFileTypeService( rockContext ).Get( binaryFileTypeId );
 
                 if ( uploadedFile == null )
@@ -109,7 +113,11 @@ namespace Rock.Rest.Controllers
                 binaryFile.BinaryFileTypeId = binaryFileType.Id;
                 binaryFile.MimeType = uploadedFile.ContentType;
                 binaryFile.FileName = Path.GetFileName( uploadedFile.FileName );
+#if IS_NET_CORE
+                binaryFile.FileSize = uploadedFile.Length;
+#else
                 binaryFile.FileSize = uploadedFile.ContentLength;
+#endif
                 binaryFile.ContentStream = FileUtilities.GetFileContentStream( uploadedFile );
 
                 rockContext.SaveChanges();

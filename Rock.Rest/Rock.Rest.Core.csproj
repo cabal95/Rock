@@ -1,0 +1,301 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <AssemblyName>Rock.Rest</AssemblyName>
+    <RootNamespace>Rock.Rest</RootNamespace>
+    <DefineConstants>$(DefineConstants);IS_NET_CORE</DefineConstants>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\**" />
+    <Compile Remove="Swagger\**" />
+    <EmbeddedResource Remove="Controllers\**" />
+    <EmbeddedResource Remove="Swagger\**" />
+    <None Remove="Controllers\**" />
+    <None Remove="Swagger\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Binders\NakedBodyAttribute.cs" />
+    <Compile Remove="Binders\NakedBodyParameterBinding.cs" />
+    <Compile Remove="Filters\RequireHttpsAttribute.cs" />
+    <Compile Remove="Filters\ValidateAttribute.cs" />
+    <Compile Remove="Handler\RockApiExceptionHandler.cs" />
+    <Compile Remove="Handler\RockApiExceptionLogger.cs" />
+    <Compile Remove="Utility\HttpRequestMessageExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove=".gitignore" />
+    <None Remove="App.config" />
+    <None Remove="packages.config" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Rock.Version\AssemblySharedInfo.cs" Link="AssemblySharedInfo.cs" />
+    <Compile Include="Controllers\AssetStorageProvidersController.Partial.cs" />
+    <Compile Include="Controllers\AttendancesController.partial.cs" />
+    <Compile Include="Controllers\AttributesController.Partial.cs" />
+    <Compile Include="Controllers\AuthController.cs" />
+    <Compile Include="Controllers\BinaryFilesController.Partial.cs" />
+    <Compile Include="Controllers\BlocksController.Partial.cs" />
+    <Compile Include="Controllers\CategoriesController.Partial.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsDimCampusController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsDimFamilyCurrentsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsDimFamilyHeadOfHouseholdsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsDimFamilyHistoricalsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsDimFinancialAccountsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsDimFinancialBatchesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsDimPersonCurrentsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsDimPersonHistoricalsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsFactAttendancesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsFactFinancialTransactionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsSourceAttendancesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsSourceCampusController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsSourceFamilyHistoricalsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsSourceFinancialTransactionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AnalyticsSourcePersonHistoricalsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AssetStorageProvidersController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AttendanceCodesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AttendanceOccurrencesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AttendancesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AttributeMatricesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AttributeMatrixItemsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AttributeMatrixTemplatesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AttributeQualifiersController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AttributesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AttributeValueHistoricalsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AttributeValuesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AuditDetailsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AuditsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\AuthsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\BackgroundChecksController.cs" />
+    <Compile Include="Controllers\CodeGenerated\BenevolenceRequestDocumentsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\BenevolenceRequestsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\BenevolenceResultsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\BinaryFileDatasController.cs" />
+    <Compile Include="Controllers\CodeGenerated\BinaryFilesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\BinaryFileTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\BlocksController.cs" />
+    <Compile Include="Controllers\CodeGenerated\BlockTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\CampusesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\CategoriesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\CommunicationAttachmentsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\CommunicationRecipientsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\CommunicationResponsesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\CommunicationsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\CommunicationTemplateAttachmentsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\CommunicationTemplatesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionActivityTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionOpportunitiesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionOpportunityCampusController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionOpportunityConnectorGroupsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionOpportunityGroupConfigsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionOpportunityGroupsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionRequestActivitiesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionRequestsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionRequestWorkflowsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionStatusController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ConnectionWorkflowsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ContentChannelItemAssociationsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ContentChannelItemsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ContentChannelItemSlugsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ContentChannelsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ContentChannelTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\DataViewFiltersController.cs" />
+    <Compile Include="Controllers\CodeGenerated\DataViewsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\DefinedTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\DefinedValuesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\DevicesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\EntitySetItemsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\EntitySetsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\EntityTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\EventCalendarContentChannelsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\EventCalendarItemsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\EventCalendarsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\EventItemAudiencesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\EventItemOccurrenceChannelItemsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\EventItemOccurrenceGroupMapsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\EventItemOccurrencesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\EventItemsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ExceptionLogsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FieldTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialAccountsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialBatchesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialGatewaysController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialPaymentDetailsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialPersonBankAccountsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialPersonSavedAccountsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialPledgesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialScheduledTransactionDetailsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialScheduledTransactionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialTransactionDetailsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialTransactionImagesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialTransactionRefundsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FinancialTransactionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FollowingEventNotificationsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FollowingEventSubscriptionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FollowingEventTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FollowingsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FollowingSuggestedsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\FollowingSuggestionTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupHistoricalsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupLocationHistoricalSchedulesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupLocationHistoricalsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupLocationsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupMemberHistoricalsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupMemberRequirementsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupMembersController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupMemberWorkflowTriggersController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupRequirementsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupRequirementTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupScheduleExclusionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupSyncsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupTypeRolesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\GroupTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\HistoriesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\HtmlContentsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\InteractionChannelsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\InteractionComponentsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\InteractionDeviceTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\InteractionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\InteractionSessionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\LavaShortcodesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\LayoutsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\LocationsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\MergeTemplatesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\MetaFirstNameGenderLookupsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\MetaLastNameLookupsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\MetaNickNameLookupsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\MetricCategoriesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\MetricPartitionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\MetricsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\MetricValuePartitionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\MetricValuesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\NcoaHistoriesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\NoteAttachmentsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\NotesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\NoteTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\NoteWatchesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\NotificationRecipientsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\NotificationsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PageContextsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PageRoutesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PagesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PageShortLinksController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PeopleController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PersonalDevicesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PersonAliasController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PersonBadgesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PersonDuplicatesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PersonPreviousNamesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PersonSearchKeysController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PersonSignalsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PersonTokensController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PersonViewedsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PhoneNumbersController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PluginMigrationsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\PrayerRequestsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RegistrationInstancesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RegistrationRegistrantFeesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RegistrationRegistrantsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RegistrationsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RegistrationTemplateDiscountsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RegistrationTemplateFeeItemsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RegistrationTemplateFeesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RegistrationTemplateFormFieldsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RegistrationTemplateFormsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RegistrationTemplatesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ReportFieldsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ReportsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RestActionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\RestControllersController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ScheduleCategoryExclusionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\SchedulesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ServiceJobHistoriesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ServiceJobsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\ServiceLogsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\SignalTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\SignatureDocumentsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\SignatureDocumentTemplatesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\SiteDomainsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\SitesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\SystemEmailsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\TaggedItemsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\TagsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\UserLoginsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\WorkflowActionFormAttributesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\WorkflowActionFormsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\WorkflowActionsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\WorkflowActionTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\WorkflowActivitiesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\WorkflowActivityTypesController.cs" />
+    <Compile Include="Controllers\CodeGenerated\WorkflowLogsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\WorkflowsController.cs" />
+    <Compile Include="Controllers\CodeGenerated\WorkflowTriggersController.cs" />
+    <Compile Include="Controllers\CodeGenerated\WorkflowTypesController.cs" />
+    <Compile Include="Controllers\CommunicationsController.Partial.cs" />
+    <Compile Include="Controllers\ConnectionRequestsController.Partial.cs" />
+    <Compile Include="Controllers\ContentChannelItemSlugsController.Partial.cs" />
+    <Compile Include="Controllers\ExceptionLogsController.Partial.cs" />
+    <Compile Include="Controllers\FileBrowserController.cs" />
+    <Compile Include="Controllers\FinancialAccountsController.Partial.cs" />
+    <Compile Include="Controllers\FinancialGatewaysController.Partial.cs" />
+    <Compile Include="Controllers\FinancialScheduledTransactionsController.Partial.cs" />
+    <Compile Include="Controllers\FinancialTransactionsController.Partial.cs" />
+    <Compile Include="Controllers\FollowingsController.Partial.cs" />
+    <Compile Include="Controllers\GroupMemberHistoricalsController.Partial.cs" />
+    <Compile Include="Controllers\GroupMembersController.Partial.cs" />
+    <Compile Include="Controllers\GroupsController.Partial.cs" />
+    <Compile Include="Controllers\HtmlContentsController.Partial.cs" />
+    <Compile Include="Controllers\LavaController.cs" />
+    <Compile Include="Controllers\LocationsController.Partial.cs" />
+    <Compile Include="Controllers\MergeFieldsController.cs" />
+    <Compile Include="Controllers\MetricsController.partial.cs" />
+    <Compile Include="Controllers\MetricValuesController.Partial.cs" />
+    <Compile Include="Controllers\NotesController.partial.cs" />
+    <Compile Include="Controllers\PagesController.Partial.cs" />
+    <Compile Include="Controllers\PbxController.cs" />
+    <Compile Include="Controllers\PeopleController.Partial.cs" />
+    <Compile Include="Controllers\PersonalDevicesController.Partial.cs" />
+    <Compile Include="Controllers\PersonBadgesController.cs" />
+    <Compile Include="Controllers\PrayerRequestsController.Parial.cs" />
+    <Compile Include="Controllers\PresenceController.cs" />
+    <Compile Include="Controllers\RestControllersController.partial.cs" />
+    <Compile Include="Controllers\SearchController.cs" />
+    <Compile Include="Controllers\TaggedItemsController.Partial.cs" />
+    <Compile Include="Controllers\TagsController.Partial.cs" />
+    <Compile Include="Controllers\UserLoginsController.Partial.cs" />
+    <Compile Include="Controllers\UtilityController.cs" />
+    <Compile Include="Controllers\WorkflowActionTypesController.Partial.cs" />
+    <Compile Include="Controllers\WorkflowsController.Partial.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.2" />
+    <PackageReference Include="Microsoft.AspNetCore.OData" Version="7.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Rock.Version\Rock.Version.Core.csproj" />
+    <ProjectReference Include="..\Rock\Rock.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Binders\" />
+    <Folder Include="Handler\" />
+    <Folder Include="Utility\" />
+  </ItemGroup>
+
+</Project>

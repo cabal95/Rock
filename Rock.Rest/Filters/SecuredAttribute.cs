@@ -18,10 +18,18 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+#if !IS_NET_CORE
 using System.ServiceModel.Channels;
+#endif
+using System.Threading.Tasks;
+#if !IS_NET_CORE
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
+#endif
 
+#if IS_NET_CORE
+using Microsoft.AspNetCore.Mvc.Filters;
+#endif
 using Rock.Data;
 using Rock.Model;
 using Rock.Security;
@@ -29,6 +37,36 @@ using Rock.Web.Cache;
 
 namespace Rock.Rest.Filters
 {
+#if IS_NET_CORE
+    public class SecuredAttribute : System.Attribute, IAsyncActionFilter
+    {
+        public async Task OnActionExecutionAsync( ActionExecutingContext actionContext, ActionExecutionDelegate next )
+        {
+            var controller = actionContext.RouteData.Values["controller"].ToString();
+            string controllerClassName = actionContext.Controller.GetType().FullName;
+            string actionMethod = actionContext.RouteData.Values["action"].ToString().ToUpper();
+            var endpoint = actionContext.HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IEndpointFeature>();
+            string actionPath;
+            if ( endpoint != null )
+            {
+                actionPath = ( ( Microsoft.AspNetCore.Routing.RouteEndpoint ) endpoint?.Endpoint )?.RoutePattern?.RawText ?? string.Empty;
+            }
+            else if ( actionContext.RouteData.Routers.Any( r => r.GetType() == typeof( Microsoft.AspNetCore.Routing.Route ) ) )
+            {
+                var route = ( Microsoft.AspNetCore.Routing.Route ) actionContext.RouteData.Routers.Single( r => r.GetType() == typeof( Microsoft.AspNetCore.Routing.Route ) );
+                actionPath = route.RouteTemplate.Replace( "{controller}", controller );
+            }
+            else
+            {
+                throw new Exception( "Unknown route encountred" );
+            }
+
+            //// find any additional arguments that aren't part of the RouteTemplate that qualified the action method
+            //// for example: ~/person/search?name={name}&includeHtml={includeHtml}&includeDetails={includeDetails}&includeBusinesses={includeBusinesses}
+            //// is a different action method than ~/person/search?name={name}.
+            //// Also exclude any ODataQueryOptions parameters (those don't end up as put of the apiId)
+            var routeQueryParams = actionContext.ActionArguments.Where( a => !actionPath.Contains( "{" + a.Key + "}" ) && !( a.Value is Microsoft.AspNet.OData.Query.ODataQueryOptions ) );
+#else
     /// <summary>
     /// Checks to see if the Logged-In person has authorization View (HttpMethod: GET) or Edit (all other HttpMethods) for the RestController and Controller's associated EntityType
     /// </summary>
@@ -50,6 +88,7 @@ namespace Rock.Rest.Filters
             //// is a different action method than ~/person/search?name={name}.
             //// Also exclude any ODataQueryOptions parameters (those don't end up as put of the apiId)
             var routeQueryParams = actionContext.ActionArguments.Where(a => !actionPath.Contains("{" + a.Key + "}") && !(a.Value is System.Web.Http.OData.Query.ODataQueryOptions) );
+#endif
             if ( routeQueryParams.Any())
             {
                 var actionPathQueryString = routeQueryParams.Select( a => string.Format( "{0}={{{0}}}", a.Key ) ).ToList().AsDelimited( "&" );
@@ -69,13 +108,24 @@ namespace Rock.Rest.Filters
 
             Person person = null;
 
+#if IS_NET_CORE
+            if ( actionContext.HttpContext.Items.ContainsKey( "Person" ) )
+            {
+                person = actionContext.HttpContext.Items["Person"] as Person;
+            }
+#else
             if ( actionContext.Request.Properties.Keys.Contains( "Person" ) )
             {
                 person = actionContext.Request.Properties["Person"] as Person;
             }
+#endif
             else
             {
+#if IS_NET_CORE
+                var principal = actionContext.HttpContext.User;
+#else
                 var principal = actionContext.Request.GetUserPrincipal();
+#endif
                 if ( principal != null && principal.Identity != null )
                 {
                     using ( var rockContext = new RockContext() )
@@ -100,7 +150,11 @@ namespace Rock.Rest.Filters
                         if ( userLogin != null )
                         {
                             person = userLogin.Person;
+#if IS_NET_CORE
+                            actionContext.HttpContext.Items.Add( "Person", person );
+#else
                             actionContext.Request.Properties.Add( "Person", person );
+#endif
                         }
                     }
                 }
@@ -110,7 +164,15 @@ namespace Rock.Rest.Filters
                 Rock.Security.Authorization.VIEW : Rock.Security.Authorization.EDIT;
             if ( !item.IsAuthorized( action, person ) )
             {
+#if IS_NET_CORE
+                actionContext.Result = new Microsoft.AspNetCore.Mvc.ChallengeResult();
+            }
+            else
+            {
+                await next();
+#else
                 actionContext.Response = new HttpResponseMessage( HttpStatusCode.Unauthorized );
+#endif
             }
         }
     }

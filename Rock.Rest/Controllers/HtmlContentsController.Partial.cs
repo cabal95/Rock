@@ -18,13 +18,17 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
+#endif
 using System.Dynamic;
 using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Http;
+#if !IS_NET_CORE
 using System.Web.Http.OData;
+#endif
 
 using Rock.Data;
 using Rock.Model;
@@ -63,10 +67,14 @@ namespace Rock.Rest.Controllers
                 if ( htmlContent != null )
                 {
                     htmlContent.Content = htmlContents.Content;
+#if IS_NET_CORE
+                    EnsureHttpContextHasCurrentPerson();
+#else
                     if ( !System.Web.HttpContext.Current.Items.Contains( "CurrentPerson" ) )
                     {
                         System.Web.HttpContext.Current.Items.Add( "CurrentPerson", person );
                     }
+#endif
 
                     Service.Context.SaveChanges();
 
