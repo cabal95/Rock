@@ -597,7 +597,7 @@ namespace Rock
             }
             catch ( Exception ex )
             {
-                ExceptionLogService.LogException( ex );
+                ExceptionLogService.LogException( ex, System.Web.HttpContext.Current );
                 return "Error resolving Lava merge fields: " + ex.Message;
             }
         }
@@ -703,7 +703,7 @@ namespace Rock
                 }
                 else
                 {
-                    ExceptionLogService.LogException( ex );
+                    ExceptionLogService.LogException( ex, System.Web.HttpContext.Current );
                     return "Error resolving Lava merge fields: " + ex.Message;
                 }
             }

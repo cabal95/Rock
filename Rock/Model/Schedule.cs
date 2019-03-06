@@ -241,7 +241,7 @@ namespace Rock.Model
                 CalendarEvent calendarEvent = this.GetCalenderEvent();
                 if ( calendarEvent != null && calendarEvent.DtStart != null )
 #else
-                DDay.iCal.Event calendarEvent = this.GetCalenderEvent();
+                DDay.iCal.Event calendarEvent = this.GetCalendarEvent();
                 if ( calendarEvent != null && calendarEvent.DTStart != null )
 #endif
                 {
@@ -337,7 +337,7 @@ namespace Rock.Model
                     return calendarEvent.DtStart.Value.TimeOfDay;
                 }
 #else
-                DDay.iCal.Event calendarEvent = this.GetCalenderEvent();
+                DDay.iCal.Event calendarEvent = this.GetCalendarEvent();
                 if ( calendarEvent != null && calendarEvent.DTStart != null )
                 {
                     return calendarEvent.DTStart.TimeOfDay;
@@ -406,7 +406,7 @@ namespace Rock.Model
         public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.EntityState state )
 #endif
         {
-            var calEvent = GetCalenderEvent();
+            var calEvent = GetCalendarEvent();
             if ( calEvent != null )
             {
 #if IS_NET_CORE
@@ -427,13 +427,29 @@ namespace Rock.Model
         /// <value>
         /// A <see cref="DDay.iCal.Event"/> representing the iCalendar event for this Schedule.
         /// </value>
+        [Obsolete( "Use GetCalendarEvent() instead " )]
 #if IS_NET_CORE
         public virtual CalendarEvent GetCalenderEvent()
 #else
-        public virtual DDay.iCal.Event GetCalenderEvent()  
+        public virtual DDay.iCal.Event GetCalenderEvent()
 #endif
         {
-            return ScheduleICalHelper.GetCalenderEvent( iCalendarContent );
+            return ScheduleICalHelper.GetCalendarEvent( iCalendarContent );
+        }
+
+        /// <summary>
+        /// Gets the Schedule's iCalender Event.
+        /// </summary>
+        /// <value>
+        /// A <see cref="DDay.iCal.Event"/> representing the iCalendar event for this Schedule.
+        /// </value>
+#if IS_NET_CORE
+        public virtual CalendarEvent GetCalendarEvent()
+#else
+        public virtual DDay.iCal.Event GetCalendarEvent()
+#endif
+        {
+            return ScheduleICalHelper.GetCalendarEvent( iCalendarContent );
         }
 
         /// <summary>
@@ -447,10 +463,10 @@ namespace Rock.Model
             var occurrences = new List<Occurrence>();
 
 #if IS_NET_CORE
-            CalendarEvent calEvent = GetCalenderEvent();
+            CalendarEvent calEvent = GetCalendarEvent();
             if ( calEvent != null && calEvent.DtStart != null )
 #else
-            DDay.iCal.Event calEvent = GetCalenderEvent();
+            DDay.iCal.Event calEvent = GetCalendarEvent();
             if ( calEvent != null && calEvent.DTStart != null )
 #endif
             {
@@ -602,10 +618,10 @@ namespace Rock.Model
         public virtual bool HasSchedule()
         {
 #if IS_NET_CORE
-            CalendarEvent calEvent = GetCalenderEvent();
+            CalendarEvent calEvent = GetCalendarEvent();
             if ( calEvent != null && calEvent.DtStart != null )
 #else
-            DDay.iCal.Event calEvent = GetCalenderEvent();
+            DDay.iCal.Event calEvent = GetCalendarEvent();
             if ( calEvent != null && calEvent.DTStart != null )
 #endif
             {
@@ -625,10 +641,10 @@ namespace Rock.Model
         public virtual bool HasScheduleWarning()
         {
 #if IS_NET_CORE
-            CalendarEvent calEvent = GetCalenderEvent();
+            CalendarEvent calEvent = GetCalendarEvent();
             if ( calEvent != null && calEvent.DtStart != null )
 #else
-            DDay.iCal.Event calEvent = GetCalenderEvent();
+            DDay.iCal.Event calEvent = GetCalendarEvent();
             if ( calEvent != null && calEvent.DTStart != null )
 #endif
             {
@@ -691,10 +707,10 @@ namespace Rock.Model
             string result = this.Name;
 
 #if IS_NET_CORE
-            CalendarEvent calendarEvent = this.GetCalenderEvent();
+            CalendarEvent calendarEvent = this.GetCalendarEvent();
             if ( calendarEvent != null && calendarEvent.DtStart != null )
 #else
-            DDay.iCal.Event calendarEvent = this.GetCalenderEvent();
+            DDay.iCal.Event calendarEvent = this.GetCalendarEvent();
             if ( calendarEvent != null && calendarEvent.DTStart != null )
 #endif
             {
@@ -868,7 +884,7 @@ namespace Rock.Model
         /// <returns></returns>
         public bool WasScheduleActive( DateTime time )
         {
-            var calEvent = this.GetCalenderEvent();
+            var calEvent = this.GetCalendarEvent();
 #if IS_NET_CORE
             if ( calEvent != null && calEvent.DtStart != null )
 #else
@@ -912,7 +928,7 @@ namespace Rock.Model
                 return false;
             }
 
-            var calEvent = this.GetCalenderEvent();
+            var calEvent = this.GetCalendarEvent();
 #if IS_NET_CORE
             if ( calEvent != null && calEvent.DtStart != null )
             {
@@ -1276,14 +1292,29 @@ namespace Rock.Model
         }
 
         /// <summary>
-        /// Gets the calender event.
+        /// Gets the calendar event.
         /// </summary>
         /// <param name="iCalendarContent">Content of the i calendar.</param>
         /// <returns></returns>
+        [Obsolete( "Use GetCalendarEvent( iCalendarContent ) instead " )]
 #if IS_NET_CORE
         public static CalendarEvent GetCalenderEvent( string iCalendarContent )
 #else
         public static DDay.iCal.Event GetCalenderEvent( string iCalendarContent )
+#endif
+        {
+            return GetCalendarEvent( iCalendarContent );
+        }
+
+        /// <summary>
+        /// Gets the calendar event.
+        /// </summary>
+        /// <param name="iCalendarContent">Content of the i calendar.</param>
+        /// <returns></returns>
+#if IS_NET_CORE
+        public static CalendarEvent GetCalendarEvent( string iCalendarContent )
+#else
+        public static DDay.iCal.Event GetCalendarEvent( string iCalendarContent )
 #endif
         {
             string trimmedContent = iCalendarContent.Trim();

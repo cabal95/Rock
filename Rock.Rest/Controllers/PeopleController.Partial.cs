@@ -316,9 +316,6 @@ namespace Rock.Rest.Controllers
         /// <param name="person">The person.</param>
         /// <returns></returns>
         ///
-        [Authenticate, Secured]
-        [HttpPost]
-        [System.Web.Http.Route( "api/People" )]
 #if IS_NET_CORE
         public override Microsoft.AspNetCore.Mvc.IActionResult Post( Person person )
 #else

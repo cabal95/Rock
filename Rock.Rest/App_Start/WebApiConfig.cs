@@ -133,6 +133,24 @@ namespace Rock.Rest
                     httpMethod = new HttpMethodConstraint( new string[] { "PUT", "OPTIONS" } ),
                 } );
 
+            // Add any custom HTTP API routes. Do this before the attribute route mapping to allow
+            // derived classes to override the parent class route attributes.
+            foreach ( var type in Reflection.FindTypes( typeof( IHasCustomHttpRoutes ) ) )
+            {
+                try
+                {
+                    var controller = Activator.CreateInstance( type.Value ) as IHasCustomHttpRoutes;
+                    if ( controller != null )
+                    {
+                        controller.AddRoutes( config.Routes );
+                    }
+                }
+                catch
+                {
+                    // ignore, and skip adding routes if the controller raises an exception
+                }
+            }
+
 #if !IS_NET_CORE
             // finds all [Route] attributes on REST controllers and creates the routes
             config.MapHttpAttributeRoutes();

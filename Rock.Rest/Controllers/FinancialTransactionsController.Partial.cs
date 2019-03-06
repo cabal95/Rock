@@ -81,9 +81,9 @@ namespace Rock.Rest.Controllers
         [HttpPost]
         [System.Web.Http.Route( "api/FinancialTransactions/Process" )]
 #if IS_NET_CORE
-        public Microsoft.AspNetCore.Mvc.IActionResult ProcessPayment( [FromBody]AutomatedPaymentArgs automatedPaymentArgs, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
+        public virtual Microsoft.AspNetCore.Mvc.IActionResult ProcessPayment( [FromBody]AutomatedPaymentArgs automatedPaymentArgs, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
 #else
-        public HttpResponseMessage ProcessPayment( [FromBody]AutomatedPaymentArgs automatedPaymentArgs, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
+        public virtual HttpResponseMessage ProcessPayment( [FromBody]AutomatedPaymentArgs automatedPaymentArgs, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
 #endif
         {
             var errorMessage = string.Empty;

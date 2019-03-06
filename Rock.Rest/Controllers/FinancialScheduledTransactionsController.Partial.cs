@@ -97,9 +97,9 @@ namespace Rock.Rest.Controllers
         [HttpPost]
         [System.Web.Http.Route( "api/FinancialScheduledTransactions/Process/{scheduledTransactionId}" )]
 #if IS_NET_CORE
-        public Microsoft.AspNetCore.Mvc.IActionResult ProcessPayment( int scheduledTransactionId, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
+        public virtual Microsoft.AspNetCore.Mvc.IActionResult ProcessPayment( int scheduledTransactionId, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
 #else
-        public System.Net.Http.HttpResponseMessage ProcessPayment( int scheduledTransactionId, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
+        public virtual System.Net.Http.HttpResponseMessage ProcessPayment( int scheduledTransactionId, [FromUri]bool enableDuplicateChecking = true, [FromUri]bool enableScheduleAdherenceProtection = true )
 #endif
         {
             var financialScheduledTransactionService = Service as FinancialScheduledTransactionService;
@@ -203,9 +203,9 @@ namespace Rock.Rest.Controllers
         [HttpGet]
         [System.Web.Http.Route( "api/FinancialScheduledTransactions/WithPreviousTransaction" )]
 #if IS_NET_CORE
-        public Microsoft.AspNetCore.Mvc.IActionResult GetWithPreviousTransaction( [FromUri]int skip, [FromUri]int top )
+        public virtual Microsoft.AspNetCore.Mvc.IActionResult GetWithPreviousTransaction( [FromUri]int skip, [FromUri]int top )
 #else
-        public System.Net.Http.HttpResponseMessage GetWithPreviousTransaction( [FromUri]int skip, [FromUri]int top )
+        public virtual System.Net.Http.HttpResponseMessage GetWithPreviousTransaction( [FromUri]int skip, [FromUri]int top )
 #endif
         {
             var now = RockDateTime.Now;

@@ -277,8 +277,6 @@ namespace Rock.Model
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
 #endif
         {
-            string errorMessage = string.Empty;
-
             var changeTransaction = new Rock.Transactions.GroupMemberChangeTransaction( entry );
             Rock.Transactions.RockQueue.TransactionQueue.Enqueue( changeTransaction );
 
@@ -508,6 +506,7 @@ namespace Rock.Model
                 {
                     PersonService.UpdatePersonAgeClassification( this.PersonId, dbContext as RockContext );
                     PersonService.UpdatePrimaryFamily( this.PersonId, dbContext as RockContext );
+                    PersonService.UpdateGivingLeaderId( this.PersonId, dbContext as RockContext );
                 }
             }
         }
@@ -568,7 +567,7 @@ namespace Rock.Model
             var groupService = new GroupService( rockContext );
             var group = this.Group ?? groupService.Queryable().AsNoTracking().Where( g => g.Id == this.GroupId ).FirstOrDefault();
 
-            if ( !groupService.AllowsDuplicateMembers( group ) )
+            if ( GroupService.AllowsDuplicateMembers() )
             {
                 var groupMember = new GroupMemberService( rockContext ).GetByGroupIdAndPersonIdAndGroupRoleId( this.GroupId, this.PersonId, this.GroupRoleId );
                 if ( groupMember != null && groupMember.Id != this.Id )
