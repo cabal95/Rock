@@ -129,6 +129,9 @@ namespace Rock.Reporting
             return string.Format( "{0} {1} '{2}'", GetTitle( entityType ), comparisonType.ConvertToString(), value );
         }
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls
+
         /// <summary>
         /// Creates the model representation of the child controls used to display and edit the filter settings.
         /// Implement this version of CreateChildControls if your DataFilterComponent supports different FilterModes
@@ -246,6 +249,7 @@ namespace Rock.Reporting
                 ( (TextBox)controls[1] ).Text = options[1];
             }
         }
+#endif
 
         /// <summary>
         /// Creates a Linq Expression that can be applied to an IQueryable to filter the result set.
@@ -265,6 +269,9 @@ namespace Rock.Reporting
 
         #region Static Properties
 
+#if !IS_NET_CORE
+        // EFTODO: Causes dependency on WebForms.
+
         /// <summary>
         /// Registers Javascript to hide/show .js-filter-control child elements of a .js-filter-compare dropdown
         /// see RockWeb\Scripts\Rock\reportingInclude.js
@@ -274,6 +281,7 @@ namespace Rock.Reporting
         {
             ReportingHelper.RegisterJavascriptInclude( filterControl );
         }
+#endif
 
         #endregion
     }

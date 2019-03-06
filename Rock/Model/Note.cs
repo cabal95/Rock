@@ -20,10 +20,17 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
+#if !IS_NET_CORE
 using System.Data.Entity.Infrastructure;
+#endif
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+#endif
 using Rock.Web.Cache;
 using Rock.Data;
 using Rock.Security;
@@ -545,7 +552,11 @@ namespace Rock.Model
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityEntry entry, EntityState state )
+#else
         public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry, EntityState state )
+#endif
         {
             if ( state == EntityState.Added )
             {

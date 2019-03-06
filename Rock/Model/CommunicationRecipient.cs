@@ -35,6 +35,9 @@ namespace Rock.Model
     [RockDomain( "Communication" )]
     [Table( "CommunicationRecipient" )]
     [DataContract]
+#if IS_NET_CORE
+    [IgnoreProperties( new[] { "AdditionalMergeValues" } )]
+#endif
     public partial class CommunicationRecipient : Model<CommunicationRecipient>
     {
 
@@ -225,6 +228,9 @@ namespace Rock.Model
         ///  A <see cref="System.Collections.Generic.Dictionary{String,String}"/> of <see cref="System.String"/> objects containing additional merge values for the <see cref="Rock.Model.Communication"/>
         /// </value>
         [DataMember]
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual Dictionary<string, object> AdditionalMergeValues
         {
             get { return _additionalMergeValues; }

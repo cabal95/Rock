@@ -76,6 +76,9 @@ namespace Rock.PersonProfile
         }
 
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebForms.
+
         /// <summary>
         /// Gets or sets the parent person block.
         /// </summary>
@@ -88,6 +91,7 @@ namespace Rock.PersonProfile
             set { _parentPersonBlock = value; }
         }
         private PersonBlock _parentPersonBlock;
+#endif
 
         /// <summary>
         /// Gets or sets the person.
@@ -143,11 +147,15 @@ namespace Rock.PersonProfile
             return badge.GetAttributeValue( key );
         }
         
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebForms.
+
         /// <summary>
         /// Renders the specified writer.
         /// </summary>
         /// <param name="badge">The badge.</param>
         /// <param name="writer">The writer.</param>
         public abstract void Render( Web.Cache.PersonBadgeCache badge, HtmlTextWriter writer );
+#endif
     }
 }

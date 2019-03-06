@@ -28,6 +28,9 @@ namespace Rock.Field
     /// </summary>
     public interface IFieldType
     {
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         #region Configuration
 
         /// <summary>
@@ -200,8 +203,12 @@ namespace Rock.Field
         bool IsValid( string value, bool required, out string message );
 
         #endregion
+#endif
 
         #region Filter Control
+
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
 
         /// <summary>
         /// Creates the control needed to filter (query) values using this field type using the specified FilterMode
@@ -212,6 +219,7 @@ namespace Rock.Field
         /// <param name="filterMode">The filter mode.</param>
         /// <returns></returns>
         Control FilterControl( Dictionary<string, ConfigurationValue> configurationValues, string id, bool required, FilterMode filterMode );
+#endif
 
         /// <summary>
         /// Returns the ComparisonType options that the field supports
@@ -226,6 +234,9 @@ namespace Rock.Field
         /// </summary>
         /// <returns></returns>
         bool HasFilterControl();
+
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
 
         /// <summary>
         /// Gets the filter values.
@@ -281,6 +292,7 @@ namespace Rock.Field
         /// <param name="title">The title.</param>
         /// <returns></returns>
         string GetFilterFormatScript( Dictionary<string, ConfigurationValue> configurationValues, string title );
+#endif
 
         /// <summary>
         /// Gets a filter expression for an entity property value.
@@ -302,6 +314,9 @@ namespace Rock.Field
         /// <returns></returns>
         Expression AttributeFilterExpression( Dictionary<string, ConfigurationValue> configurationValues, List<string> filterValues, ParameterExpression parameterExpression );
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Applies the attribute query filter based on the values configured in the filterControl
         /// </summary>
@@ -313,6 +328,7 @@ namespace Rock.Field
         /// <param name="filterMode">The filter mode.</param>
         /// <returns></returns>
         System.Linq.IQueryable<T> ApplyAttributeQueryFilter<T>( System.Linq.IQueryable<T> qry, Control filterControl, Rock.Web.Cache.AttributeCache attribute, Rock.Data.IService serviceInstance, Rock.Reporting.FilterMode filterMode ) where T : Rock.Data.Entity<T>, new();
+#endif
 
         /// <summary>
         /// Determines whether the filter is an 'Equal To' comparison and the filtered value is equal to the specified value.

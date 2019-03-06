@@ -31,13 +31,20 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
+#if !IS_NET_CORE
 using System.Web.UI.HtmlControls;
 using DDay.iCal;
+#endif
 using DotLiquid;
 using DotLiquid.Util;
 using Humanizer;
 using Humanizer.Localisation;
+#if !IS_NET_CORE
 using ImageResizer;
+#endif
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Rock;
@@ -1012,6 +1019,9 @@ namespace Rock.Lava
             }
         }
 
+#if !IS_NET_CORE
+        // EFTODO: Migrate this to Ical.Net
+
         /// <summary>
         /// Returns the occurrence Dates from an iCal string or list.
         /// </summary>
@@ -1100,6 +1110,7 @@ namespace Rock.Lava
                 return new List<DateTime>();
             }
         }
+#endif
 
         /// <summary>
         /// Adds a time interval to a date
@@ -1965,6 +1976,9 @@ namespace Rock.Lava
                         return rawValue;
                     }
 
+#if !IS_NET_CORE
+                    // EFTODO: Causes dependencies on WebControls via Field Types.
+
                     // Check qualifier for 'Url' and if present and attribute's field type is a ILinkableFieldType, then return the formatted url value
                     var field = attribute.FieldType.Field;
                     if ( qualifier.Equals( "Url", StringComparison.OrdinalIgnoreCase ) && field is Rock.Field.ILinkableFieldType )
@@ -2020,6 +2034,9 @@ namespace Rock.Lava
 
                     // Otherwise return the formatted value
                     return field.FormatValue( null, attribute.EntityTypeId, entityId, rawValue, attribute.QualifierValues, false );
+#else
+                    return rawValue;
+#endif
                 }
             }
 
@@ -2443,7 +2460,11 @@ namespace Rock.Lava
                                 case "GeoPoint":
                                     if ( location.GeoPoint != null )
                                     {
+#if IS_NET_CORE
+                                        qualifier = qualifier.Replace( match.ToString(), string.Format( "{0},{1}", location.Latitude.ToString(), location.Longitude.ToString() ) );
+#else
                                         qualifier = qualifier.Replace( match.ToString(), string.Format( "{0},{1}", location.GeoPoint.Latitude.ToString(), location.GeoPoint.Longitude.ToString() ) );
+#endif
                                     }
                                     else
                                     {
@@ -2454,7 +2475,11 @@ namespace Rock.Lava
                                 case "Latitude":
                                     if ( location.GeoPoint != null )
                                     {
+#if IS_NET_CORE
+                                        qualifier = qualifier.Replace( match.ToString(), location.Latitude.ToString() );
+#else
                                         qualifier = qualifier.Replace( match.ToString(), location.GeoPoint.Latitude.ToString() );
+#endif
                                     }
                                     else
                                     {
@@ -2465,7 +2490,11 @@ namespace Rock.Lava
                                 case "Longitude":
                                     if ( location.GeoPoint != null )
                                     {
+#if IS_NET_CORE
+                                        qualifier = qualifier.Replace( match.ToString(), location.Longitude.ToString() );
+#else
                                         qualifier = qualifier.Replace( match.ToString(), location.GeoPoint.Longitude.ToString() );
+#endif
                                     }
                                     else
                                     {
@@ -2590,6 +2619,9 @@ namespace Rock.Lava
 
             return phoneNumber;
         }
+
+#if !IS_NET_CORE
+        // EFTODO: Various dependencies.
 
         /// <summary>
         /// Gets the profile photo for a person object in a string that zebra printers can use.
@@ -2890,6 +2922,7 @@ namespace Rock.Lava
 
             return adjustedImage;
         }
+#endif
 
         /// <summary>
         /// Gets the groups of selected type that person is a member of
@@ -3460,6 +3493,9 @@ namespace Rock.Lava
             return mergeFields.lavaDebugInfo();
         }
 
+#if !IS_NET_CORE
+        // EFTODO: WebForms dependencies.
+
         /// <summary>
         /// Redirects the specified input.
         /// </summary>
@@ -3509,6 +3545,7 @@ namespace Rock.Lava
 
             return page.ResolveUrl( input );
         }
+#endif
 
         /// <summary>
         /// From the cache.
@@ -3778,6 +3815,9 @@ namespace Rock.Lava
             }
         }
 
+#if !IS_NET_CORE
+        // EFTODO: WebForms dependencies.
+
         /// <summary>
         /// adds a meta tag to the head of the document
         /// </summary>
@@ -3942,6 +3982,7 @@ namespace Rock.Lava
             }
 
         }
+#endif
 
         /// <summary>
         /// Ratings the markup.
@@ -3973,6 +4014,9 @@ namespace Rock.Lava
 
             return starMarkup.ToString();
         }
+
+#if !IS_NET_CORE
+        // EFTODO: WebForms dependencies.
 
         /// <summary>
         /// Pages the specified input.
@@ -4093,6 +4137,7 @@ namespace Rock.Lava
 
             return parmReturn;
         }
+#endif
 
         /// <summary>
         /// Converts a lava property to a key value pair
@@ -4524,6 +4569,9 @@ namespace Rock.Lava
             return inputList[indexInt.Value];
         }
 
+#if !IS_NET_CORE
+        // EFTODO: Distinct() doesn't seem to be available.
+
         /// <summary>
         /// Takes a collection and returns distinct values in that collection.
         /// </summary>
@@ -4543,6 +4591,7 @@ namespace Rock.Lava
 
             return e.Distinct().Cast<object>().ToList();
         }
+#endif
 
         #endregion
 
@@ -4762,11 +4811,15 @@ namespace Rock.Lava
 
             if ( currentPerson == null )
             {
+#if !IS_NET_CORE
+                // EFTODO: Dependency on WebControls.
+
                 var httpContext = System.Web.HttpContext.Current;
                 if ( httpContext != null && httpContext.Items.Contains( "CurrentPerson" ) )
                 {
                     currentPerson = httpContext.Items["CurrentPerson"] as Person;
                 }
+#endif
             }
 
             return currentPerson;
@@ -4813,11 +4866,17 @@ namespace Rock.Lava
                     return fileContent;
                 }
 
+#if !IS_NET_CORE
+                // EFTODO: Resizing not supported.
+
                 ResizeSettings settings = new ResizeSettings( HttpUtility.ParseQueryString( resizeSettings ) );
                 MemoryStream resizedStream = new MemoryStream();
 
                 ImageBuilder.Current.Build( fileContent, resizedStream, settings );
                 return resizedStream;
+#else
+                throw new NotImplementedException();
+#endif
             }
             catch
             {
@@ -5055,6 +5114,9 @@ namespace Rock.Lava
         #endregion
 
         #region POCOs
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebForms.
+
         /// <summary>
         /// POCO to translate an HTTP cookie in to a Liquidizable form
         /// </summary>
@@ -5184,6 +5246,7 @@ namespace Rock.Lava
                 _cookie = cookie;
             }
         }
+#endif
         #endregion
     }
 }

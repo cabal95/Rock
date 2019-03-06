@@ -130,6 +130,9 @@ namespace Rock.Web.Cache
 
         #region Public Methods
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls
+
         /// <summary>
         /// Sets the security actions.
         /// </summary>
@@ -148,6 +151,7 @@ namespace Rock.Web.Cache
                 CheckedSecurityActions = true;
             }
         }
+#endif
 
         /// <summary>
         /// Copies from model.
@@ -178,6 +182,9 @@ namespace Rock.Web.Cache
 
             string physicalPath;
 
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             // This will add a file system watcher so that when the block on the file system changes, this 
             // object will be removed from cache. This is to force the cmsPage object to revalidate any
             // BlockPropery attributes that may have been added or modified.
@@ -189,6 +196,9 @@ namespace Rock.Web.Cache
             {
                 physicalPath = System.Web.Hosting.HostingEnvironment.MapPath( Path );
             }
+#else
+            physicalPath = string.Empty;
+#endif
 
             var fileinfo = new FileInfo( physicalPath );
             if ( !fileinfo.Exists ) return;

@@ -77,6 +77,9 @@ namespace Rock.Web.Cache
         /// <param name="hit">if set to <c>true</c> [hit].</param>
         internal static void UpdateCacheHitMiss( string key, bool hit )
         {
+#if !IS_NET_CORE
+            // TODO: Dependency on WebForms.
+
             var httpContext = System.Web.HttpContext.Current;
             if ( httpContext == null || !httpContext.Items.Contains( "Cache_Hits" ) )
             {
@@ -85,6 +88,7 @@ namespace Rock.Web.Cache
 
             var cacheHits = httpContext.Items["Cache_Hits"] as Dictionary<string, bool>;
             cacheHits?.AddOrIgnore( key, hit );
+#endif
         }
 
         #endregion
@@ -605,6 +609,9 @@ namespace Rock.Web.Cache
         {
             try
             {
+#if false
+                // TODO: Redis requires newer Newtonsoft.Json version
+
                 var configurationOptions = StackExchange.Redis.ConfigurationOptions.Parse( socket );
                 configurationOptions.ConnectRetry = 1;
                 configurationOptions.ConnectTimeout = 500;
@@ -616,6 +623,9 @@ namespace Rock.Web.Cache
                 
                 var redisConnection = StackExchange.Redis.ConnectionMultiplexer.Connect( configurationOptions );
                 return redisConnection.IsConnected;
+#else
+                throw new NotImplementedException();
+#endif
             }
             catch(Exception)
             {

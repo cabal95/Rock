@@ -17,11 +17,17 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
+#endif
 using System.Linq;
 using System.Text;
 using System.Web.UI.WebControls;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
+#endif
 using Rock;
 using Rock.BulkExport;
 using Rock.Data;
@@ -2384,7 +2390,11 @@ namespace Rock.Model
                 .Where( m => m.Person.Gender != person.Gender || m.Person.Gender == Gender.Unknown || person.Gender == Gender.Unknown )
                 .Where( m => m.Person.MaritalStatusValueId == marriedDefinedValueId )
                 .OrderBy( m => groupOrderQuery.FirstOrDefault( x => x.GroupId == m.GroupId && x.PersonId == person.Id ).GroupOrder ?? int.MaxValue )
+#if IS_NET_CORE
+                .ThenBy( m => EF.Functions.DateDiffDay( m.Person.BirthDate ?? new DateTime( 1, 1, 1 ), person.BirthDate ?? new DateTime( 1, 1, 1 ) ) )
+#else
                 .ThenBy( m => DbFunctions.DiffDays( m.Person.BirthDate ?? new DateTime( 1, 1, 1 ), person.BirthDate ?? new DateTime( 1, 1, 1 ) ) )
+#endif
                 .ThenBy( m => m.PersonId )
                 .Select( selector )
                 .FirstOrDefault();
@@ -2580,7 +2590,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="personId">The person identifier.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public IQueryable<Geometry> GetGeopoints( int personId )
+#else
         public IQueryable<DbGeography> GetGeopoints( int personId )
+#endif
         {
             var rockContext = ( RockContext ) this.Context;
             var groupMemberService = new GroupMemberService( rockContext );

@@ -20,8 +20,14 @@ using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
+#if !IS_NET_CORE
 using Rock.Reporting.DataFilter;
+#endif
 using Rock.Web.Cache;
 
 namespace Rock.Model
@@ -71,10 +77,18 @@ namespace Rock.Model
 
                     if ( entityType != null )
                     {
+#if IS_NET_CORE
+                        var reportDbContext = Reflection.GetDbContextForEntityType( entityType );
+#else
                         System.Data.Entity.DbContext reportDbContext = Reflection.GetDbContextForEntityType( entityType );
+#endif
                         if ( reportDbContext != null )
                         {
+#if IS_NET_CORE
+                            reportDbContext.Database.SetCommandTimeout( 180 );
+#else
                             reportDbContext.Database.CommandTimeout = 180;
+#endif
                             IService serviceInstance = Reflection.GetServiceForEntityType( entityType, reportDbContext );
                             if ( serviceInstance != null )
                             {
@@ -109,9 +123,15 @@ namespace Rock.Model
         /// </returns>
         public bool IsViewInFilter( int dataViewId, DataViewFilter filter )
         {
+#if !IS_NET_CORE
+            // EFTODO: Caused dependency on WebControls via Field Types.
+
             var dataViewFilterEntityId = new EntityTypeService( (RockContext)this.Context ).Get( typeof( OtherDataViewFilter ), false, null ).Id;
 
             return IsViewInFilter( dataViewId, filter, dataViewFilterEntityId );
+#else
+            throw new NotImplementedException();
+#endif
         }
 
         private bool IsViewInFilter( int dataViewId, DataViewFilter filter, int dataViewFilterEntityId )

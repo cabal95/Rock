@@ -20,14 +20,23 @@ using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+#if !IS_NET_CORE
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
+#endif
+
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
+#if !IS_NET_CORE
 using Rock.Web.UI;
 using Rock.Web.UI.Controls;
+#endif
 
 namespace Rock.Attribute
 {
@@ -66,8 +75,13 @@ namespace Rock.Attribute
         /// </remarks>
         public static bool UpdateAttributes( Type type, int? entityTypeId, string entityQualifierColumn, string entityQualifierValue, RockContext rockContext = null )
         {
+            // EFTODO: Dependency on WebControls
+
             bool attributesUpdated = false;
             bool attributesDeleted = false;
+
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebControls
 
             if ( type != null )
             {
@@ -156,9 +170,13 @@ namespace Rock.Attribute
                     ExceptionLogService.LogException( new Exception( "Could not delete one or more old attributes.", ex ), null );
                 }
             }
+#endif
 
             return attributesUpdated;
         }
+
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls
 
         /// <summary>
         /// Adds or Updates a <see cref="Rock.Model.Attribute" /> item for the attribute.
@@ -324,6 +342,7 @@ namespace Rock.Attribute
                 return false;
             }
         }
+#endif
 
         /// <summary>
         /// Loads the <see cref="P:IHasAttributes.Attributes" /> and <see cref="P:IHasAttributes.AttributeValues" /> of any <see cref="IHasAttributes" /> object
@@ -617,6 +636,10 @@ namespace Rock.Attribute
             attributeCategory.Attributes.Add( attribute );
         }
 
+
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Saves any attribute edits made using an Attribute Editor control
         /// </summary>
@@ -656,6 +679,7 @@ namespace Rock.Attribute
 
             return SaveAttributeEdits( newAttribute, entityTypeId, entityTypeQualifierColumn, entityTypeQualifierValue, rockContext );
         }
+#endif
 
         /// <summary>
         /// Saves the attribute edits.
@@ -956,6 +980,9 @@ namespace Rock.Attribute
                 }
             }
         }
+
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
 
         /// <summary>
         /// Adds edit controls for each of the item's attributes
@@ -1322,6 +1349,7 @@ namespace Rock.Attribute
 
             return firstOrDefault;
         }
+#endif
     }
 
     /// <summary>

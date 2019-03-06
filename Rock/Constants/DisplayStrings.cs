@@ -97,6 +97,9 @@ namespace Rock.Constants
         /// </summary>
         public const string TextHtml = "";
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls
+
         /// <summary>
         /// Return a ListItem with Text: "", Value: "0"
         /// </summary>
@@ -110,6 +113,7 @@ namespace Rock.Constants
                 return new System.Web.UI.WebControls.ListItem( None.Text, None.IdValue );
             }
         }
+#endif
     }
 
     /// <summary>
@@ -132,6 +136,9 @@ namespace Rock.Constants
         /// </summary>
         public const string Text = "All";
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Gets the list item with Text "All", Value: -1
         /// </summary>
@@ -145,6 +152,7 @@ namespace Rock.Constants
                 return new System.Web.UI.WebControls.ListItem( All.Text, All.IdValue );
             }
         }
+#endif
     }
 
     /// <summary>

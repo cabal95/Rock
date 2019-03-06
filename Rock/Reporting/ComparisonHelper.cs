@@ -195,6 +195,9 @@ namespace Rock.Reporting
             return comparisonExpression;
         }
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Gets a DropDownList of the supported comparison types
         /// </summary>
@@ -218,6 +221,7 @@ namespace Rock.Reporting
 
             return ddl;
         }
+#endif
 
         /// <summary>
         /// Gets the comparison types typically used simple comparisons of: equal, not equal, blank or not blank.

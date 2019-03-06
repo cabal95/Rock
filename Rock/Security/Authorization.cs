@@ -16,12 +16,19 @@
 //
 using System;
 using System.Collections.Generic;
+#if !IS_NET_CORE
 using System.Data.Entity;
+#endif
 using System.Linq;
 using System.Text;
 using System.Web;
+#if !IS_NET_CORE
 using System.Web.Security;
+#endif
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
@@ -697,6 +704,9 @@ namespace Rock.Security
         /// <param name="IsImpersonated">if set to <c>true</c> [is impersonated].</param>
         public static void SetAuthCookie( string userName, bool isPersisted, bool IsImpersonated )
         {
+#if !IS_NET_CORE
+        // EFTODO: Need to figure out how to do this.
+
             var ticket = new FormsAuthenticationTicket( 1, userName, RockDateTime.Now,
                 RockDateTime.Now.Add( FormsAuthentication.Timeout ), isPersisted,
                 IsImpersonated.ToString(), FormsAuthentication.FormsCookiePath );
@@ -723,6 +733,7 @@ namespace Rock.Security
                 };
             HttpContext.Current.Response.Cookies.Add( domainCookie );
 
+#endif
         }
 
         /// <summary>
@@ -730,6 +741,9 @@ namespace Rock.Security
         /// </summary>
         public static void SignOut()
         {
+#if !IS_NET_CORE
+        // EFTODO: These methods need to be moved to a Web/UI namespace.
+
             var domainCookie = HttpContext.Current.Request.Cookies[$"{FormsAuthentication.FormsCookieName}_DOMAIN"];
             if ( domainCookie != null )
             {
@@ -753,7 +767,11 @@ namespace Rock.Security
             {
                 FormsAuthentication.SignOut();
             }
+#endif
         }
+
+#if !IS_NET_CORE
+        // EFTODO: These methods need to be moved to a Web/UI namespace.
 
         /// <summary>
         /// Create a forms authentication cookie.
@@ -796,6 +814,7 @@ namespace Rock.Security
             return domain.Count( c => c == '.' ) >= 2 ? domain : string.Empty;
 
         }
+#endif
 
         /// <summary>
         /// Checks to see if a person is authorized for entity

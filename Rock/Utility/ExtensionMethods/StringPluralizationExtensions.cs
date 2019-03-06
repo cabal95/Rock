@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 //
+#if !IS_NET_CORE
 using System.Data.Entity.Design.PluralizationServices;
+#endif
 using System.Globalization;
 
 namespace Rock
@@ -42,8 +44,12 @@ namespace Rock
                     return str + "ES";
 
                 default:
+#if IS_NET_CORE
+                    return Humanizer.InflectorExtensions.Pluralize( str, false );
+#else
                     var pluralizationService = PluralizationService.CreateService( new CultureInfo( "en-US" ) );
                     return pluralizationService.Pluralize( str );
+#endif
             }
         }
 
@@ -72,8 +78,12 @@ namespace Rock
         /// <returns></returns>
         public static string Singularize( this string str )
         {
+#if IS_NET_CORE
+            return Humanizer.InflectorExtensions.Singularize( str, false );
+#else
             var pluralizationService = PluralizationService.CreateService( new CultureInfo( "en-US" ) );
             return pluralizationService.Singularize( str );
+#endif
         }
 
         /// <summary>

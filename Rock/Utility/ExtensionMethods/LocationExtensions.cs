@@ -32,7 +32,11 @@ namespace Rock
         /// </summary>
         /// <param name="geography">The geography.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public static List<MapCoordinate> Coordinates( this NetTopologySuite.Geometries.Geometry geography )
+#else
         public static List<MapCoordinate> Coordinates( this System.Data.Entity.Spatial.DbGeography geography )
+#endif
         {
             var coordinates = new List<MapCoordinate>();
 

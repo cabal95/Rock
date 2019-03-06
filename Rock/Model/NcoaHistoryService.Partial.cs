@@ -14,7 +14,11 @@
 // limitations under the License.
 // </copyright>
 //
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#else
 using System.Data.Entity;
+#endif
 using System.Linq;
 
 namespace Rock.Model

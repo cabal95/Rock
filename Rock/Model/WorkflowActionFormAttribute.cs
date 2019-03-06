@@ -20,6 +20,9 @@ using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
 using System.Runtime.Serialization;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 using Rock.Workflow;

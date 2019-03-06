@@ -123,7 +123,11 @@ namespace Rock.Model
         /// A <see cref="System.Decimal"/> representing the control amount of the batch.
         /// </value>
         [DataMember]
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         [BoundFieldTypeAttribute( typeof( Rock.Web.UI.Controls.CurrencyField ) )]
+#endif
         public decimal ControlAmount { get; set; }
 
         /// <summary>

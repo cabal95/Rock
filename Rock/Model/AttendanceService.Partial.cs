@@ -17,11 +17,16 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+#if !IS_NET_CORE
 using System.Data.Entity;
 using System.Data.Entity.SqlServer;
+#endif
 using System.Linq;
 using System.Linq.Expressions;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Chart;
 using Rock.Data;
 
@@ -145,12 +150,21 @@ namespace Rock.Model
             // If an attendance record doesn't exist for the occurrence, add a new record
             if ( attendance == null )
             {
+#if IS_NET_CORE
+                attendance = new Attendance
+                {
+                    Occurrence = occurrence,
+                    OccurrenceId = occurrence.Id,
+                    PersonAliasId = personAliasId
+                };
+#else
                 attendance = ( (RockContext)Context ).Attendances.Create();
                 {
                     attendance.Occurrence = occurrence;
                     attendance.OccurrenceId = occurrence.Id;
                     attendance.PersonAliasId = personAliasId;
                 };
+#endif
                 Add( attendance );
             }
 
@@ -617,7 +631,11 @@ namespace Rock.Model
             {
                 qryAttendanceGroupedBy = qryAttendance.Select( a => new AttendanceService.AttendanceWithSummaryDateTime
                 {
+#if IS_NET_CORE
+                    SummaryDateTime = a.Occurrence.SundayDate.AddDays( -a.Occurrence.SundayDate.Day + 1 ),
+#else
                     SummaryDateTime = (DateTime)SqlFunctions.DateAdd( "day", -SqlFunctions.DatePart( "day", a.Occurrence.SundayDate ) + 1, a.Occurrence.SundayDate ),
+#endif
                     Attendance = a
                 } );
             }
@@ -625,7 +643,11 @@ namespace Rock.Model
             {
                 qryAttendanceGroupedBy = qryAttendance.Select( a => new AttendanceService.AttendanceWithSummaryDateTime
                 {
+#if IS_NET_CORE
+                    SummaryDateTime = a.Occurrence.SundayDate.AddDays( -a.Occurrence.SundayDate.DayOfYear + 1 ),
+#else
                     SummaryDateTime = (DateTime)SqlFunctions.DateAdd( "day", -SqlFunctions.DatePart( "dayofyear", a.Occurrence.SundayDate ) + 1, a.Occurrence.SundayDate ),
+#endif
                     Attendance = a
                 } );
             }

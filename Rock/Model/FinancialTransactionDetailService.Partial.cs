@@ -18,10 +18,15 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
+#if !IS_NET_CORE
 using System.Data.Entity.SqlServer;
+#endif
 using System.Linq;
 using System.Linq.Expressions;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Chart;
 using Rock.Data;
 using Rock.Web.UI.Controls;

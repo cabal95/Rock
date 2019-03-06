@@ -20,7 +20,9 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
+#if !IS_NET_CORE
 using System.Web.Routing;
+#endif
 
 using Rock.Web.Cache;
 using Rock.Web.UI;
@@ -211,6 +213,9 @@ namespace Rock.Web
         {
             Parameters = new Dictionary<string, string>();
 
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             var routeInfo = new Rock.Web.RouteInfo( uri, applicationPath );
             if ( routeInfo != null )
             {
@@ -255,6 +260,9 @@ namespace Rock.Web
                     }
                 }
             }
+#else
+            throw new NotImplementedException();
+#endif
         }
 
 
@@ -341,7 +349,11 @@ namespace Rock.Web
             }
 
             // add base path to url -- Fixed bug #84
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             url = ( HttpContext.Current.Request.ApplicationPath == "/" ) ? "/" + url : HttpContext.Current.Request.ApplicationPath + "/" + url;
+#endif
 
             return url;
         }
@@ -404,6 +416,9 @@ namespace Rock.Web
         {
             string routeUrl = string.Empty;
 
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             foreach ( var route in RouteTable.Routes.OfType<Route>() )
             {
                 if ( route != null && route.DataTokens != null && route.DataTokens.ContainsKey( "PageRoutes" ) )
@@ -416,6 +431,7 @@ namespace Rock.Web
                     }
                 }
             }
+#endif
 
             // get dictionary of parms in the route
             Dictionary<string, string> routeParms = new Dictionary<string, string>();
@@ -510,7 +526,13 @@ namespace Rock.Web
         public static List<PageReference> GetParentPageReferences(RockPage rockPage, PageCache currentPage, PageReference currentPageReference)
         {
             // Get previous page references in nav history
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             var pageReferenceHistory = HttpContext.Current.Session["RockPageReferenceHistory"] as List<PageReference>;
+#else
+            List<PageReference> pageReferenceHistory = null;
+#endif
                         
             // Current page hierarchy references
             var pageReferences = new List<PageReference>();
@@ -549,6 +571,9 @@ namespace Rock.Web
 
                                 foreach ( var block in page.Blocks.Where( b=> b.BlockLocation == Model.BlockLocation.Page) )
                                 {
+#if !IS_NET_CORE
+                                    // EFTODO: Dependency on WebForms.
+
                                     try
                                     {
                                         System.Web.UI.Control control = rockPage.TemplateControl.LoadControl(block.BlockType.Path);
@@ -564,6 +589,7 @@ namespace Rock.Web
                                     {
                                         ExceptionLogService.LogException(ex, HttpContext.Current, currentPage.Id, currentPage.Layout.SiteId);
                                     }
+#endif
                                 }
 
                             }
@@ -584,7 +610,11 @@ namespace Rock.Web
         /// <param name="pageReferences">The page references.</param>
         public static void SavePageReferences( List<PageReference> pageReferences)
         {
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             HttpContext.Current.Session["RockPageReferenceHistory"] = pageReferences;
+#endif
         }
 
         #endregion

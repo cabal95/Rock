@@ -148,6 +148,15 @@ namespace Rock.Model
         /// A collection containing a collection of the <see cref="Rock.Model.EventCalendarItem">EventCalendarItems</see> that belong to this EventItem.
         /// </value>
         [LavaInclude]
+#if IS_NET_CORE
+        public virtual ICollection<EventCalendarItem> EventCalendarItems
+        {
+            get { return _eventCalendarItems ?? ( _eventCalendarItems = new Collection<EventCalendarItem>() ); }
+            set { _eventCalendarItems = value; }
+        }
+
+        private ICollection<EventCalendarItem> _eventCalendarItems;
+#else
         public virtual ICollection<EventCalendarItem> EventCalendarItems
         {
             get { return _eventCalenderItems ?? ( _eventCalenderItems = new Collection<EventCalendarItem>() ); }
@@ -155,6 +164,7 @@ namespace Rock.Model
         }
 
         private ICollection<EventCalendarItem> _eventCalenderItems;
+#endif
 
         /// <summary>
         /// Gets or sets a collection of the <see cref="Rock.Model.EventItemOccurrence">EventItemOccurrence</see> that belong to this EventItem.
@@ -178,6 +188,15 @@ namespace Rock.Model
         /// A collection containing a collection of the <see cref="Rock.Model.EventItemAudience">EventItemAudiences</see> that belong to this EventItem.
         /// </value>
         [LavaInclude]
+#if IS_NET_CORE
+        public virtual ICollection<EventItemAudience> EventItemAudiences
+        {
+            get { return _eventItemAudiences ?? ( _eventItemAudiences = new Collection<EventItemAudience>() ); }
+            set { _eventItemAudiences = value; }
+        }
+
+        private ICollection<EventItemAudience> _eventItemAudiences;
+#else
         public virtual ICollection<EventItemAudience> EventItemAudiences
         {
             get { return _calendarItemAudiences ?? ( _calendarItemAudiences = new Collection<EventItemAudience>() ); }
@@ -185,6 +204,7 @@ namespace Rock.Model
         }
 
         private ICollection<EventItemAudience> _calendarItemAudiences;
+#endif
 
         /// <summary>
         /// Gets or sets the approved by person alias.

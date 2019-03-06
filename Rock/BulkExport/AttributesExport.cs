@@ -101,6 +101,7 @@ namespace Rock.BulkExport
 
             var attributeValuesLookup = attributeValuesList.GroupBy( a => a.EntityId ).ToDictionary( k => k.Key, v => v.Select( a => new AttributeValueCache { AttributeId = a.AttributeId, EntityId = a.EntityId, Value = a.AttributeValue } ) );
             Dictionary<string, object> defaultAttributeValues;
+#if !IS_NET_CORE
             if ( exportOptions.AttributeReturnType == AttributeReturnType.Formatted )
             {
                 defaultAttributeValues = exportOptions.AttributeList.ToDictionary( k => k.Key, v => ( object ) v.DefaultValueAsFormatted );
@@ -109,6 +110,9 @@ namespace Rock.BulkExport
             {
                 defaultAttributeValues = exportOptions.AttributeList.ToDictionary( k => k.Key, v => v.DefaultValueAsType );
             }
+#else
+            defaultAttributeValues = exportOptions.AttributeList.ToDictionary( k => k.Key, v => ( object ) v.DefaultValue );
+#endif
 
             foreach ( var modelExport in modelExportList )
             {

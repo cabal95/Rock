@@ -23,6 +23,9 @@ using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 
@@ -158,6 +161,10 @@ namespace Rock.Model
         /// A collection of <see cref="Rock.Model.Location">Locations</see> that use this device.
         /// </value>
         [LavaInclude]
+#if IS_NET_CORE
+        // EFTODO: Many-to-many relationships are not supported.
+        [NotMapped]
+#endif
         public virtual ICollection<Location> Locations
         {
             get { return _locations ?? ( _locations = new Collection<Location>() ); }
@@ -239,7 +246,11 @@ namespace Rock.Model
         public DeviceConfiguration()
         {
             this.HasOptional( d => d.Location ).WithMany().HasForeignKey( d => d.LocationId ).WillCascadeOnDelete( false );
+#if !IS_NET_CORE
+            // EFTODO: Many-to-many relationships are not supported.
+
             this.HasMany( d => d.Locations ).WithMany().Map( d => { d.MapLeftKey( "DeviceId" ); d.MapRightKey( "LocationId" ); d.ToTable( "DeviceLocation" ); } );
+#endif
             this.HasOptional( d => d.PrinterDevice ).WithMany().HasForeignKey( d => d.PrinterDeviceId ).WillCascadeOnDelete( false );
             this.HasRequired( d => d.DeviceType ).WithMany().HasForeignKey( d => d.DeviceTypeValueId ).WillCascadeOnDelete( false );
         }

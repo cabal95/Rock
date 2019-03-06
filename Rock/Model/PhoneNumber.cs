@@ -17,12 +17,18 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+#if !IS_NET_CORE
 using System.Data.Entity.Infrastructure;
+#endif
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 
@@ -200,9 +206,17 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityEntry entry )
+#else
         public override void PreSaveChanges( DbContext dbContext, DbEntityEntry entry )
+#endif
         {
+#if IS_NET_CORE
+            if ( entry.State == EntityState.Added || entry.State == EntityState.Modified )
+#else
             if ( entry.State == System.Data.Entity.EntityState.Added || entry.State == System.Data.Entity.EntityState.Modified )
+#endif
             {
                 if ( string.IsNullOrEmpty( CountryCode ) )
                 {
@@ -213,15 +227,23 @@ namespace Rock.Model
                 Number = PhoneNumber.CleanNumber( NumberFormatted );
             }
 
-			// Check for duplicate
-			if ( entry.State == System.Data.Entity.EntityState.Added || entry.State == System.Data.Entity.EntityState.Modified )
-			{
-				var rockContext = ( RockContext ) dbContext;
+            // Check for duplicate
+#if IS_NET_CORE
+            if ( entry.State == EntityState.Added || entry.State == EntityState.Modified )
+#else
+            if ( entry.State == System.Data.Entity.EntityState.Added || entry.State == System.Data.Entity.EntityState.Modified )
+#endif
+            {
+                var rockContext = ( RockContext ) dbContext;
 				var phoneNumberService = new PhoneNumberService( rockContext );
 				var duplicates = phoneNumberService.Queryable().Where( pn => pn.PersonId == PersonId && pn.Number == Number && pn.CountryCode == CountryCode );
 
                 // Make sure this number isn't considered a duplicate
+#if IS_NET_CORE
+                if ( entry.State == EntityState.Modified )
+#else
                 if ( entry.State == System.Data.Entity.EntityState.Modified )
+#endif
                 {
                     duplicates = duplicates.Where( d => d.Id != Id );
                 }
@@ -235,9 +257,13 @@ namespace Rock.Model
 						var numberType = DefinedValueCache.Get( NumberTypeValueId.Value, rockContext );
 						if ( highestOrderedDuplicate.NumberTypeValue.Order < numberType.Order )
 						{
-							entry.State = entry.State == System.Data.Entity.EntityState.Added ? System.Data.Entity.EntityState.Detached : System.Data.Entity.EntityState.Deleted;
-						}
-						else
+#if IS_NET_CORE
+                            entry.State = entry.State == EntityState.Added ? EntityState.Detached : EntityState.Deleted;
+#else
+                            entry.State = entry.State == System.Data.Entity.EntityState.Added ? System.Data.Entity.EntityState.Detached : System.Data.Entity.EntityState.Deleted;
+#endif
+                        }
+                        else
 						{
 							phoneNumberService.DeleteRange( duplicates);
 						}
@@ -250,7 +276,11 @@ namespace Rock.Model
 
             switch ( entry.State )
             {
+#if IS_NET_CORE
+                case EntityState.Added:
+#else
                 case System.Data.Entity.EntityState.Added:
+#endif
                     {
 
                         History.EvaluateChange( PersonHistoryChanges[personId], string.Format( "{0} Phone", DefinedValueCache.GetName( NumberTypeValueId ) ), string.Empty, NumberFormatted );
@@ -259,7 +289,11 @@ namespace Rock.Model
                         break;
                     }
 
+#if IS_NET_CORE
+                case EntityState.Modified:
+#else
                 case System.Data.Entity.EntityState.Modified:
+#endif
                     {
                         string numberTypeName = DefinedValueCache.GetName( NumberTypeValueId );
                         int? oldPhoneNumberTypeId = entry.OriginalValues["NumberTypeValueId"].ToStringSafe().AsIntegerOrNull();
@@ -279,7 +313,11 @@ namespace Rock.Model
                         break;
                     }
 
+#if IS_NET_CORE
+                case EntityState.Deleted:
+#else
                 case System.Data.Entity.EntityState.Deleted:
+#endif
                     {
                         personId = entry.OriginalValues["PersonId"].ToStringSafe().AsInteger();
                         PersonHistoryChanges.AddOrIgnore( personId, new History.HistoryChangeList() );

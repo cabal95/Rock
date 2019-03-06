@@ -26,7 +26,11 @@ namespace Rock.Web.Cache
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        void UpdateCache( Microsoft.EntityFrameworkCore.EntityState entityState, Rock.Data.DbContext dbContext );
+#else
         void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext );
+#endif
 
         /// <summary>
         /// Gets the cache object associated with this Entity

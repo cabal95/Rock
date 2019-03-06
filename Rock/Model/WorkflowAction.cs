@@ -315,7 +315,11 @@ namespace Rock.Model
                 {
                     if (formatted)
                     {
+#if !IS_NET_CORE
+                        // EFTODO: Causes dependency on WebControls.
+
                         value = attribute.FieldType.Field.FormatValue( null, attribute.EntityTypeId, entityId, value, attribute.QualifierValues, condensed );
+#endif
                     }
                 }
 
@@ -436,7 +440,13 @@ namespace Rock.Model
 
                             var field = attribute.FieldType.Field;
 
+#if !IS_NET_CORE
+                            // EFTODO: Causes dependency on WebControls.
+
                             string formattedValue = field.FormatValue( null, attribute.EntityTypeId, entityId, value, attribute.QualifierValues, false );
+#else
+                            string formattedValue = value;
+#endif
 
                             var liquidFormAttribute = new LiquidFormAttribute();
                             liquidFormAttribute.Name = attribute.Name;

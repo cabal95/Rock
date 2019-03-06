@@ -193,7 +193,11 @@ namespace Rock.Workflow
                             }
                             else if ( attribute.FieldTypeId == FieldTypeCache.Get( SystemGuid.FieldType.SSN.AsGuid() ).Id )
                             {
+#if !IS_NET_CORE
                                 value = Rock.Field.Types.SSNFieldType.UnencryptAndClean( value );
+#else
+                                throw new NotImplementedException();
+#endif
                             }
                         }
                     }

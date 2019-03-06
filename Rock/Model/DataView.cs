@@ -24,6 +24,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Web.UI.WebControls;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 using Rock.Security;
@@ -266,7 +270,11 @@ namespace Rock.Model
         /// <param name="databaseTimeoutSeconds">The database timeout seconds.</param>
         /// <param name="errorMessages">The error messages.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public IQueryable<IEntity> GetQuery( SortProperty sortProperty, Microsoft.EntityFrameworkCore.DbContext dbContext, int? databaseTimeoutSeconds, out List<string> errorMessages )
+#else
         public IQueryable<IEntity> GetQuery( SortProperty sortProperty, System.Data.Entity.DbContext dbContext, int? databaseTimeoutSeconds, out List<string> errorMessages )
+#endif
         {
             return GetQuery( sortProperty, dbContext, null, databaseTimeoutSeconds, out errorMessages );
         }
@@ -275,7 +283,11 @@ namespace Rock.Model
         /// Gets the most appropriate database context for this DataView's EntityType
         /// </summary>
         /// <returns></returns>
+#if IS_NET_CORE
+        public Microsoft.EntityFrameworkCore.DbContext GetDbContext()
+#else
         public System.Data.Entity.DbContext GetDbContext()
+#endif
         {
             if ( EntityTypeId.HasValue )
             {
@@ -299,7 +311,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public IService GetServiceInstance( Microsoft.EntityFrameworkCore.DbContext dbContext )
+#else
         public IService GetServiceInstance( System.Data.Entity.DbContext dbContext )
+#endif
         {
             if ( EntityTypeId.HasValue )
             {
@@ -330,7 +346,11 @@ namespace Rock.Model
         /// <param name="databaseTimeoutSeconds">The database timeout seconds.</param>
         /// <param name="errorMessages">The error messages.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public IQueryable<IEntity> GetQuery( SortProperty sortProperty, Microsoft.EntityFrameworkCore.DbContext dbContext, DataViewFilterOverrides dataViewFilterOverrides, int? databaseTimeoutSeconds, out List<string> errorMessages )
+#else
         public IQueryable<IEntity> GetQuery( SortProperty sortProperty, System.Data.Entity.DbContext dbContext, DataViewFilterOverrides dataViewFilterOverrides, int? databaseTimeoutSeconds, out List<string> errorMessages )
+#endif
         {
             errorMessages = new List<string>();
             if ( dbContext == null )
@@ -345,7 +365,11 @@ namespace Rock.Model
 
                 if ( databaseTimeoutSeconds.HasValue )
                 {
+#if IS_NET_CORE
+                    dbContext.Database.SetCommandTimeout( databaseTimeoutSeconds.Value );
+#else
                     dbContext.Database.CommandTimeout = databaseTimeoutSeconds.Value;
+#endif
                 }
             }
 
@@ -492,7 +516,11 @@ namespace Rock.Model
                     rockContext = new RockContext();
                 }
 
+#if IS_NET_CORE
+                rockContext.Database.SetCommandTimeout( databaseTimeoutSeconds );
+#else
                 rockContext.Database.CommandTimeout = databaseTimeoutSeconds;
+#endif
                 var savedDataViewPersistedValues = rockContext.DataViewPersistedValues.Where( a => a.DataViewId == this.Id );
 
                 var updatedEntityIdsQry = qry.Select( a => a.Id );

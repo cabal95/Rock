@@ -19,6 +19,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock;
 using Rock.Data;
 using Rock.Web.Cache;
@@ -138,6 +142,9 @@ namespace Rock.Model
                 .Select( s => s.Entity );
         }
 
+#if !IS_NET_CORE
+        // TODO: Dependency on WebControls.
+
         /// <summary>
         /// Returns the <see cref="Rock.Model.EntityType">EntityTypes</see> as a grouped collection of <see cref="System.Web.UI.WebControls.ListItem">ListItems</see> with the 
         /// "Common" flag set to true.
@@ -165,6 +172,7 @@ namespace Rock.Model
 
             return items;
         }
+#endif
 
         /// <summary>
         /// Gets an Entity by type and entity Id.

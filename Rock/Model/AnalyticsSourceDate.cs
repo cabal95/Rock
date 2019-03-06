@@ -21,7 +21,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+#if !IS_NET_CORE
 using EntityFramework.Utilities;
+#else
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 
 namespace Rock.Model
@@ -465,12 +469,20 @@ namespace Rock.Model
                 try
                 {
                     // if TRUNCATE takes more than 5 seconds, it is probably due to a lock. If so, do a DELETE FROM instead
+#if IS_NET_CORE
+                    rockContext.Database.SetCommandTimeout( 5 );
+#else
                     rockContext.Database.CommandTimeout = 5;
+#endif
                     rockContext.Database.ExecuteSqlCommand( string.Format( "TRUNCATE TABLE {0}", typeof( AnalyticsSourceDate ).GetCustomAttribute<TableAttribute>().Name ) );
                 }
                 catch
                 {
+#if IS_NET_CORE
+                    rockContext.Database.SetCommandTimeout( null );
+#else
                     rockContext.Database.CommandTimeout = null;
+#endif
                     rockContext.Database.ExecuteSqlCommand( string.Format( "DELETE FROM {0}", typeof( AnalyticsSourceDate ).GetCustomAttribute<TableAttribute>().Name ) );
                 }
             }
@@ -637,7 +649,11 @@ namespace Rock.Model
             using ( var rockContext = new RockContext() )
             {
                 // NOTE: We can't use rockContext.BulkInsert because that enforces that the <T> is Rock.Data.IEntity, so we'll just use EFBatchOperation directly
+#if !IS_NET_CORE
+                // EFTODO: EntityFramework.Utils does not exist.
+
                 EFBatchOperation.For( rockContext, rockContext.AnalyticsSourceDates ).InsertAll( generatedDates );
+#endif
             }
         }
     }

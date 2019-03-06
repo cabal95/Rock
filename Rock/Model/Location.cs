@@ -20,11 +20,17 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
+#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
+#endif
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 using System.Data.Entity;
@@ -96,7 +102,11 @@ namespace Rock.Model
         /// </value>
         [DataMember]
         [Newtonsoft.Json.JsonConverter( typeof( DbGeographyConverter ) )]
+#if IS_NET_CORE
+        public Geometry GeoPoint { get; set; }
+#else
         public DbGeography GeoPoint { get; set; }
+#endif
 
         /// <summary>
         /// Gets or sets the geographic parameter around the a Location's Geopoint. This can also be used to define a large area
@@ -111,7 +121,11 @@ namespace Rock.Model
         /// </value>
         [DataMember]
         [Newtonsoft.Json.JsonConverter( typeof( DbGeographyConverter ) )]
+#if IS_NET_CORE
+        public Geometry GeoFence { get; set; }
+#else
         public DbGeography GeoFence { get; set; }
+#endif
 
         /// <summary>
         /// Gets or sets the first line of the Location's Street/Mailing Address.
@@ -459,7 +473,11 @@ namespace Rock.Model
         {
             get
             {
+#if IS_NET_CORE
+                return GeoPoint?.Coordinate?.Y;
+#else
                 return GeoPoint != null ? GeoPoint.Latitude : null;
+#endif
             }
         }
 
@@ -474,7 +492,11 @@ namespace Rock.Model
         {
             get
             {
+#if IS_NET_CORE
+                return GeoPoint?.Coordinate?.X;
+#else
                 return GeoPoint != null ? GeoPoint.Longitude : null;
+#endif
             }
         }
 
@@ -628,7 +650,11 @@ namespace Rock.Model
         {
             try
             {
+#if IS_NET_CORE
+                this.GeoPoint = new Point( longitude, latitude );
+#else
                 this.GeoPoint = DbGeography.FromText( string.Format( "POINT({0} {1})", longitude, latitude ) );
+#endif
                 return true;
             }
             catch
@@ -655,7 +681,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityState state )
+#else
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.EntityState state )
+#endif
         {
             if ( ImageId.HasValue )
             {
@@ -689,12 +719,20 @@ namespace Rock.Model
             {
                 if ( this.GeoPoint != null )
                 {
+#if IS_NET_CORE
+                    return string.Format( "A point at {0}, {1}", this.Latitude, this.Longitude );
+#else
                     return string.Format( "A point at {0}, {1}", this.GeoPoint.Latitude, this.GeoPoint.Longitude );
+#endif
                 }
 
                 if ( this.GeoFence != null )
                 {
+#if IS_NET_CORE
+                    int pointCount = this.GeoFence.Coordinates.Length;
+#else
                     int pointCount = this.GeoFence.PointCount ?? 0;
+#endif
                     return string.Format( "An area with {0} points", ( pointCount > 0 ? pointCount - 1 : 0 ) );
                 }
             }
@@ -817,7 +855,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             // Make sure CampusCache.All is cached using the dbContext (to avoid deadlock if snapshot isolation is disabled)
             var campusId = this.GetCampusId( dbContext as RockContext );
@@ -852,10 +894,17 @@ namespace Rock.Model
                 {
                     case "GeoPoint":
                         {
+#if IS_NET_CORE
+                            if ( GeoPoint != null )
+                            {
+                                return string.Format( "{0},{1}", this.Latitude, this.Longitude );
+                            }
+#else
                             if ( GeoPoint != null && GeoPoint.Latitude.HasValue && GeoPoint.Longitude.HasValue )
                             {
                                 return string.Format( "{0},{1}", GeoPoint.Latitude.Value, GeoPoint.Longitude.Value );
                             }
+#endif
                             break;
                         }
                     case "GeoFence":
@@ -1038,7 +1087,11 @@ namespace Rock.Model
                 LocationId = location.Id;
                 if ( location.GeoPoint != null )
                 {
+#if IS_NET_CORE
+                    Point = new MapCoordinate( location.Latitude, location.Longitude );
+#else
                     Point = new MapCoordinate( location.GeoPoint.Latitude, location.GeoPoint.Longitude );
+#endif
                 }
 
                 if ( location.GeoFence != null )

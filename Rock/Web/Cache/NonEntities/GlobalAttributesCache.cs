@@ -23,6 +23,9 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Web;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Model;
 using Rock.Security;
@@ -250,11 +253,15 @@ namespace Rock.Web.Cache
             string value = GetValue( key, rockContext );
             if ( !string.IsNullOrWhiteSpace( value ) )
             {
+#if !IS_NET_CORE
+                // EFTODO: Dependency on WebControls via Field Type.
+
                 var attributeCache = Attributes.FirstOrDefault( a => a.Key.Equals( key, StringComparison.OrdinalIgnoreCase ) );
                 if ( attributeCache != null )
                 {
                     value = attributeCache.FieldType.Field.FormatValue( null, value, attributeCache.QualifierValues, false );
                 }
+#endif
             }
 
             AttributeValuesFormatted.AddOrUpdate( key, value, ( k, v ) => value );
@@ -329,11 +336,15 @@ namespace Rock.Web.Cache
 
             AttributeValues.AddOrUpdate( key, value, ( k, v ) => value );
 
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebControls via Field Type.
+
             var attributeCache = Attributes.FirstOrDefault( a => a.Key.Equals( key, StringComparison.OrdinalIgnoreCase ) );
             if ( attributeCache != null )
             {
                 value = attributeCache.FieldType.Field.FormatValue( null, value, attributeCache.QualifierValues, false );
             }
+#endif
             AttributeValuesFormatted.AddOrUpdate( key, value, ( k, v ) => value );
 
         }
@@ -393,12 +404,16 @@ namespace Rock.Web.Cache
         {
             Clear();
 
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms
+
             if ( HttpContext.Current == null ) return;
 
             var appSettings = HttpContext.Current.Application;
             appSettings[ORG_LOC_GUID] = null;
             appSettings[ORG_LOC_STATE] = null;
             appSettings[ORG_LOC_COUNTRY] = null;
+#endif
         }
 
         /// <summary>
@@ -515,6 +530,9 @@ namespace Rock.Web.Cache
                 var locGuid = GetValue( "OrganizationAddress" ).AsGuidOrNull();
                 if ( !locGuid.HasValue ) return string.Empty;
 
+#if !IS_NET_CORE
+                // EFTODO: Dependency on WebForms
+
                 if ( HttpContext.Current != null )
                 {
                     var appSettings = HttpContext.Current.Application;
@@ -539,6 +557,7 @@ namespace Rock.Web.Cache
                         return location.State;
                     }
                 }
+#endif
 
                 using ( var rockContext = new RockContext() )
                 {
@@ -567,6 +586,9 @@ namespace Rock.Web.Cache
                 var locGuid = GetValue( "OrganizationAddress" ).AsGuidOrNull();
                 if ( !locGuid.HasValue ) return string.Empty;
 
+#if !IS_NET_CORE
+                // EFTODO: Dependency on WebForms
+
                 if ( HttpContext.Current != null )
                 {
                     var appSettings = HttpContext.Current.Application;
@@ -591,6 +613,7 @@ namespace Rock.Web.Cache
                         return location.Country;
                     }
                 }
+#endif
 
                 using ( var rockContext = new RockContext() )
                 {
@@ -619,6 +642,9 @@ namespace Rock.Web.Cache
                 var locGuid = GetValue( "OrganizationAddress" ).AsGuidOrNull();
                 if ( !locGuid.HasValue ) return string.Empty;
 
+#if !IS_NET_CORE
+                // EFTODO: Dependency on WebForms.
+
                 if ( HttpContext.Current != null )
                 {
                     var appSettings = HttpContext.Current.Application;
@@ -642,6 +668,7 @@ namespace Rock.Web.Cache
                         return location.Country;
                     }
                 }
+#endif
 
                 using ( var rockContext = new RockContext() )
                 {

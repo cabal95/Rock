@@ -122,12 +122,21 @@ namespace Rock.Model
         /// The child DataViewFilters.
         /// </value>
         [DataMember]
+#if IS_NET_CORE
+        public virtual ICollection<DataViewFilter> ChildFilters
+        {
+            get { return _childFilters ?? ( _childFilters = new Collection<DataViewFilter>() ); }
+            set { _childFilters = value; }
+        }
+        private ICollection<DataViewFilter> _childFilters;
+#else
         public virtual ICollection<DataViewFilter> ChildFilters
         {
             get { return _filters ?? ( _filters = new Collection<DataViewFilter>() ); }
             set { _filters = value; }
         }
         private ICollection<DataViewFilter> _filters;
+#endif
 
         #endregion
 

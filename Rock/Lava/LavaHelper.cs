@@ -21,7 +21,9 @@ using System.Web;
 using Rock.Model;
 using Rock.Web.Cache;
 using Rock.Web.UI;
+#if !IS_NET_CORE
 using UAParser;
+#endif
 
 namespace Rock.Lava
 {
@@ -41,10 +43,12 @@ namespace Rock.Lava
         {
             var mergeFields = new Dictionary<string, object>();
 
+#if !IS_NET_CORE
             if ( rockPage == null && HttpContext.Current != null )
             {
                 rockPage = HttpContext.Current.Handler as RockPage;
             }
+#endif
 
             if ( options == null )
             {
@@ -53,6 +57,7 @@ namespace Rock.Lava
 
             if ( currentPerson == null )
             {
+#if !IS_NET_CORE
                 if ( rockPage != null )
                 {
                     currentPerson = rockPage.CurrentPerson;
@@ -61,6 +66,7 @@ namespace Rock.Lava
                 {
                     currentPerson = HttpContext.Current.Items["CurrentPerson"] as Person;
                 }
+#endif
             }
 
             if ( options.GetLegacyGlobalMergeFields )
@@ -76,6 +82,7 @@ namespace Rock.Lava
                 }
             }
 
+#if !IS_NET_CORE
             if ( options.GetPageContext && rockPage != null )
             {
                 var contextObjects = new Dictionary<string, object>();
@@ -137,6 +144,7 @@ namespace Rock.Lava
                     }
                 }
             }
+#endif
 
             if ( options.GetCurrentPerson )
             {
@@ -164,6 +172,7 @@ namespace Rock.Lava
         public static Dictionary<string, object> GetPagePropertiesMergeObject( RockPage rockPage )
         {
             Dictionary<string, object> pageProperties = new Dictionary<string, object>();
+#if !IS_NET_CORE
             pageProperties.Add( "Id", rockPage.PageId.ToString() );
             pageProperties.Add( "BrowserTitle", rockPage.BrowserTitle );
             pageProperties.Add( "PageTitle", rockPage.PageTitle );
@@ -174,6 +183,7 @@ namespace Rock.Lava
             pageProperties.Add( "SiteTheme", rockPage.Site.Theme );
             pageProperties.Add( "PageIcon", rockPage.PageIcon );
             pageProperties.Add( "Description", rockPage.MetaDescription );
+#endif
             return pageProperties;
         }
 

@@ -27,6 +27,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Web.UI.WebControls;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Reporting;
 using Rock.Web.Cache;
@@ -207,7 +211,11 @@ namespace Rock.Model
         /// <returns></returns>
         public List<object> GetDataSource( Type entityType, Dictionary<int, EntityField> entityFields, Dictionary<int, AttributeCache> attributes, Dictionary<int, ReportField> selectComponents, Rock.Web.UI.Controls.SortProperty sortProperty, int? databaseTimeoutSeconds, out List<string> errorMessages )
         {
+#if IS_NET_CORE
+            Microsoft.EntityFrameworkCore.DbContext reportDbContext;
+#else
             System.Data.Entity.DbContext reportDbContext;
+#endif
             var qry = GetQueryable( entityType, entityFields, attributes, selectComponents, sortProperty, null, databaseTimeoutSeconds, false, out errorMessages, out reportDbContext );
 
             // enumerate thru the query results and put into a list
@@ -234,7 +242,11 @@ namespace Rock.Model
         /// <returns></returns>
         public IQueryable GetQueryable( Type entityType, Dictionary<int, EntityField> entityFields, Dictionary<int, AttributeCache> attributes, Dictionary<int, ReportField> selectComponents, Rock.Web.UI.Controls.SortProperty sortProperty, int? databaseTimeoutSeconds, out List<string> errorMessages )
         {
+#if IS_NET_CORE
+            Microsoft.EntityFrameworkCore.DbContext reportDbContext;
+#else
             System.Data.Entity.DbContext reportDbContext;
+#endif
             return GetQueryable( entityType, entityFields, attributes, selectComponents, sortProperty, null, databaseTimeoutSeconds, false, out errorMessages, out reportDbContext );
         }
 
@@ -250,7 +262,11 @@ namespace Rock.Model
         /// <param name="errorMessages">The error messages.</param>
         /// <param name="reportDbContext">The report database context.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public IQueryable GetQueryable( Type entityType, Dictionary<int, EntityField> entityFields, Dictionary<int, AttributeCache> attributes, Dictionary<int, ReportField> selectComponents, Rock.Web.UI.Controls.SortProperty sortProperty, int? databaseTimeoutSeconds, out List<string> errorMessages, out Microsoft.EntityFrameworkCore.DbContext reportDbContext )
+#else
         public IQueryable GetQueryable( Type entityType, Dictionary<int, EntityField> entityFields, Dictionary<int, AttributeCache> attributes, Dictionary<int, ReportField> selectComponents, Rock.Web.UI.Controls.SortProperty sortProperty, int? databaseTimeoutSeconds, out List<string> errorMessages, out System.Data.Entity.DbContext reportDbContext )
+#endif
         {
             return GetQueryable( entityType, entityFields, attributes, selectComponents, sortProperty, null, databaseTimeoutSeconds, false, out errorMessages, out reportDbContext );
         }
@@ -270,7 +286,11 @@ namespace Rock.Model
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         /// <exception cref="System.Exception"></exception>
+#if IS_NET_CORE
+        public IQueryable GetQueryable( Type entityType, Dictionary<int, EntityField> entityFields, Dictionary<int, AttributeCache> attributes, Dictionary<int, ReportField> selectComponents, Rock.Web.UI.Controls.SortProperty sortProperty, int? databaseTimeoutSeconds, bool isCommunication, out List<string> errorMessages, out Microsoft.EntityFrameworkCore.DbContext reportDbContext )
+#else
         public IQueryable GetQueryable( Type entityType, Dictionary<int, EntityField> entityFields, Dictionary<int, AttributeCache> attributes, Dictionary<int, ReportField> selectComponents, Rock.Web.UI.Controls.SortProperty sortProperty, int? databaseTimeoutSeconds, bool isCommunication, out List<string> errorMessages, out System.Data.Entity.DbContext reportDbContext )
+#endif
         {
             return GetQueryable( entityType, entityFields, attributes, selectComponents, sortProperty, null, databaseTimeoutSeconds, isCommunication, out errorMessages, out reportDbContext );
         }
@@ -290,7 +310,11 @@ namespace Rock.Model
         /// <param name="reportDbContext">The report database context.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
+#if IS_NET_CORE
+        public IQueryable GetQueryable( Type entityType, Dictionary<int, EntityField> entityFields, Dictionary<int, AttributeCache> attributes, Dictionary<int, ReportField> selectComponents, Rock.Web.UI.Controls.SortProperty sortProperty, DataViewFilterOverrides dataViewFilterOverrides, int? databaseTimeoutSeconds, bool isCommunication, out List<string> errorMessages, out Microsoft.EntityFrameworkCore.DbContext reportDbContext )
+#else
         public IQueryable GetQueryable( Type entityType, Dictionary<int, EntityField> entityFields, Dictionary<int, AttributeCache> attributes, Dictionary<int, ReportField> selectComponents, Rock.Web.UI.Controls.SortProperty sortProperty, DataViewFilterOverrides dataViewFilterOverrides, int? databaseTimeoutSeconds, bool isCommunication, out List<string> errorMessages, out System.Data.Entity.DbContext reportDbContext )
+#endif
         {
             errorMessages = new List<string>();
             reportDbContext = null;
@@ -302,7 +326,11 @@ namespace Rock.Model
 
                 if ( databaseTimeoutSeconds.HasValue )
                 {
+#if IS_NET_CORE
+                    reportDbContext.Database.SetCommandTimeout( databaseTimeoutSeconds.Value );
+#else
                     reportDbContext.Database.CommandTimeout = databaseTimeoutSeconds.Value;
+#endif
                 }
 
                 if ( serviceInstance != null )
@@ -324,7 +352,11 @@ namespace Rock.Model
 
                     foreach ( var a in attributes )
                     {
+#if !IS_NET_CORE
+                        // EFTODO: Causes dependency on WebControls via Field Types.
+
                         dynamicFields.Add( string.Format( "Attribute_{0}_{1}", a.Value.Id, a.Key ), a.Value.FieldType.Field.AttributeValueFieldType );
+#endif
                     }
 
                     foreach ( var reportField in selectComponents )
@@ -490,7 +522,18 @@ namespace Rock.Model
 
                         var selectExpression = Expression.Call( typeof( Queryable ), "Select", new Type[] { qry.ElementType, dynamicType }, qryExpression, selector );
 
+#if IS_NET_CORE
+                        // EFTODO: I'm not sure this works, but it compiles.
+                        // EFCore does not have a non-generic AsNoTracking method so use the CreateQuery method that is generic.
+
+                        var query = ( IQueryable<IEntity> ) qry.Provider.GetType().GetRuntimeMethods()
+                            .Single( m => m.Name == "CreateQuery" && m.IsGenericMethod )
+                            .MakeGenericMethod( entityType )
+                            .Invoke( qry.Provider, new[] { selectExpression } );
+                        query = query.AsNoTracking();
+#else
                         var query = qry.Provider.CreateQuery( selectExpression ).AsNoTracking();
+#endif
 
                         // cast to a dynamic so that we can do a Queryable.Take (the compiler figures out the T in IQueryable at runtime)
                         dynamic dquery = query;

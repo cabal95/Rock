@@ -14,7 +14,11 @@
 // limitations under the License.
 // </copyright>
 //
+#if IS_NET_CORE
+using NetTopologySuite.Geometries;
+#else
 using System.Data.Entity.Spatial;
+#endif
 
 namespace Rock.Data
 {
@@ -53,7 +57,11 @@ namespace Rock.Data
         /// <value>
         /// The mailing address geo fence.
         /// </value>
+#if IS_NET_CORE
+        Geometry MailingAddressGeoFence { get; set; }
+#else
         DbGeography MailingAddressGeoFence { get; set; }
+#endif
 
         /// <summary>
         /// Gets or sets the mailing address geo point.
@@ -61,7 +69,11 @@ namespace Rock.Data
         /// <value>
         /// The mailing address geo point.
         /// </value>
+#if IS_NET_CORE
+        Geometry MailingAddressGeoPoint { get; set; }
+#else
         DbGeography MailingAddressGeoPoint { get; set; }
+#endif
 
         /// <summary>
         /// Gets or sets the mailing address latitude.
@@ -149,7 +161,11 @@ namespace Rock.Data
         /// <value>
         /// The mapped address geo fence.
         /// </value>
+#if IS_NET_CORE
+        Geometry MappedAddressGeoFence { get; set; }
+#else
         DbGeography MappedAddressGeoFence { get; set; }
+#endif
 
         /// <summary>
         /// Gets or sets the mapped address geo point.
@@ -157,7 +173,11 @@ namespace Rock.Data
         /// <value>
         /// The mapped address geo point.
         /// </value>
+#if IS_NET_CORE
+        Geometry MappedAddressGeoPoint { get; set; }
+#else
         DbGeography MappedAddressGeoPoint { get; set; }
+#endif
 
         /// <summary>
         /// Gets or sets the mapped address latitude.

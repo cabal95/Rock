@@ -19,6 +19,9 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 using Z.EntityFramework.Plus;
@@ -531,7 +534,11 @@ namespace Rock.Model
 
             if ( !currentPersonAliasId.HasValue )
             {
+#if IS_NET_CORE
+                if ( HttpContext.Current != null && HttpContext.Current.Items.ContainsKey( "CurrentPerson" ) )
+#else
                 if ( HttpContext.Current != null && HttpContext.Current.Items.Contains( "CurrentPerson" ) )
+#endif
                 {
                     currentPersonAliasId = ( HttpContext.Current.Items["CurrentPerson"] as Person )?.PrimaryAliasId;
                 }

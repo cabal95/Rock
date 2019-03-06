@@ -31,6 +31,9 @@ namespace Rock.Field
     /// </summary>
     public interface IEntityFieldType : IFieldType
     {
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Gets the edit value as the IEntity.Id
         /// </summary>
@@ -46,6 +49,7 @@ namespace Rock.Field
         /// <param name="configurationValues">The configuration values.</param>
         /// <param name="id">The identifier.</param>
         void SetEditValueFromEntityId( Control control, Dictionary<string, ConfigurationValue> configurationValues, int? id );
+#endif
 
         /// <summary>
         /// Gets the entity.

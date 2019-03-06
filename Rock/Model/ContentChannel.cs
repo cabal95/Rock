@@ -228,6 +228,10 @@ namespace Rock.Model
         /// A collection of ContentChannels that this ContentChannel allows as children.
         /// </value>
         [DataMember, LavaIgnore]
+#if IS_NET_CORE
+        // EFTODO: Many-to-many relationships are not supported.
+        [NotMapped]
+#endif
         public virtual ICollection<ContentChannel> ChildContentChannels
         {
             get { return _childContentChannels ?? ( _childContentChannels = new Collection<ContentChannel>() ); }
@@ -346,19 +350,35 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( DbContext dbContext, Microsoft.EntityFrameworkCore.EntityState state )
+#else
         public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.EntityState state )
+#endif
         {
+#if IS_NET_CORE
+            if ( state == Microsoft.EntityFrameworkCore.EntityState.Deleted )
+#else
             if ( state == System.Data.Entity.EntityState.Deleted )
+#endif
             {
                 ChildContentChannels.Clear();
             }
 
             // clean up the index
+#if IS_NET_CORE
+            if ( state == Microsoft.EntityFrameworkCore.EntityState.Deleted && IsIndexEnabled )
+#else
             if ( state == System.Data.Entity.EntityState.Deleted && IsIndexEnabled )
+#endif
             {
                 this.DeleteIndexedDocumentsByContentChannel( Id );
             }
+#if IS_NET_CORE
+            else if ( state == Microsoft.EntityFrameworkCore.EntityState.Modified )
+#else
             else if ( state == System.Data.Entity.EntityState.Modified )
+#endif
             {
                 // check if indexing is enabled
                 var changeEntry = dbContext.ChangeTracker.Entries<ContentChannel>().Where( a => a.Entity == this ).FirstOrDefault();
@@ -410,7 +430,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( Microsoft.EntityFrameworkCore.EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             ContentChannelCache.UpdateCachedEntity( this.Id, entityState );
         }
@@ -430,7 +454,10 @@ namespace Rock.Model
         /// </summary>
         public ContentChannelConfiguration()
         {
+#if !IS_NET_CORE
+            // EFTODO: Many-to-many relationships are not supported.
             this.HasMany( p => p.ChildContentChannels ).WithMany( c => c.ParentContentChannels ).Map( m => { m.MapLeftKey( "ContentChannelId" ); m.MapRightKey( "ChildContentChannelId" ); m.ToTable( "ContentChannelAssociation" ); } );
+#endif
             this.HasRequired( c => c.ContentChannelType ).WithMany( t => t.Channels ).HasForeignKey( c => c.ContentChannelTypeId ).WillCascadeOnDelete( false );
             this.HasOptional( c => c.ItemTagCategory ).WithMany().HasForeignKey( c => c.ItemTagCategoryId ).WillCascadeOnDelete( false );
         }

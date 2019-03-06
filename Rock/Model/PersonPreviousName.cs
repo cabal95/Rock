@@ -18,12 +18,19 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+#if !IS_NET_CORE
 using System.Data.Entity.Infrastructure;
+#endif
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+#endif
 using Rock.Data;
 
 namespace Rock.Model
@@ -111,7 +118,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityEntry entry )
+#else
         public override void PreSaveChanges( DbContext dbContext, DbEntityEntry entry )
+#endif
         {
             var rockContext = (RockContext)dbContext;
 
@@ -131,19 +142,31 @@ namespace Rock.Model
 
                 switch ( entry.State )
                 {
+#if IS_NET_CORE
+                    case EntityState.Added:
+#else
                     case System.Data.Entity.EntityState.Added:
+#endif
                         {
                             History.EvaluateChange( HistoryChanges, "Previous Name", string.Empty, LastName );
                             break;
                         }
 
+#if IS_NET_CORE
+                    case EntityState.Modified:
+#else
                     case System.Data.Entity.EntityState.Modified:
+#endif
                         {
                             History.EvaluateChange( HistoryChanges, "Previous Name", entry.OriginalValues["LastName"].ToStringSafe(), LastName );
                             break;
                         }
 
+#if IS_NET_CORE
+                    case EntityState.Deleted:
+#else
                     case System.Data.Entity.EntityState.Deleted:
+#endif
                         {
                             History.EvaluateChange( HistoryChanges, "Previous Name", entry.OriginalValues["LastName"].ToStringSafe(), string.Empty );
                             return;

@@ -15,13 +15,18 @@
 // </copyright>
 //
 using System;
+#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
+#endif
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Rock.Model
 {
+#if IS_NET_CORE
+    public class DbGeographyConverter : NetTopologySuite.IO.Converters.GeometryConverter { }
+#else
     /// <summary>
     /// 
     /// </summary>
@@ -76,4 +81,5 @@ namespace Rock.Model
             serializer.Serialize( writer, value );
         }
     }
+#endif
 }

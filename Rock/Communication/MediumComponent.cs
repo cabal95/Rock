@@ -22,14 +22,20 @@ using Rock.Attribute;
 using Rock.Extension;
 using Rock.Model;
 using Rock.Web.Cache;
+#if !IS_NET_CORE
 using Rock.Web.UI.Controls.Communication;
+#endif
 
 namespace Rock.Communication
 {
     /// <summary>
     /// Base class for components communication mediums (i.e. email, sms, twitter, etc) 
     /// </summary>
+#if !IS_NET_CORE
+    // EFTODO: Causes dependency on WebControls via Field Type.
+
     [ComponentField( "Rock.Communication.TransportContainer, Rock", "Transport Container", "", false, "", "", 1 )]
+#endif
     public abstract class MediumComponent : Component
     {
         /// <summary>
@@ -75,12 +81,16 @@ namespace Rock.Communication
         /// </value>
         public abstract CommunicationType CommunicationType { get; }
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Gets the control.
         /// </summary>
         /// <param name="useSimpleMode">if set to <c>true</c> [use simple mode].</param>
         /// <returns></returns>
         public abstract MediumControl GetControl( bool useSimpleMode );
+#endif
 
         /// <summary>
         /// Sends the specified rock message.

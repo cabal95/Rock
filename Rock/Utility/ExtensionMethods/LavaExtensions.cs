@@ -57,6 +57,9 @@ namespace Rock
             lavaDebugPanel.Append( "<p>Below is a listing of available merge fields for this block. Find out more on Lava at <a href='http://www.rockrms.com/lava' target='_blank'>rockrms.com/lava</a>." );
 
 
+#if IS_NET_CORE
+            lavaDebugPanel.Append( formatLavaDebugInfo( lavaObject.LiquidizeChildren( 0, rockContext ) ) );
+#else
             int maxWaitMS = 10000;
             System.Web.HttpContext taskContext = System.Web.HttpContext.Current; 
             var formatLavaTask = new Task( () =>
@@ -71,6 +74,7 @@ namespace Rock
             {
                 return "<div class='alert alert-warning lava-debug'>Warning: Timeout generating Lava Help</div>";
             }
+#endif
 
             // Add a 'GlobalAttribute' entry if it wasn't part of the LavaObject
             if ( !( lavaObject is IDictionary<string, object> ) || !( (IDictionary<string, object>)lavaObject ).Keys.Contains( "GlobalAttribute" ) )
@@ -240,7 +244,11 @@ namespace Rock
                                 if ( entityDbContext != null )
                                 {
                                     var entryCollection = entityDbContext.Entry( myObject )?.Collection( key );
+#if IS_NET_CORE
+                                    if ( entryCollection.EntityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Detached )
+#else
                                     if ( entryCollection.EntityEntry.State == System.Data.Entity.EntityState.Detached )
+#endif
                                     {
                                         // create a sample since we can't fetch real data
                                         Type listOfType = propType.GenericTypeArguments[0];
@@ -314,7 +322,11 @@ namespace Rock
                     foreach ( var objAttr in objWithAttrs.Attributes )
                     {
                         var attributeCache = objAttr.Value;
+#if IS_NET_CORE
+                        string value = objWithAttrs.GetAttributeValue( attributeCache.Key );
+#else
                         string value = attributeCache.FieldType.Field.FormatValue( null, attributeCache.EntityTypeId, objWithAttrs.Id, objWithAttrs.GetAttributeValue( attributeCache.Key ), attributeCache.QualifierValues, false );
+#endif
                         objAttrs.Add( attributeCache.Key, value.Truncate( 50 ).EncodeHtml() );
                     }
 
@@ -519,6 +531,15 @@ namespace Rock
         /// <returns></returns>
         private static DbContext GetDbContextFromEntity( object entity )
         {
+#if IS_NET_CORE
+            if ( !( entity is Microsoft.EntityFrameworkCore.Proxies.Internal.IProxyLazyLoader proxy ) )
+            {
+                return null;
+            }
+
+            var contextProperty = proxy.LazyLoader.GetType().GetProperty( "Context", BindingFlags.NonPublic | BindingFlags.Instance );
+            return contextProperty.GetValue( proxy ) as DbContext;
+#else
             FieldInfo entityWrapperField = entity.GetType().GetField( "_entityWrapper" );
 
             if ( entityWrapperField == null )
@@ -529,6 +550,7 @@ namespace Rock
             var context = ( System.Data.Entity.Core.Objects.ObjectContext ) entityWrapperContextProperty.GetValue( entityWrapper, null );
 
             return context?.TransactionHandler?.DbContext as DbContext;
+#endif
         }
 
         /// <summary>

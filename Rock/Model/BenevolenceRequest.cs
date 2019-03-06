@@ -221,7 +221,11 @@ namespace Rock.Model
         public BenevolenceRequest()
             : base()
         {
+#if IS_NET_CORE
+            _benevolenceResults = new Collection<BenevolenceResult>();
+#else
             _results = new Collection<BenevolenceResult>();
+#endif
             _documents = new Collection<BenevolenceRequestDocument>();
         }
 
@@ -341,12 +345,21 @@ namespace Rock.Model
         /// A collection of <see cref="Rock.Model.BenevolenceResult"/> entities representing the results of the Benevolence Request.
         /// </value>
         [DataMember]
+#if IS_NET_CORE
+        public virtual ICollection<BenevolenceResult> BenevolenceResults
+        {
+            get { return _benevolenceResults; }
+            set { _benevolenceResults = value; }
+        }
+        private ICollection<BenevolenceResult> _benevolenceResults;
+#else
         public virtual ICollection<BenevolenceResult> BenevolenceResults
         {
             get { return _results; }
             set { _results = value; }
         }
         private ICollection<BenevolenceResult> _results;
+#endif
 
 
         /// <summary>

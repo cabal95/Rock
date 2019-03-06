@@ -24,17 +24,21 @@ using System.Reflection;
 using System.Runtime.Caching;
 using System.Text;
 using System.Web;
+#if !IS_NET_CORE
 using System.Web.Security;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
+#endif
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
 using Rock.Transactions;
 using Rock.Security;
+#if !IS_NET_CORE
 using Rock.Web.UI.Controls;
 using Page = System.Web.UI.Page;
+#endif
 using Rock.Attribute;
 using Rock.Utility;
 
@@ -45,6 +49,7 @@ namespace Rock.Web.UI
     /// </summary>
     public abstract class RockPage : Page
     {
+#if !IS_NET_CORE
         #region Private Variables
 
         private PlaceHolder phLoadStats;
@@ -3054,8 +3059,10 @@ Sys.Application.add_load(function () {
         public event PageNavigateEventHandler PageNavigate;
 
         #endregion
+#endif
     }
 
+#if !IS_NET_CORE
     #region Event Argument Classes
 
     /// <summary>
@@ -3129,6 +3136,7 @@ Sys.Application.add_load(function () {
 
 
     #endregion
+#endif
 
 }
 

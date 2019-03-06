@@ -17,10 +17,16 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+#if !IS_NET_CORE
 using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration.Conventions;
+#endif
 using System.Linq;
 using System.Reflection;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Model;
 
 namespace Rock.Data
@@ -62,7 +68,11 @@ namespace Rock.Data
         /// Initializes a new instance of the <see cref="RockContext"/> class.
         /// </summary>
         public RockContext()
+#if IS_NET_CORE
+            : base( "RockContext" )
+#else
             : base()
+#endif
         {
         }
 
@@ -1693,7 +1703,11 @@ namespace Rock.Data
             }
             else
             {
+#if !IS_NET_CORE
+                // EFTODO: EF Core does not do it's own validation.
+
                 this.Configuration.ValidateOnSaveEnabled = false;
+#endif
                 this.Set<T>().AddRange( records );
                 this.SaveChanges( true );
             }
@@ -1704,14 +1718,24 @@ namespace Rock.Data
         /// before the model has been locked down and used to initialize the context. 
         /// </summary>
         /// <param name="modelBuilder">The builder that defines the model for the context being created.</param>
+#if IS_NET_CORE
+        protected override void OnModelCreating( ModelBuilder modelBuilder )
+#else
         protected override void OnModelCreating( DbModelBuilder modelBuilder )
+#endif
         {
+#if IS_NET_CORE
+            ContextHelper.ModelBuilder = modelBuilder;
+#endif
             ContextHelper.AddConfigurations( modelBuilder );
 
             try
             {
                 //// dynamically add plugin entities so that queryables can use a mixture of entities from different plugins and core
                 //// from http://romiller.com/2012/03/26/dynamically-building-a-model-with-code-first/, but using the new RegisterEntityType in 6.1.3
+
+#if !IS_NET_CORE
+                // EFTODO: These UDFs can probably be implented via modelBuilder.HasDbFunction()
 
                 // look for IRockStoreModelConvention classes
                 var modelConventionList = Reflection.FindTypes( typeof( Rock.Data.IRockStoreModelConvention<System.Data.Entity.Core.Metadata.Edm.EdmModel> ) )
@@ -1723,6 +1747,7 @@ namespace Rock.Data
                     var convention = ( IConvention ) Activator.CreateInstance( modelConventionType );
                     modelBuilder.Conventions.Add( convention );
                 }
+#endif
 
                 // look for IRockEntity classes
                 var entityTypeList = Reflection.FindTypes( typeof( Rock.Data.IRockEntity ) )
@@ -1733,7 +1758,11 @@ namespace Rock.Data
                 {
                     try
                     {
+#if IS_NET_CORE
+                        modelBuilder.Entity( entityType );
+#else
                         modelBuilder.RegisterEntityType( entityType );
+#endif
                     }
                     catch ( Exception ex )
                     {
@@ -1746,7 +1775,11 @@ namespace Rock.Data
                 {
                     try
                     {
+#if IS_NET_CORE
+                        ContextHelper.AddConfigurationsFromAssembly( modelBuilder, assembly );
+#else
                         modelBuilder.Configurations.AddFromAssembly( assembly );
+#endif
                     }
                     catch ( Exception ex )
                     {
@@ -1758,6 +1791,11 @@ namespace Rock.Data
             {
                 ExceptionLogService.LogException( new Exception( "Exception occurred when adding Plugin Entities to RockContext", ex ), null );
             }
+
+#if IS_NET_CORE
+            ContextHelper.FinalizeConfigurations( modelBuilder );
+            ContextHelper.ModelBuilder = null;
+#endif
         }
     }
 
@@ -1766,14 +1804,53 @@ namespace Rock.Data
     /// </summary>
     public static class ContextHelper
     {
+        public static ModelBuilder ModelBuilder { get; set; }
+
         /// <summary>
         /// Adds the configurations.
         /// </summary>
         /// <param name="modelBuilder">The model builder.</param>
+#if IS_NET_CORE
+        public static void AddConfigurations( ModelBuilder modelBuilder )
+#else
         public static void AddConfigurations( DbModelBuilder modelBuilder )
+#endif
         {
+#if IS_NET_CORE
+            AddConfigurationsFromAssembly( modelBuilder, typeof( RockContext ).Assembly );
+#else
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
             modelBuilder.Configurations.AddFromAssembly( typeof( RockContext ).Assembly );
+#endif
         }
+
+#if IS_NET_CORE
+        public static void AddConfigurationsFromAssembly( ModelBuilder modelBuilder, Assembly assembly )
+        {
+            modelBuilder.ApplyConfigurationsFromAssembly( assembly );
+
+            // Add legacy configurations
+            var types = assembly.GetTypes()
+                .Where( t => !t.IsAbstract && t.BaseType != null )
+                .Where( t => t.BaseType.IsGenericType && t.BaseType.GetGenericTypeDefinition() == typeof( System.Data.Entity.ModelConfiguration.EntityTypeConfiguration<> ) );
+
+            foreach ( var type in types )
+            {
+                Activator.CreateInstance( type );
+                var e = modelBuilder.Entity<Category>();
+            }
+        }
+
+        public static void FinalizeConfigurations( ModelBuilder modelBuilder )
+        {
+            // Equivalent of .Remove<PluralizingTableNameconvention>()
+            foreach ( var entityType in modelBuilder.Model.GetEntityTypes() )
+            {
+                var tableAttribute = entityType.ClrType.GetCustomAttribute<TableAttribute>();
+
+                entityType.Relational().TableName = tableAttribute?.Name ?? entityType.Name;
+            }
+        }
+#endif
     }
 }

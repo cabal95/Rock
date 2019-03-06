@@ -189,9 +189,13 @@ namespace Rock.Web
             {
                 if ( System.Configuration.ConfigurationManager.AppSettings[key] != null )
                 {
+#if !IS_NET_CORE
                     System.Configuration.Configuration rockWebConfig = System.Web.Configuration.WebConfigurationManager.OpenWebConfiguration( "~" );
                     rockWebConfig.AppSettings.Settings[key].Value = value;
                     rockWebConfig.Save();
+#else
+                    throw new NotImplementedException();
+#endif
                 }
             }
             catch ( Exception ex )
@@ -212,7 +216,11 @@ namespace Rock.Web
 
             try
             {
+#if !IS_NET_CORE
                 rockWebConfig = System.Web.Configuration.WebConfigurationManager.OpenWebConfiguration( "~" );
+#else
+                throw new NotImplementedException();
+#endif
             }
             catch ( Exception ex )
             {

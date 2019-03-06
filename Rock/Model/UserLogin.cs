@@ -22,7 +22,9 @@ using System.Runtime.Serialization;
 using System.Security.Principal;
 using System.Threading;
 using System.Web;
+#if !IS_NET_CORE
 using System.Web.Hosting;
+#endif
 
 using Rock.Data;
 
@@ -229,6 +231,7 @@ namespace Rock.Model
         {
             get
             {
+#if !IS_NET_CORE
                 System.Web.Security.FormsIdentity identity = HttpContext.Current.User?.Identity as System.Web.Security.FormsIdentity;
                 if ( identity == null )
                     return false;
@@ -238,6 +241,9 @@ namespace Rock.Model
                     return false;
 
                 return true;
+#else
+                throw new NotImplementedException();
+#endif
             }
         }
 
@@ -319,6 +325,9 @@ namespace Rock.Model
         /// <returns>A <see cref="System.String"/> representing the UserName of the user that is currently logged in.</returns>
         public static string GetCurrentUserName()
         {
+#if IS_NET_CORE
+            return HttpContext.Current?.User?.Identity?.Name ?? string.Empty;
+#else
             if ( HostingEnvironment.IsHosted )
             {
                 HttpContext current = HttpContext.Current;
@@ -330,6 +339,7 @@ namespace Rock.Model
                 return string.Empty;
             else
                 return currentPrincipal.Identity.Name;
+#endif
         }
 
         #endregion

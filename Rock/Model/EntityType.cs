@@ -21,6 +21,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
 using System.Runtime.Serialization;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.UniversalSearch;
 using Rock.Web.Cache;
@@ -373,7 +376,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             EntityTypeCache.UpdateCachedEntity( this.Id, entityState );
         }

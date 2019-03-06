@@ -313,6 +313,7 @@ namespace Rock.Web.Cache
         /// <param name="hit">if set to <c>true</c> [hit].</param>
         private void UpdateCacheHitMiss( string key, bool hit )
         {
+#if !IS_NET_CORE
             var httpContext = System.Web.HttpContext.Current;
             if ( httpContext != null && httpContext.Items.Contains( "Cache_Hits" ) )
             {
@@ -322,6 +323,7 @@ namespace Rock.Web.Cache
                     cacheHits.AddOrIgnore( key, hit );
                 }
             }
+#endif
         }
 
 

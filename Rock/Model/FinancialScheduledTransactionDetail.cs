@@ -22,6 +22,9 @@ using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Financial;
 
@@ -63,7 +66,11 @@ namespace Rock.Model
         /// A <see cref="System.Decimal"/> representing the purchase/gift amount.
         /// </value>
         [DataMember]
+#if false
+        // EFTODO: Dependency on WebControls.
+
         [BoundFieldTypeAttribute( typeof( Rock.Web.UI.Controls.CurrencyField ) )]
+#endif
         public decimal Amount { get; set; }
 
         /// <summary>
@@ -165,21 +172,33 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
+#else
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
+#endif
         {
             var rockContext = ( RockContext ) dbContext;
             HistoryChangeList = new History.HistoryChangeList();
 
             switch ( entry.State )
             {
+#if IS_NET_CORE
+                case EntityState.Added:
+#else
                 case System.Data.Entity.EntityState.Added:
+#endif
                     {
                         string acct = History.GetValue<FinancialAccount>( this.Account, this.AccountId, rockContext );
                         HistoryChangeList.AddChange( History.HistoryVerb.Add, History.HistoryChangeType.Record, acct ).SetNewValue( Amount.FormatAsCurrency() );
                         break;
                     }
 
+#if IS_NET_CORE
+                case EntityState.Modified:
+#else
                 case System.Data.Entity.EntityState.Modified:
+#endif
                     {
                         string acct = History.GetValue<FinancialAccount>( this.Account, this.AccountId, rockContext );
 
@@ -194,7 +213,11 @@ namespace Rock.Model
 
                         break;
                     }
+#if IS_NET_CORE
+                case EntityState.Deleted:
+#else
                 case System.Data.Entity.EntityState.Deleted:
+#endif
                     {
                         string acct = History.GetValue<FinancialAccount>( this.Account, this.AccountId, rockContext );
                         HistoryChangeList.AddChange( History.HistoryVerb.Delete, History.HistoryChangeType.Record, acct ).SetOldValue( Amount.FormatAsCurrency() );
@@ -209,7 +232,11 @@ namespace Rock.Model
         /// Method that will be called on an entity immediately after the item is saved
         /// </summary>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public override void PostSaveChanges( Rock.Data.DbContext dbContext )
+#else
         public override void PostSaveChanges( DbContext dbContext )
+#endif
         {
             if ( HistoryChangeList.Any() )
             {

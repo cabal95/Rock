@@ -16,6 +16,10 @@
 //
 using System.Net.Http.Headers;
 using System.Web;
+
+#if IS_NET_CORE
+using Microsoft.AspNetCore.Http;
+#endif
 using Rock.Model;
 
 namespace Rock.Financial
@@ -34,6 +38,10 @@ namespace Rock.Financial
         /// <param name="requestHeaders">The headers from the webhook request.</param>
         /// <param name="request">The request from the gateway. Can be used to obtain the body.</param>
         /// <returns>True if the webhook was handled successfully, false otherwise</returns>
+#if IS_NET_CORE
+        bool HandleWebhook( FinancialGateway financialGateway, IHeaderDictionary requestHeaders, HttpRequest request );
+#else
         bool HandleWebhook( FinancialGateway financialGateway, HttpRequestHeaders requestHeaders, HttpRequest request );
+#endif
     }
 }

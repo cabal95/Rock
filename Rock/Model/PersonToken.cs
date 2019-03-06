@@ -214,9 +214,16 @@ namespace Rock.Model
         public static string ObfuscateRockMagicToken( string url )
         {
             // obfuscate rock magic token
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebControls.
+
             return ObfuscateRockMagicToken( url, null );
+#else
+            throw new NotImplementedException();
+#endif
         }
 
+#if !IS_NET_CORE
         /// <summary>
         /// Obfuscates the rock magic token.
         /// </summary>
@@ -255,6 +262,7 @@ namespace Rock.Model
 
             return url;
         }
+#endif
 
         /// <summary>
         /// Removes any instances of a rckipid parameter within the specified url so that isn't included.

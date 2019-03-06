@@ -695,7 +695,11 @@ namespace Rock.Web.Cache
             var iconUrl = string.Empty;
             if ( IconFileId.HasValue )
             {
+#if !IS_NET_CORE
                 iconUrl = $"{HttpContext.Current.Request.ApplicationPath}/GetImage.ashx?{IconFileId.Value}";
+#else
+                iconUrl = $"/GetImage.ashx?Id={IconFileId.Value}";
+#endif
             }
 
             var isCurrentPage = currentPage != null && currentPage.Id == Id;
@@ -764,7 +768,11 @@ namespace Rock.Web.Cache
             var iconUrl = string.Empty;
             if ( IconFileId.HasValue )
             {
+#if !IS_NET_CORE
                 iconUrl = $"{HttpContext.Current.Request.ApplicationPath}/GetImage.ashx?{IconFileId.Value}";
+#else
+                iconUrl = $"/GetImage.ashx?Id={IconFileId.Value}";
+#endif
             }
 
             var isCurrentPage = false;

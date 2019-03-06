@@ -22,6 +22,10 @@ using System.Data.Entity;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Reporting;
 using Rock.Web.Cache;
@@ -161,12 +165,20 @@ FROM (
                         {
                             // view already exists, but something has changed, so drop and recreate it
                             this.Context.Database.ExecuteSqlCommand( $"DROP VIEW [{metricViewName}]" );
+#if IS_NET_CORE
+                            this.Context.Database.ExecuteSqlCommand( "{0}", viewDefinition );
+#else
                             this.Context.Database.ExecuteSqlCommand( viewDefinition );
+#endif
                         }
                     }
                     else
                     {
+#if IS_NET_CORE
+                        this.Context.Database.ExecuteSqlCommand( "{0}", viewDefinition );
+#else
                         this.Context.Database.ExecuteSqlCommand( viewDefinition );
+#endif
                     }
                 }
                 catch ( Exception ex )

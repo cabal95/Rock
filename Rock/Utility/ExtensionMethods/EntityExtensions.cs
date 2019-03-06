@@ -28,6 +28,7 @@ namespace Rock
     /// </summary>
     public static partial class ExtensionMethods
     {
+#if !IS_NET_CORE
         /// <summary>
         /// Sets the value to the entity's id value. If the value does not exist, will set the first item in the list.
         /// </summary>
@@ -47,6 +48,7 @@ namespace Rock
         {
             listControl.SetValue( entity == null ? "0" : entity.Id.ToString() );
         }
+#endif
 
         #region IEntity extensions
 
@@ -146,7 +148,11 @@ namespace Rock
         {
             if ( type != null )
             {
+#if IS_NET_CORE
+                return type.Namespace == "Castle.Proxies";
+#else
                 return type.Namespace == "System.Data.Entity.DynamicProxies";
+#endif
             }
             else
             {

@@ -17,7 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+#if !IS_NET_CORE
 using System.Data.Entity;
+#endif
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -25,6 +27,9 @@ using System.Text.RegularExpressions;
 using DotLiquid;
 using DotLiquid.Exceptions;
 using DotLiquid.Util;
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Model;
 using Rock.Utility;
@@ -312,11 +317,15 @@ namespace Rock.Lava.Shortcodes
 
             if ( currentPerson == null )
             {
+#if !IS_NET_CORE
+                // EFTODO: Dependency on WebForms.
+
                 var httpContext = System.Web.HttpContext.Current;
                 if ( httpContext != null && httpContext.Items.Contains( "CurrentPerson" ) )
                 {
                     currentPerson = httpContext.Items["CurrentPerson"] as Person;
                 }
+#endif
             }
 
             return currentPerson;

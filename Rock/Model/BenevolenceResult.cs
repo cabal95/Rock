@@ -65,7 +65,11 @@ namespace Rock.Model
         /// A <see cref="System.String" /> containing the amount of benevolence.
         /// </value>
         [DataMember]
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         [BoundFieldTypeAttribute( typeof( Rock.Web.UI.Controls.CurrencyField ) )]
+#endif
         public decimal? Amount { get; set; }
 
         /// <summary>

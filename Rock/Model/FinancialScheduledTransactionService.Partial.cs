@@ -20,6 +20,9 @@ using System.Data.Entity;
 using System.Linq;
 using System.Text;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Financial;
 using Rock.Transactions;
@@ -44,7 +47,11 @@ namespace Rock.Model
         /// </returns>
         public IQueryable<FinancialScheduledTransaction> Get( int? personId, int? givingGroupId, bool includeInactive )
         {
+#if IS_NET_CORE
+            IQueryable<FinancialScheduledTransaction> qry = Queryable()
+#else
             var qry = Queryable()
+#endif
                 .Include( a => a.ScheduledTransactionDetails )
                 .Include( a => a.FinancialPaymentDetail.CurrencyTypeValue )
                 .Include( a => a.FinancialPaymentDetail.CreditCardTypeValue );
@@ -273,7 +280,11 @@ namespace Rock.Model
             var batchSummary = new Dictionary<Guid, List<Decimal>>();
             var initialControlAmounts = new Dictionary<Guid, decimal>();
 
+#if !IS_NET_CORE
+            // EFTODO: Remove, this isn't used.
+
             var gatewayComponent = gateway.GetGatewayComponent();
+#endif
 
             var newTransactions = new List<FinancialTransaction>();
             var failedPayments = new List<FinancialTransaction>();

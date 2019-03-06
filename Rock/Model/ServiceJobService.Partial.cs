@@ -17,7 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+#if !IS_NET_CORE
 using System.Web.Compilation;
+#endif
 
 using Quartz;
 
@@ -66,7 +68,11 @@ namespace Rock.Model
                 if (type == null)
                 {
                     // if it can't be found in dlls, look in App_Code using BuildManager
+#if !IS_NET_CORE
+                    // EFTODO: App_Code I don't think is supported in ASP.Net Core
+
                     type = BuildManager.GetType( job.Class, false );
+#endif
                 }
             }
             else

@@ -16,9 +16,16 @@
 //
 using System;
 using System.Collections.Generic;
+#if !IS_NET_CORE
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
+#endif
 using System.Linq;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+#endif
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
@@ -39,7 +46,11 @@ namespace Rock.Transactions
         /// Initializes a new instance of the <see cref="ConnectionRequestActivityChangeTransaction"/> class.
         /// </summary>
         /// <param name="entry">The entry.</param>
+#if IS_NET_CORE
+        public ConnectionRequestActivityChangeTransaction( EntityEntry entry )
+#else
         public ConnectionRequestActivityChangeTransaction( DbEntityEntry entry )
+#endif
         {
             // If entity was a connection request activity and state was added, save the values
             var connectionRequestActivity = entry.Entity as ConnectionRequestActivity;

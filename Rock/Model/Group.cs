@@ -20,11 +20,18 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
+#if !IS_NET_CORE
 using System.Data.Entity.Infrastructure;
+#endif
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 using Rock.UniversalSearch;
@@ -391,6 +398,15 @@ namespace Rock.Model
         /// The group requirements.
         /// </value>
         [DataMember]
+#if IS_NET_CORE
+        public virtual ICollection<GroupRequirement> GroupRequirements
+        {
+            get { return _groupRequirements ?? ( _groupRequirements = new Collection<GroupRequirement>() ); }
+            set { _groupRequirements = value; }
+        }
+
+        private ICollection<GroupRequirement> _groupRequirements;
+#else
         public virtual ICollection<GroupRequirement> GroupRequirements
         {
             get { return _groupsRequirements ?? ( _groupsRequirements = new Collection<GroupRequirement>() ); }
@@ -398,6 +414,7 @@ namespace Rock.Model
         }
 
         private ICollection<GroupRequirement> _groupsRequirements;
+#endif
 
         /// <summary>
         /// Gets or sets the group member workflow triggers.
@@ -406,6 +423,15 @@ namespace Rock.Model
         /// The group member workflow triggers.
         /// </value>
         [LavaInclude]
+#if IS_NET_CORE
+        public virtual ICollection<GroupMemberWorkflowTrigger> GroupMemberWorkflowTriggers
+        {
+            get { return _groupMemberWorkflowTriggers ?? ( _groupMemberWorkflowTriggers = new Collection<GroupMemberWorkflowTrigger>() ); }
+            set { _groupMemberWorkflowTriggers = value; }
+        }
+
+        private ICollection<GroupMemberWorkflowTrigger> _groupMemberWorkflowTriggers;
+#else
         public virtual ICollection<GroupMemberWorkflowTrigger> GroupMemberWorkflowTriggers
         {
             get { return _triggers ?? ( _triggers = new Collection<GroupMemberWorkflowTrigger>() ); }
@@ -413,6 +439,7 @@ namespace Rock.Model
         }
 
         private ICollection<GroupMemberWorkflowTrigger> _triggers;
+#endif
 
         /// <summary>
         /// Gets or sets the group syncs.
@@ -707,7 +734,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityEntry entry )
+#else
         public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry )
+#endif
         {
             var rockContext = (RockContext)dbContext;
 
@@ -715,7 +746,11 @@ namespace Rock.Model
 
             switch ( entry.State )
             {
+#if IS_NET_CORE
+                case EntityState.Added:
+#else
                 case System.Data.Entity.EntityState.Added:
+#endif
                     {
                         HistoryChangeList.AddChange( History.HistoryVerb.Add, History.HistoryChangeType.Record, "Group").SetNewValue( Name );
 
@@ -738,7 +773,11 @@ namespace Rock.Model
                         break;
                     }
 
+#if IS_NET_CORE
+                case EntityState.Modified:
+#else
                 case System.Data.Entity.EntityState.Modified:
+#endif
                     {
                         var originalIsActive = entry.OriginalValues["IsActive"].ToStringSafe().AsBoolean();
                         History.EvaluateChange( HistoryChangeList, "Name", entry.OriginalValues["Name"].ToStringSafe(), Name );
@@ -769,7 +808,11 @@ namespace Rock.Model
                         break;
                     }
 
+#if IS_NET_CORE
+                case EntityState.Deleted:
+#else
                 case System.Data.Entity.EntityState.Deleted:
+#endif
                     {
                         HistoryChangeList.AddChange( History.HistoryVerb.Delete, History.HistoryChangeType.Record, null );
 
@@ -1006,9 +1049,17 @@ namespace Rock.Model
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityEntry entry, EntityState state )
+#else
         public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry, EntityState state )
+#endif
         {
+#if IS_NET_CORE
+            if ( state == EntityState.Modified || state == EntityState.Deleted )
+#else
             if ( state == System.Data.Entity.EntityState.Modified || state == System.Data.Entity.EntityState.Deleted )
+#endif
             {
                 _originalGroupTypeId = entry.OriginalValues["GroupTypeId"]?.ToString().AsIntegerOrNull();
                 _originalIsSecurityRole = entry.OriginalValues["IsSecurityRole"]?.ToString().AsBooleanOrNull();
@@ -1032,7 +1083,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             // If the group changed, and it was a security group, flush the security for the group
             Guid? originalGroupTypeGuid = null;
@@ -1080,7 +1135,12 @@ namespace Rock.Model
 
             // In the case of Group as a property (not a collection), we DO want to fetch the group record even if it is archived, so ensure that AllowPropertyFilter = false;
             // NOTE: This is not specific to Group, it is for any Filtered Model (currently just Group and GroupMember)
+#if !IS_NET_CORE
+            // EFTODO: FIXME, this shows up in the source code but doesn't work here.
+            // https://github.com/zzzprojects/EntityFramework-Plus/commit/e5d656584c64e00132b2a01f71aaa63551bca2a6
+
             Z.EntityFramework.Plus.QueryFilterManager.AllowPropertyFilter = false;
+#endif
         }
     }
 

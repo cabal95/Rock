@@ -17,6 +17,10 @@
 using System;
 using System.Data.Entity;
 using System.Linq;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.BulkExport;
 using Rock.Data;
 using Rock.Web.Cache;

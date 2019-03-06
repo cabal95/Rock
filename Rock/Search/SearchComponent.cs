@@ -26,8 +26,12 @@ namespace Rock.Search
     /// <summary>
     /// 
     /// </summary>
+#if !IS_NET_CORE
+    // EFTODO: Causes dependency on WebControls via Field Types.
+
     [TextField( "Search Label", "The text to display in the search type dropdown", false, "Search" )]
     [TextField( "Result URL", "The url to redirect user to after they have entered search text.  (use '{0}' for the search text)" )]
+#endif
     public abstract class SearchComponent : Component
     {
         /// <summary>

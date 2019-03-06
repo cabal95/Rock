@@ -117,6 +117,9 @@ namespace Rock.Transactions
         /// </summary>
         private void Initialize()
         {
+#if IS_NET_CORE
+            _logInteraction = false;
+#else
             RockPage rockPage;
 
             try
@@ -184,6 +187,7 @@ namespace Rock.Transactions
             InteractionSummary = title;
 
             _interactionDateTime = RockDateTime.Now;
+#endif
         }
 
         /// <summary>

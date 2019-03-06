@@ -52,7 +52,11 @@ namespace Rock.Data
         /// </summary>
         static LinqRuntimeTypeBuilder()
         {
+#if IS_NET_CORE
+            moduleBuilder = AssemblyBuilder.DefineDynamicAssembly( assemblyName, AssemblyBuilderAccess.Run ).DefineDynamicModule( assemblyName.Name );
+#else
             moduleBuilder = Thread.GetDomain().DefineDynamicAssembly( assemblyName, AssemblyBuilderAccess.Run ).DefineDynamicModule( assemblyName.Name );
+#endif
         }
 
         /// <summary>

@@ -131,6 +131,8 @@ namespace Rock.Reporting
 
         #region Public Methods
 
+#if !IS_NET_CORE
+        // EFTODO: 
         /// <summary>
         /// Gets the grid field.
         /// </summary>
@@ -142,6 +144,7 @@ namespace Rock.Reporting
             BoundField result = Rock.Web.UI.Controls.Grid.GetGridField( this.ColumnFieldType );
             return result;
         }
+#endif
 
         /// <summary>
         /// Gets the title of the DataSelectComponent.
@@ -154,6 +157,9 @@ namespace Rock.Reporting
         {
             return this.ColumnPropertyName;
         }
+
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
 
         /// <summary>
         /// Creates the child controls.
@@ -219,6 +225,7 @@ namespace Rock.Reporting
 
             return values;
         }
+#endif
 
         /// <summary>
         /// Gets the attribute value from selection.
@@ -245,6 +252,9 @@ namespace Rock.Reporting
 
             return string.Empty;
         }
+
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls
 
         /// <summary>
         /// Sets the attributes selection values.
@@ -298,6 +308,7 @@ namespace Rock.Reporting
         {
             SetAttributesSelectionValues( controls, selection );
         }
+#endif
 
         /// <summary>
         /// Gets the expression.
@@ -316,7 +327,11 @@ namespace Rock.Reporting
         /// <param name="entityIdProperty">The entity identifier property.</param>
         /// <param name="selection">The selection.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public virtual Expression GetExpression( Microsoft.EntityFrameworkCore.DbContext context, MemberExpression entityIdProperty, string selection )
+#else
         public virtual Expression GetExpression( System.Data.Entity.DbContext context, MemberExpression entityIdProperty, string selection )
+#endif
         {
             return GetExpression( context as RockContext, entityIdProperty, selection );
         }

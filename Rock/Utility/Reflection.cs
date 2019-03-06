@@ -167,12 +167,20 @@ namespace Rock
         /// </summary>
         /// <param name="entityType">Type of the Entity.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public static Microsoft.EntityFrameworkCore.DbContext GetDbContextForEntityType( Type entityType )
+#else
         public static System.Data.Entity.DbContext GetDbContextForEntityType( Type entityType )
+#endif
         {
             Type contextType = typeof( Rock.Data.RockContext );
             if ( entityType.Assembly != contextType.Assembly )
             {
+#if IS_NET_CORE
+                var contextTypeLookup = Reflection.SearchAssembly( entityType.Assembly, typeof( Microsoft.EntityFrameworkCore.DbContext ) );
+#else
                 var contextTypeLookup = Reflection.SearchAssembly( entityType.Assembly, typeof( System.Data.Entity.DbContext ) );
+#endif
 
                 if ( contextTypeLookup.Any() )
                 {
@@ -180,7 +188,11 @@ namespace Rock
                 }
             }
 
+#if IS_NET_CORE
+            Microsoft.EntityFrameworkCore.DbContext dbContext = Activator.CreateInstance( contextType ) as Microsoft.EntityFrameworkCore.DbContext;
+#else
             System.Data.Entity.DbContext dbContext = Activator.CreateInstance( contextType ) as System.Data.Entity.DbContext;
+#endif
             return dbContext;
         }
 
@@ -190,7 +202,11 @@ namespace Rock
         /// <param name="entityType">Type of the Entity.</param>
         /// <param name="dbContext">The database context.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public static Rock.Data.IService GetServiceForEntityType( Type entityType, Microsoft.EntityFrameworkCore.DbContext dbContext )
+#else
         public static Rock.Data.IService GetServiceForEntityType( Type entityType, System.Data.Entity.DbContext dbContext )
+#endif
         {
             Type serviceType = typeof( Rock.Data.Service<> );
             if ( entityType.Assembly != serviceType.Assembly )

@@ -403,8 +403,13 @@ namespace Rock.Web.Cache
 
                 if ( locationModel.GeoPoint == null ) return;
 
+#if IS_NET_CORE
+                Latitude = locationModel.Latitude;
+                Longitude = locationModel.Longitude;
+#else
                 Latitude = locationModel.GeoPoint.Latitude;
                 Longitude = locationModel.GeoPoint.Longitude;
+#endif
             }
         }
 

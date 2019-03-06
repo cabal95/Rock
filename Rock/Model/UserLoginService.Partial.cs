@@ -19,7 +19,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
+#if !IS_NET_CORE
 using System.Web.Security;
+#else
+
+using Microsoft.AspNetCore.Http.Extensions;
+#endif
 using Rock.Web.Cache;
 using Rock.Data;
 using Rock.Security;
@@ -208,7 +213,11 @@ namespace Rock.Model
                         {
                             if ( HttpContext.Current != null && HttpContext.Current.Session != null )
                             {
+#if IS_NET_CORE
+                                Microsoft.AspNetCore.Http.SessionExtensions.SetInt32( HttpContext.Current.Session, "RockUserId", user.Id );
+#else
                                 HttpContext.Current.Session["RockUserId"] = user.Id;
+#endif
                             }
 
                             // see if there is already a LastActivitytransaction queued for this user, and just update its LastActivityDate instead of adding another to the queue
@@ -423,7 +432,11 @@ namespace Rock.Model
 
                         if ( impersonated )
                         {
+#if IS_NET_CORE
+                            var impersonatedByUser = HttpContext.Current?.Session.Get<UserLogin>( "ImpersonatedByUser" );
+#else
                             var impersonatedByUser = HttpContext.Current?.Session["ImpersonatedByUser"] as UserLogin;
+#endif
 
                             relatedEntityTypeId = EntityTypeCache.GetId<Rock.Model.Person>();
                             relatedEntityId = impersonatedByUser?.PersonId;
@@ -436,14 +449,22 @@ namespace Rock.Model
                         
                         if ( HttpContext.Current != null && HttpContext.Current.Request != null )
                         {
+#if IS_NET_CORE
+                            string cleanUrl = PersonToken.ObfuscateRockMagicToken( HttpContext.Current.Request.GetDisplayUrl() );
+#else
                             string cleanUrl = PersonToken.ObfuscateRockMagicToken( HttpContext.Current.Request.Url.AbsoluteUri );
+#endif
 
                             // obfuscate the url specified in the returnurl, just in case it contains any sensitive information (like a rckipid)
                             Regex returnurlRegEx = new Regex( @"returnurl=([^&]*)" );
                             cleanUrl = returnurlRegEx.Replace( cleanUrl, "returnurl=XXXXXXXXXXXXXXXXXXXXXXXXXXXX" );
 
                             relatedDataBuilder.AppendFormat( " to <span class='field-value'>{0}</span>, from <span class='field-value'>{1}</span>",
+#if IS_NET_CORE
+                                cleanUrl, HttpContext.Current.Connection.RemoteIpAddress.ToString() );
+#else
                                 cleanUrl, HttpContext.Current.Request.UserHostAddress );
+#endif
                         }
 
                         var historyChangeList = new History.HistoryChangeList();

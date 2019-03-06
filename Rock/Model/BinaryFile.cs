@@ -22,11 +22,23 @@ using System.Data.Entity.ModelConfiguration;
 using System.IO;
 using System.Runtime.Serialization;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+#endif
 using Rock.Data;
 using Rock.Storage;
 using Rock.Web.Cache;
+#if IS_NET_CORE
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.MetaData;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.Primitives;
+#else
 using System.Drawing;
 using ImageResizer;
+#endif
 
 namespace Rock.Model
 {
@@ -337,9 +349,17 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityEntry entry )
+#else
         public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
+#endif
         {
+#if IS_NET_CORE
+            if ( entry.State == EntityState.Deleted )
+#else
             if ( entry.State == System.Data.Entity.EntityState.Deleted )
+#endif
             {
                 if ( StorageProvider != null )
                 {
@@ -369,6 +389,16 @@ namespace Rock.Model
                 {
                     try
                     {
+#if IS_NET_CORE
+                        using ( var image = Image.Load( this.ContentStream ) )
+                        {
+                            if ( image != null )
+                            {
+                                this.Width = image.Width;
+                                this.Height = image.Height;
+                            }
+                        }
+#else
                         using ( Bitmap bm = new Bitmap( this.ContentStream ) )
                         {
                             if ( bm != null )
@@ -377,6 +407,7 @@ namespace Rock.Model
                                 this.Height = bm.Height;
                             }
                         }
+#endif
                         ContentStream.Seek( 0, SeekOrigin.Begin );
 
                         if ( !IsTemporary )
@@ -386,6 +417,31 @@ namespace Rock.Model
                                 BinaryFileType.MaxWidth.HasValue && 
                                 BinaryFileType.MaxWidth != 0 )
                             {
+#if IS_NET_CORE
+                                if ( BinaryFileType.MaxWidth.Value < Width || BinaryFileType.MaxHeight < Height )
+                                {
+                                    var resizedStream = new MemoryStream();
+                                    using ( var image = Image.Load( this.ContentStream ) )
+                                    {
+                                        image.Mutate( operation =>
+                                        {
+                                            var resizeOptions = new ResizeOptions
+                                            {
+                                                Size = new Size( BinaryFileType.MaxWidth.Value, BinaryFileType.MaxHeight.Value ),
+                                                Mode = ResizeMode.Max,
+                                            };
+                                            operation.Resize( resizeOptions );
+                                        } );
+
+                                        image.Save( resizedStream, SixLabors.ImageSharp.Formats.Jpeg.JpegFormat.Instance );
+                                        resizedStream.Position = 0;
+                                        ContentStream = resizedStream;
+
+                                        this.Width = image.Width;
+                                        this.Height = image.Height;
+                                    }
+                                }
+#else
                                 ResizeSettings settings = new ResizeSettings();
                                 MemoryStream resizedStream = new MemoryStream();
                                 if ( BinaryFileType.MaxWidth.Value < Width || BinaryFileType.MaxHeight < Height )
@@ -424,13 +480,18 @@ namespace Rock.Model
                                         }
                                     }
                                 }
+#endif
                             }
                         }
                     }
                     catch ( Exception ) { } // if the file is an invalid photo keep moving
                 }
 
+#if IS_NET_CORE
+                if ( entry.State == EntityState.Added )
+#else
                 if ( entry.State == System.Data.Entity.EntityState.Added )
+#endif
                 {
                     // when a file is saved (unless it is getting Deleted/Saved), it should use the StoredEntityType that is associated with the BinaryFileType
                     if ( BinaryFileType != null )
@@ -466,7 +527,11 @@ namespace Rock.Model
                 }
 
 
+#if IS_NET_CORE
+                else if ( entry.State == EntityState.Modified )
+#else
                 else if ( entry.State == System.Data.Entity.EntityState.Modified )
+#endif
                 {
                     // when a file is saved (unless it is getting Deleted/Added), 
                     // it should use the StorageEntityType that is associated with the BinaryFileType
@@ -587,7 +652,11 @@ namespace Rock.Model
         public BinaryFileConfiguration()
         {
             this.HasRequired( f => f.BinaryFileType ).WithMany().HasForeignKey( f => f.BinaryFileTypeId ).WillCascadeOnDelete( false );
+#if !IS_NET_CORE
+            // EFTODO: I don't know how to do this in EF Core. Maybe it's just a relationship setup from the BinaryFileData side?
+
             this.HasOptional( f => f.DatabaseData ).WithRequired().WillCascadeOnDelete();
+#endif
         }
     }
 

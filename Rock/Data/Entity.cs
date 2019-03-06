@@ -440,6 +440,9 @@ namespace Rock.Data
         /// </value>
         //[LavaIgnore]
         [LavaIgnore]
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual Dictionary<string, object> AdditionalLavaFields { get; set; }
 
         /// <summary>

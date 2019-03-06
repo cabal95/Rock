@@ -16,13 +16,20 @@
 //
 using System;
 using System.Collections.Generic;
+#if !IS_NET_CORE
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
+#endif
 using System.Linq;
 using System.Reflection;
 using System.Web;
 using Z.EntityFramework.Plus;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Rock.Data.Validation;
+#endif
 using Rock.Model;
 using Rock.Transactions;
 using Rock.UniversalSearch;
@@ -34,10 +41,15 @@ using Rock.Web.Cache;
 
 namespace Rock.Data
 {
+
     /// <summary>
     /// Entity Framework Context
     /// </summary>
+#if IS_NET_CORE
+    public abstract class DbContext : Microsoft.EntityFrameworkCore.DbContext
+#else
     public abstract class DbContext : System.Data.Entity.DbContext
+#endif
     {
         private bool _transactionInProgress = false;
 
@@ -46,11 +58,39 @@ namespace Rock.Data
         /// </summary>
         public DbContext() : base() { }
 
+#if !IS_NET_CORE
         /// <summary>
         /// Initializes a new instance of the <see cref="DbContext"/> class.
         /// </summary>
         /// <param name="nameOrConnectionString">Either the database name or a connection string.</param>
         public DbContext( string nameOrConnectionString ) : base( nameOrConnectionString ) { }
+#else
+        private readonly string _nameOrConnectionString;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DbContext"/> class.
+        /// </summary>
+        /// <param name="nameOrConnectionString">The connection string.</param>
+        public DbContext( string nameOrConnectionString ) : base()
+        {
+            _nameOrConnectionString = nameOrConnectionString;
+        }
+
+        /// <summary>
+        /// Configures the context parameters and initializes any extensions.
+        /// </summary>
+        /// <param name="optionsBuilder">A builder used to create or modify options for this context. Databases (and other extensions)
+        /// typically define extension methods on this object that allow you to configure the context.</param>
+        protected override void OnConfiguring( DbContextOptionsBuilder optionsBuilder )
+        {
+            base.OnConfiguring( optionsBuilder );
+
+            var connectionString = System.Configuration.ConfigurationManager.ConnectionStrings[_nameOrConnectionString]?.ConnectionString ?? _nameOrConnectionString;
+
+            optionsBuilder.UseSqlServer( connectionString, a => a.UseNetTopologySuite() )
+                .UseLazyLoadingProxies();
+        }
+#endif
 
         /// <summary>
         /// Gets any error messages that occurred during a SaveChanges
@@ -122,7 +162,11 @@ namespace Rock.Data
         /// the Pre and Post processing from being run. This should only be disabled
         /// when updating a large number of records at a time (e.g. importing records).</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public new int SaveChanges( bool disablePrePostProcessing )
+#else
         public int SaveChanges( bool disablePrePostProcessing )
+#endif
         {
             // Pre and Post processing has been disabled, just call the base
             // SaveChanges() method and return
@@ -151,7 +195,11 @@ namespace Rock.Data
                     // Save the context changes
                     result = base.SaveChanges();
                 }
+#if IS_NET_CORE
+                catch ( EntityValidationException ex )
+#else
                 catch ( System.Data.Entity.Validation.DbEntityValidationException ex )
+#endif
                 {
                     var validationErrors = new List<string>();
                     foreach ( var error in ex.EntityValidationErrors )
@@ -181,7 +229,11 @@ namespace Rock.Data
         /// <returns></returns>
         private PersonAlias GetCurrentPersonAlias()
         {
+#if IS_NET_CORE
+            if ( HttpContext.Current != null && HttpContext.Current.Items.ContainsKey( "CurrentPerson" ) )
+#else
             if ( HttpContext.Current != null && HttpContext.Current.Items.Contains( "CurrentPerson" ) )
+#endif
             {
                 var currentPerson = HttpContext.Current.Items["CurrentPerson"] as Person;
                 if ( currentPerson != null && currentPerson.PrimaryAlias != null )
@@ -443,10 +495,15 @@ namespace Rock.Data
                 }
             }
 
+#if !IS_NET_CORE
             // set timeout to 5 minutes, just in case (the default is 30 seconds)
             EntityFramework.Utilities.Configuration.BulkCopyTimeout = 300;
             EntityFramework.Utilities.Configuration.SqlBulkCopyOptions = System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints;
             EntityFramework.Utilities.EFBatchOperation.For( this, this.Set<T>() ).InsertAll( records );
+#else
+            // TODO: Need to find a way to do this in core.
+            throw new NotImplementedException();
+#endif
         }
 
         /// <summary>
@@ -802,7 +859,11 @@ namespace Rock.Data
             /// <value>
             /// The database entity entry.
             /// </value>
+#if IS_NET_CORE
+            public EntityEntry DbEntityEntry { get; set; }
+#else
             public DbEntityEntry DbEntityEntry { get; set; }
+#endif
 
             /// <summary>
             /// Gets or sets the audit.
@@ -827,7 +888,11 @@ namespace Rock.Data
             /// <param name="entity">The entity.</param>
             /// <param name="dbEntityEntry">The database entity entry.</param>
             /// <param name="enableAuditing">if set to <c>true</c> [enable auditing].</param>
+#if IS_NET_CORE
+            public ContextItem( IEntity entity, EntityEntry dbEntityEntry, bool enableAuditing )
+#else
             public ContextItem( IEntity entity, DbEntityEntry dbEntityEntry, bool enableAuditing )
+#endif
             {
                 Entity = entity;
                 DbEntityEntry = dbEntityEntry;
@@ -866,7 +931,11 @@ namespace Rock.Data
                     if ( triggers.Any() )
                     {
                         OriginalValues = new Dictionary<string, object>();
+#if IS_NET_CORE
+                        foreach ( var p in DbEntityEntry.OriginalValues.Properties.Select( p => p.Name ) )
+#else
                         foreach ( var p in DbEntityEntry.OriginalValues.PropertyNames )
+#endif
                         {
                             OriginalValues.Add( p, DbEntityEntry.OriginalValues[p] );
                         }

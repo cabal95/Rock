@@ -310,6 +310,9 @@ namespace Rock.Model
         /// The merge fields.
         /// </value>
         [DataMember]
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual Dictionary<string, string> LavaFields { get; set; } = new Dictionary<string, string>();
 
         /// <summary>

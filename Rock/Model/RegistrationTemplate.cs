@@ -641,6 +641,15 @@ namespace Rock.Model
         /// Collection of child pages
         /// </value>
         [LavaInclude]
+#if IS_NET_CORE
+        public virtual ICollection<RegistrationInstance> Instances
+        {
+            get { return _instances ?? ( _instances = new Collection<RegistrationInstance>() ); }
+            set { _instances = value; }
+        }
+
+        private ICollection<RegistrationInstance> _instances;
+#else
         public virtual ICollection<RegistrationInstance> Instances
         {
             get { return _registrationInstances ?? ( _registrationInstances = new Collection<RegistrationInstance>() ); }
@@ -648,6 +657,7 @@ namespace Rock.Model
         }
 
         private ICollection<RegistrationInstance> _registrationInstances;
+#endif
 
         /// <summary>
         /// Gets or sets the forms.
@@ -656,6 +666,15 @@ namespace Rock.Model
         /// The forms.
         /// </value>
         [DataMember]
+#if IS_NET_CORE
+        public virtual ICollection<RegistrationTemplateForm> Forms
+        {
+            get { return _forms ?? ( _forms = new Collection<RegistrationTemplateForm>() ); }
+            set { _forms = value; }
+        }
+
+        private ICollection<RegistrationTemplateForm> _forms;
+#else
         public virtual ICollection<RegistrationTemplateForm> Forms
         {
             get { return _registrationTemplateForms ?? ( _registrationTemplateForms = new Collection<RegistrationTemplateForm>() ); }
@@ -663,6 +682,7 @@ namespace Rock.Model
         }
 
         private ICollection<RegistrationTemplateForm> _registrationTemplateForms;
+#endif
 
         /// <summary>
         /// A dictionary of actions that this class supports and the description of each.

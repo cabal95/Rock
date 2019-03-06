@@ -182,7 +182,11 @@ namespace Rock.Model
 
             if ( responseCode.IsNullOrWhiteSpace() )
             {
+#if !IS_NET_CORE
+                // EFTODO: Implement this
+
                 responseCode = Rock.Communication.Medium.Sms.GenerateResponseCode( rockContext );
+#endif
             }
 
             // add communication for reply

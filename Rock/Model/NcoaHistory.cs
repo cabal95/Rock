@@ -19,6 +19,9 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
 using System.Runtime.Serialization;
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 
 namespace Rock.Model
@@ -492,7 +495,11 @@ namespace Rock.Model
             // removed this to eliminate a hard link between the NCOA and the person alias, since this data leaves the system and comes
             // back at a later date it's best not to rely on the person alias being there
             // this.HasRequired( p => p.PersonAlias ).WithMany().HasForeignKey( p => p.PersonAliasId ).WillCascadeOnDelete( false );
+#if IS_NET_CORE
+            Builder.Property( p => p.MoveDistance ).HasColumnType( "decimal(6,2) " );
+#else
             this.Property( p => p.MoveDistance ).HasPrecision( 6, 2 );
+#endif
         }
     }
 

@@ -22,7 +22,9 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
+#if !IS_NET_CORE
 using System.Data.Entity.SqlServer;
+#endif
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -30,6 +32,10 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Web;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+#endif
 using Rock.Data;
 using Rock.UniversalSearch;
 using Rock.UniversalSearch.IndexModels;
@@ -347,7 +353,9 @@ namespace Rock.Model
         [DataMember]
         [Previewable]
         [RegularExpression( @"[\w\.\'_%-]+(\+[\w-]*)?@([\w-]+\.)+[\w-]+", ErrorMessage = "The Email address is invalid" )]
+#if !IS_NET_CORE
         [Index( "IX_Email" )]
+#endif
         public string Email { get; set; }
 
         /// <summary>
@@ -1810,7 +1818,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityEntry entry )
+#else
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
+#endif
         {
             var rockContext = ( RockContext ) dbContext;
 
@@ -1914,7 +1926,11 @@ namespace Rock.Model
 
             switch ( entry.State )
             {
+#if IS_NET_CORE
+                case EntityState.Added:
+#else
                 case System.Data.Entity.EntityState.Added:
+#endif
                     {
                         HistoryChanges.AddChange( History.HistoryVerb.Add, History.HistoryChangeType.Record, "Person" ).SetNewValue( this.FullName );
 
@@ -1964,7 +1980,11 @@ namespace Rock.Model
                         break;
                     }
 
+#if IS_NET_CORE
+                case EntityState.Modified:
+#else
                 case System.Data.Entity.EntityState.Modified:
+#endif
                     {
                         History.EvaluateChange( HistoryChanges, "Record Type", entry.OriginalValues["RecordTypeValueId"].ToStringSafe().AsIntegerOrNull(), RecordTypeValue, RecordTypeValueId );
                         History.EvaluateChange( HistoryChanges, "Record Status", entry.OriginalValues["RecordStatusValueId"].ToStringSafe().AsIntegerOrNull(), RecordStatusValue, RecordStatusValueId );
@@ -2042,7 +2062,11 @@ namespace Rock.Model
                         break;
                     }
 
+#if IS_NET_CORE
+                case EntityState.Deleted:
+#else
                 case System.Data.Entity.EntityState.Deleted:
+#endif
                     {
                         HistoryChanges.AddChange( History.HistoryVerb.Delete, History.HistoryChangeType.Record, null );
 
@@ -2971,6 +2995,9 @@ namespace Rock.Model
         /// </summary>
         public PersonConfiguration()
         {
+#if IS_NET_CORE
+            Builder.HasIndex( p => p.Email ).HasName( "IX_Email" );
+#endif
             this.HasOptional( p => p.MaritalStatusValue ).WithMany().HasForeignKey( p => p.MaritalStatusValueId ).WillCascadeOnDelete( false );
             this.HasOptional( p => p.ConnectionStatusValue ).WithMany().HasForeignKey( p => p.ConnectionStatusValueId ).WillCascadeOnDelete( false );
             this.HasOptional( p => p.RecordStatusValue ).WithMany().HasForeignKey( p => p.RecordStatusValueId ).WillCascadeOnDelete( false );
@@ -3384,9 +3411,15 @@ namespace Rock.Model
                       p => new
                       {
                           Person = p,
+#if IS_NET_CORE
+                          Age = ( p.BirthDate > currentDate.AddYears( -EF.Functions.DateDiffYear( p.BirthDate, currentDate ).Value )
+                            ? EF.Functions.DateDiffYear( p.BirthDate, currentDate ) - 1
+                            : EF.Functions.DateDiffYear( p.BirthDate, currentDate ) )
+#else
                           Age = ( p.BirthDate > SqlFunctions.DateAdd( "year", -SqlFunctions.DateDiff( "year", p.BirthDate, currentDate ), currentDate )
                             ? SqlFunctions.DateDiff( "year", p.BirthDate, currentDate ) - 1
                             : SqlFunctions.DateDiff( "year", p.BirthDate, currentDate ) )
+#endif
                       } );
 
             if ( includePeopleWithNoAge )

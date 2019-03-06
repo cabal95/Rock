@@ -16,11 +16,16 @@
 //
 using System;
 using System.Collections.Generic;
+#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
+#endif
 using System.Linq;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 
+#if IS_NET_CORE
+using NetTopologySuite.Geometries;
+#endif
 using Rock.Data;
 
 namespace Rock.Model
@@ -52,7 +57,11 @@ namespace Rock.Model
         public Device GetByGeocode( double latitude, double longitude, int deviceTypeValueId )
         {
             Device device = null;
+#if IS_NET_CORE
+            var aLocation = new Point( longitude, latitude );
+#else
             DbGeography aLocation = DbGeography.FromText( string.Format("POINT({0} {1})", longitude, latitude) );
+#endif
 
             device = Queryable()
                 .Where( d => 

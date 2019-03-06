@@ -19,6 +19,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
 using System.Linq;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 
@@ -75,13 +79,21 @@ namespace Rock.Model
             if ( fromDateTime.HasValue )
             {
                 var fromDate = fromDateTime.Value.Date;
+#if IS_NET_CORE
+                qry = qry.Where( a => a.OccurrenceDate.Date >= fromDate );
+#else
                 qry = qry.Where( a => DbFunctions.TruncateTime( a.OccurrenceDate ) >= ( fromDate ) );
+#endif
             }
 
             if ( toDateTime.HasValue )
             {
                 var toDate = toDateTime.Value.Date;
+#if IS_NET_CORE
+                qry = qry.Where( a => a.OccurrenceDate.Date < toDate );
+#else
                 qry = qry.Where( a => DbFunctions.TruncateTime( a.OccurrenceDate ) < ( toDate ) );
+#endif
             }
 
             // Location Filter
@@ -126,7 +138,11 @@ namespace Rock.Model
                 {
                     var newOccurrence = new AttendanceOccurrence
                     {
+#if IS_NET_CORE
+                        OccurrenceDate = occurrence.Period.StartTime.Date.Add( occurrence.Period.StartTime.Value.TimeOfDay ),
+#else
                         OccurrenceDate = occurrence.Period.StartTime.Date.Add( occurrence.Period.StartTime.TimeOfDay ),
+#endif
                         GroupId = group.Id,
                         Group = group,
                         ScheduleId = groupSchedule.Id,

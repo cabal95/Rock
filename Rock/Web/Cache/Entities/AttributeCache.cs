@@ -288,6 +288,7 @@ namespace Rock.Web.Cache
         [DataMember]
         public Dictionary<string, ConfigurationValue> QualifierValues { get; private set; }
 
+#if !IS_NET_CORE
         /// <summary>
         /// The default value using the most appropriate datatype
         /// </summary>
@@ -311,6 +312,7 @@ namespace Rock.Web.Cache
         /// The default sort value.
         /// </value>
         public object DefaultSortValue => FieldType.Field.SortValue( null, DefaultValue, QualifierValues );
+#endif
 
         #endregion
 
@@ -419,6 +421,9 @@ namespace Rock.Web.Cache
         /// this object, Rock will check access to the parent authority specified by this property.
         /// </summary>
         public override ISecured ParentAuthority => new Model.Attribute { Id = 0, EntityTypeId = EntityTypeId };
+
+#if !IS_NET_CORE
+        // TODO: Dependency on WebForms.
 
         /// <summary>
         /// Adds the control.
@@ -614,6 +619,7 @@ namespace Rock.Web.Cache
             var id = $"attribute_field_{Id}";
             return attributeControl.ID == id ? attributeControl : attributeControl.FindControl( id );
         }
+#endif
 
         #endregion
 
@@ -773,7 +779,11 @@ namespace Rock.Web.Cache
         /// </summary>
         /// <param name="attribute">The attribute.</param>
         /// <param name="entityState">State of the entity.</param>
+#if IS_NET_CORE
+        internal static void UpdateCacheEntityAttributes( Rock.Model.Attribute attribute, Microsoft.EntityFrameworkCore.EntityState entityState )
+#else
         internal static void UpdateCacheEntityAttributes( Rock.Model.Attribute attribute, System.Data.Entity.EntityState entityState )
+#endif
         {
             EntityAttributesCache.UpdateCacheEntityAttributes( attribute, entityState );
         }

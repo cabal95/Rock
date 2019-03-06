@@ -15,8 +15,14 @@
 // </copyright>
 //
 using System.Collections.Generic;
+#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
+#endif
 using System.Linq;
+
+#if IS_NET_CORE
+using NetTopologySuite.Geometries;
+#endif
 
 namespace Rock.Model
 {
@@ -87,7 +93,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="geofences">The geofences.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public IQueryable<GroupLocation> GetMappedLocationsByGeofences( List<Geometry> geofences )
+#else
         public IQueryable<GroupLocation> GetMappedLocationsByGeofences( List<DbGeography> geofences )
+#endif
         {
             List<int> locationIds = new List<int>();
 

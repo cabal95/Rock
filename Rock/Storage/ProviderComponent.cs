@@ -18,6 +18,9 @@ using System;
 using System.IO;
 using System.Web;
 
+#if IS_NET_CORE
+using Microsoft.AspNetCore.Http.Extensions;
+#endif
 using Rock;
 using Rock.Extension;
 using Rock.Model;
@@ -108,7 +111,7 @@ namespace Rock.Storage
                 {
                     if ( HttpContext.Current != null && HttpContext.Current.Request != null )
                     {
-                        uri = new Uri( HttpContext.Current.Request.Url.ToString() );
+                        uri = new Uri( HttpContext.Current.Request.GetDisplayUrl() );
                     }
                 }
                 catch { }

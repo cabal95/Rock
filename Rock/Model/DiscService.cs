@@ -463,6 +463,9 @@ namespace Rock.Model
         }
 
         #region DISC shared  UI stuff
+#if !IS_NET_CORE
+        // EFTODO: WebControls dependency.
+
         /// <summary>
         /// Plots the one DISC graph.
         /// </summary>
@@ -519,6 +522,7 @@ namespace Rock.Model
             barC.Style.Add( "height", score + "%" );
             barC.Attributes["title"] = scoreC.ToString();
         }
+#endif
         #endregion
 
 

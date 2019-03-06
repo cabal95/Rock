@@ -34,8 +34,10 @@ namespace Rock.Model
         /// <value>
         /// An <see cref="System.Int32"/> representing the Id of the <see cref="Rock.Model.GroupType"/>.
         /// </value>
+#if !IS_NET_CORE
         [Key]
         [Column(Order=0)]
+#endif
         [DataMember]
         public int GroupTypeId { get; set; }
 
@@ -47,8 +49,10 @@ namespace Rock.Model
         /// <value>
         /// A <see cref="System.Int32"/> representing the Id of a LocationType <see cref="Rock.Model.DefinedValue"/>  that is supported by a <see cref="Rock.Model.GroupType"/>.
         /// </value>
+#if !IS_NET_CORE
         [Key]
         [Column( Order = 1 )]
+#endif
         [DataMember]
         public int LocationTypeValueId { get; set; }
 
@@ -79,4 +83,14 @@ namespace Rock.Model
             return LocationTypeValue;
         }
     }
+
+#if IS_NET_CORE
+    public class GroupTypeLocationTypeConfiguration : EntityTypeConfiguration<GroupTypeLocationType>
+    {
+        public GroupTypeLocationTypeConfiguration()
+        {
+            Builder.HasKey( t => new { t.GroupTypeId, t.LocationTypeValueId } );
+        }
+    }
+#endif
 }

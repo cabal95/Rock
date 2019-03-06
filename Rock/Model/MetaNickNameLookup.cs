@@ -60,8 +60,12 @@ namespace Rock.Model
         /// <value>
         /// A <see cref="System.String"/> representing gender.
         /// </value>
+#if IS_NET_CORE
+        [Column( TypeName = "char(1)" )]
+#else
         [MaxLength( 1 )]
         [Column( TypeName = "char" )]
+#endif
         [DataMember]
         public string Gender { get; set; }
 

@@ -24,6 +24,10 @@ using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Web.Cache;
 using Rock.Data;
 using Rock.UniversalSearch;
@@ -424,6 +428,9 @@ namespace Rock.Model
         /// </value>
         [RockObsolete( "1.8" )]
         [Obsolete( "Moved to Theme" )]
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual ICollection<DefinedValue> IconExtensions { get; set; } = new Collection<DefinedValue>();
 
         /// <summary>
@@ -730,7 +737,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             SiteCache.UpdateCachedEntity( this.Id, entityState );
 
@@ -810,6 +821,9 @@ namespace Rock.Model
             this.HasOptional( p => p.SiteLogoBinaryFile ).WithMany().HasForeignKey( p => p.SiteLogoBinaryFileId ).WillCascadeOnDelete( false );
 
 #pragma warning disable 0618
+#if false
+            // EFTODO: Many-to-Many relationships are not currently supported.
+
             // Need Associative table for IconExtensions (which are Defined Values)
             this.HasMany( p => p.IconExtensions ).WithMany().Map( p =>
             {
@@ -817,6 +831,7 @@ namespace Rock.Model
                 p.MapRightKey( "DefinedValueId" );
                 p.ToTable( "SiteIconExtensions" );
             } );
+#endif
 #pragma warning restore 0618
         }
     }

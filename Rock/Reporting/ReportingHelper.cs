@@ -34,6 +34,7 @@ namespace Rock.Reporting
     /// </summary>
     public static class ReportingHelper
     {
+#if !IS_NET_CORE
         /// <summary>
         /// Shows the preview.
         /// </summary>
@@ -555,6 +556,7 @@ namespace Rock.Reporting
         {
             //ScriptManager.RegisterClientScriptInclude( filterField, filterField.GetType(), "reporting-include", filterField.RockBlock().RockPage.ResolveRockUrl( "~/Scripts/Rock/reportingInclude.js", true ) );
         }
+#endif
 
         #region FilterInfo Helpers
 
@@ -787,6 +789,7 @@ namespace Rock.Reporting
 
                 if ( component != null )
                 {
+#if !IS_NET_CORE
                     if ( component is Rock.Reporting.DataFilter.EntityFieldFilter )
                     {
                         var entityFieldFilter = component as Rock.Reporting.DataFilter.EntityFieldFilter;
@@ -806,6 +809,7 @@ namespace Rock.Reporting
                         }
                     }
                     else
+#endif
                     {
                         filterInfo.Title = component.GetTitle( reportEntityType.GetType() );
                     }
@@ -814,6 +818,7 @@ namespace Rock.Reporting
 
             filterList.Add( filterInfo );
 
+#if !IS_NET_CORE
             if ( filterInfo.Component is Rock.Reporting.DataFilter.OtherDataViewFilter )
             {
                 Rock.Reporting.DataFilter.OtherDataViewFilter otherDataViewFilter = filterInfo.Component as Rock.Reporting.DataFilter.OtherDataViewFilter;
@@ -833,6 +838,7 @@ namespace Rock.Reporting
                     filterList.AddRange( otherDataViewFilterList );
                 }
             }
+#endif
 
             foreach ( var childFilter in filter.ChildFilters )
             {

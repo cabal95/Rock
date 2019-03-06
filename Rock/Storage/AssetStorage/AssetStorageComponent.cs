@@ -46,6 +46,9 @@ namespace Rock.Storage.AssetStorage
         #endregion Constructors
 
         #region Properties
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebForms.
+
         /// <summary>
         /// Gets or sets the file system compont HTTP context.
         /// </summary>
@@ -66,6 +69,7 @@ namespace Rock.Storage.AssetStorage
         }
 
         private System.Web.HttpContext _fileSystemCompontHttpContext;
+#endif
 
         /// <summary>
         /// Specify the font awesome icon for the AssetStorageComponent here. It will display in the folder tree.
@@ -335,6 +339,9 @@ namespace Rock.Storage.AssetStorage
         {
             string fileExtension = Path.GetExtension( fileName ).TrimStart( '.' );
             string virtualThumbnailFilePath = string.Format( "/Assets/Icons/FileTypes/{0}.png", fileExtension );
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             string thumbnailFilePath = FileSystemCompontHttpContext.Request.MapPath( virtualThumbnailFilePath );
 
             if ( !File.Exists( thumbnailFilePath ) )
@@ -342,6 +349,7 @@ namespace Rock.Storage.AssetStorage
                 virtualThumbnailFilePath = "/Assets/Icons/FileTypes/other.png";
                 thumbnailFilePath = FileSystemCompontHttpContext.Request.MapPath( virtualThumbnailFilePath );
             }
+#endif
 
             return virtualThumbnailFilePath;
         }
@@ -377,7 +385,11 @@ namespace Rock.Storage.AssetStorage
         {
             string cleanKey = asset.Key.TrimStart( '~' );
             string virtualPath = $"{ThumbnailRootPath}/{assetStorageProvider.Id}/{cleanKey}";
+#if !IS_NET_CORE
             string physicalPath = FileSystemCompontHttpContext.Server.MapPath( virtualPath );
+#else
+            string physicalPath = string.Empty;
+#endif
 
             try
             {
@@ -491,6 +503,9 @@ namespace Rock.Storage.AssetStorage
         /// <param name="height">The height.</param>
         private void CreateImageThumbnailFromFile( AssetStorageProvider assetStorageProvider, Asset asset, string physicalThumbPath, int? width = null, int? height = null )
         {
+#if !IS_NET_CORE
+            // EFTODO: Dependency on ImageResizer and WebForms.
+
             string assetFilePath = FileSystemCompontHttpContext.Request.MapPath( asset.Key );
 
             if ( Path.GetExtension( asset.Name ).Equals( ".svg", StringComparison.OrdinalIgnoreCase ) ||
@@ -510,6 +525,9 @@ namespace Rock.Storage.AssetStorage
                 ImageResizer.ImageBuilder.Current.Build( origImageStream, resizedStream, new ImageResizer.ResizeSettings { Width = width ?? 100, Height = height ?? 100 } );
                 resizedStream.Flush();
             }
+#else
+            throw new NotImplementedException();
+#endif
         }
 
         /// <summary>
@@ -537,7 +555,11 @@ namespace Rock.Storage.AssetStorage
                     {
                         asset.AssetStream.CopyTo( origImageStream );
                         origImageStream.Position = 0;
+#if !IS_NET_CORE
+                        // EFTODO: ImageResizer not currently supported.
+
                         ImageResizer.ImageBuilder.Current.Build( origImageStream, resizedStream, new ImageResizer.ResizeSettings { Width = width ?? 100, Height = height ?? 100 } );
+#endif
                     }
                 }
 

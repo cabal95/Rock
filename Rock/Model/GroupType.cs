@@ -23,6 +23,10 @@ using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 using Rock.UniversalSearch;
@@ -661,6 +665,10 @@ namespace Rock.Model
         /// A collection of the GroupTypes that inherit from this groupType.
         /// </value>
         [DataMember, LavaIgnore]
+#if IS_NET_CORE
+        // EFTODO: Many-to-many relationships are not currently supported.
+        [NotMapped]
+#endif
         public virtual ICollection<GroupType> ChildGroupTypes
         {
             get { return _childGroupTypes ?? ( _childGroupTypes = new Collection<GroupType>() ); }
@@ -674,6 +682,10 @@ namespace Rock.Model
         /// <value>
         /// A collection containing the GroupTypes that this GroupType inherits from.
         /// </value>
+#if IS_NET_CORE
+        // EFTODO: Many-to-many relationships are not currently supported.
+        [NotMapped]
+#endif
         public virtual ICollection<GroupType> ParentGroupTypes
         {
             get { return _parentGroupTypes ?? ( _parentGroupTypes = new Collection<GroupType>() ); }
@@ -701,6 +713,14 @@ namespace Rock.Model
         /// <value>
         /// The group member workflow triggers.
         /// </value>
+#if IS_NET_CORE
+        public virtual ICollection<GroupMemberWorkflowTrigger> GroupMemberWorkflowTriggers
+        {
+            get { return _groupMemberWorkflowTriggers ?? ( _groupMemberWorkflowTriggers = new Collection<GroupMemberWorkflowTrigger>() ); }
+            set { _groupMemberWorkflowTriggers = value; }
+        }
+        private ICollection<GroupMemberWorkflowTrigger> _groupMemberWorkflowTriggers;
+#else
         public virtual ICollection<GroupMemberWorkflowTrigger> GroupMemberWorkflowTriggers
         {
             get { return _triggers ?? ( _triggers = new Collection<GroupMemberWorkflowTrigger>() ); }
@@ -708,6 +728,8 @@ namespace Rock.Model
         }
         private ICollection<GroupMemberWorkflowTrigger> _triggers;
         
+#endif
+
         /// <summary>
         /// Gets or sets the group schedule exclusions.
         /// </summary>
@@ -763,6 +785,9 @@ namespace Rock.Model
         /// A <see cref="System.Int32"/> representing the number of <see cref="Rock.Model.Group">Groups</see> that belong to this GroupType.
         /// </value>
         [LavaInclude]
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual int GroupCount
         {
             get
@@ -777,6 +802,9 @@ namespace Rock.Model
         /// <value>
         /// A queryable collection of <see cref="Rock.Model.Group">Groups</see> that belong to this GroupType.
         /// </value>
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual IQueryable<Group> GroupQuery
         {
             get
@@ -802,12 +830,21 @@ namespace Rock.Model
         /// The group requirements.
         /// </value>
         [DataMember]
+#if IS_NET_CORE
+        public virtual ICollection<GroupRequirement> GroupRequirements
+        {
+            get { return _groupRequirements ?? ( _groupRequirements = new Collection<GroupRequirement>() ); }
+            set { _groupRequirements = value; }
+        }
+        private ICollection<GroupRequirement> _groupRequirements;
+#else
         public virtual ICollection<GroupRequirement> GroupRequirements
         {
             get { return _groupsRequirements ?? ( _groupsRequirements = new Collection<GroupRequirement>() ); }
             set { _groupsRequirements = value; }
         }
         private ICollection<GroupRequirement> _groupsRequirements;
+#endif
 
         /// <summary>
         /// Gets or sets the DefinedType that Groups of this type will use for the Group.StatusValue
@@ -815,7 +852,11 @@ namespace Rock.Model
         /// <value>
         /// The type of the group status defined.
         /// </value>
+#if IS_NET_CORE
+        public virtual DefinedType GroupStatusDefinedType { get; set; }
+#else
         public DefinedType GroupStatusDefinedType { get; set; }
+#endif
 
         /// <summary>
         /// A dictionary of actions that this class supports and the description of each.
@@ -887,9 +928,17 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityState state )
+#else
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.EntityState state )
+#endif
         {
+#if IS_NET_CORE
+            if (state == EntityState.Deleted)
+#else
             if (state == System.Data.Entity.EntityState.Deleted)
+#endif
             {
                 ChildGroupTypes.Clear();
 
@@ -903,11 +952,19 @@ namespace Rock.Model
             }
 
             // clean up the index
+#if IS_NET_CORE
+            if ( state == EntityState.Deleted && IsIndexEnabled )
+#else
             if ( state == System.Data.Entity.EntityState.Deleted && IsIndexEnabled )
+#endif
             {
                 this.DeleteIndexedDocumentsByGroupType( this.Id );
             }
+#if IS_NET_CORE
+            else if ( state == EntityState.Modified )
+#else
             else if ( state == System.Data.Entity.EntityState.Modified )
+#endif
             {
                 // check if indexing is enabled
                 var changeEntry = dbContext.ChangeTracker.Entries<GroupType>().Where( a => a.Entity == this ).FirstOrDefault();
@@ -1101,7 +1158,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             var parentGroupTypeIds = new GroupTypeService( dbContext as RockContext ).GetParentGroupTypes( this.Id ).Select( a => a.Id ).ToList();
             if ( parentGroupTypeIds?.Any() == true )
@@ -1130,7 +1191,10 @@ namespace Rock.Model
         /// </summary>
         public GroupTypeConfiguration()
         {
+#if !IS_NET_CORE
+            // EFTODO: Many-to-many relatinships are not supported.
             this.HasMany( p => p.ChildGroupTypes ).WithMany( c => c.ParentGroupTypes ).Map( m => { m.MapLeftKey( "GroupTypeId" ); m.MapRightKey( "ChildGroupTypeId" ); m.ToTable( "GroupTypeAssociation" ); } );
+#endif
             this.HasOptional( p => p.DefaultGroupRole ).WithMany().HasForeignKey( p => p.DefaultGroupRoleId ).WillCascadeOnDelete( false );
             this.HasOptional( p => p.GroupStatusDefinedType ).WithMany().HasForeignKey( p => p.GroupStatusDefinedTypeId ).WillCascadeOnDelete( false );
             this.HasOptional( p => p.InheritedGroupType ).WithMany().HasForeignKey( p => p.InheritedGroupTypeId ).WillCascadeOnDelete( false );

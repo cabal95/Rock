@@ -17,8 +17,15 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
+#endif
 using System.Linq;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 using Z.EntityFramework.Plus;
@@ -157,7 +164,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="geofences">The geofences.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public IQueryable<Group> GetGeofencedFamilies( List<Geometry> geofences )
+#else
         public IQueryable<Group> GetGeofencedFamilies( List<DbGeography> geofences )
+#endif
         {
             var rockContext = (RockContext)this.Context;
             var groupLocationService = new GroupLocationService( rockContext );
@@ -206,7 +217,11 @@ namespace Rock.Model
         /// <param name="points">The points.</param>
         /// <param name="groupTypeId">The group type identifier.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public IQueryable<Group> GetGeofencingGroups( IQueryable<Geometry> points, int groupTypeId )
+#else
         public IQueryable<Group> GetGeofencingGroups( IQueryable<DbGeography> points, int groupTypeId )
+#endif
         {
             // Get the groups that have a location that intersects with any of the family's locations
             return this.Queryable()
@@ -226,7 +241,11 @@ namespace Rock.Model
         /// <param name="points">The points.</param>
         /// <param name="groupTypeGuid">The group type unique identifier.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public IQueryable<Group> GetGeofencingGroups( IQueryable<Geometry> points, Guid groupTypeGuid )
+#else
         public IQueryable<Group> GetGeofencingGroups( IQueryable<DbGeography> points, Guid groupTypeGuid )
+#endif
         {
             // Get the groups that have a location that intersects with any of the family's locations
             return this.Queryable()

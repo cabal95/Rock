@@ -15,9 +15,14 @@
 // </copyright>
 //
 using System.Collections.Generic;
+#if !IS_NET_CORE
 using System.Data.Entity.Validation;
+#endif
 using System.Linq;
 using Rock.Data;
+#if IS_NET_CORE
+using Rock.Data.Validation;
+#endif
 using Rock.Model;
 
 namespace Rock.Transactions
@@ -56,7 +61,11 @@ namespace Rock.Transactions
                         }
                     }
                 }
+#if IS_NET_CORE
+                catch ( EntityValidationException devx )
+#else
                 catch ( DbEntityValidationException devx )
+#endif
                 {
                     string errorMessage = string.Empty;
 

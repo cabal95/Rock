@@ -18,7 +18,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+#if !IS_NET_CORE
 using System.Data.Services;
+#endif
 using System.Runtime.Serialization;
 
 using Rock.Attribute;
@@ -214,7 +216,11 @@ namespace Rock.Data
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="state"></param>
+#if IS_NET_CORE
+        public virtual void PreSaveChanges(  Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.EntityState state )
+#else
         public virtual void PreSaveChanges(  Rock.Data.DbContext dbContext, System.Data.Entity.EntityState state )
+#endif
         {
         }
 
@@ -223,7 +229,11 @@ namespace Rock.Data
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
+#if IS_NET_CORE
+        public virtual void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
+#else
         public virtual void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
+#endif
         {
             PreSaveChanges( dbContext, entry.State );
         }
@@ -234,7 +244,11 @@ namespace Rock.Data
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public virtual void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry, Microsoft.EntityFrameworkCore.EntityState state )
+#else
         public virtual void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry, System.Data.Entity.EntityState state )
+#endif
         {
             PreSaveChanges( dbContext, entry );
         }
@@ -515,7 +529,13 @@ namespace Rock.Data
                                     return ( (Rock.Field.ILinkableFieldType)field ).UrlLink( value, attribute.QualifierValues );
                                 }
 
+#if !IS_NET_CORE
+                                // EFTODO: Causes dependency on WebControls via Field Types.
+
                                 return field.FormatValue( null, attribute.EntityTypeId, this.Id, value, attribute.QualifierValues, false );
+#else
+                                return value;
+#endif
                             }
                         }
                     }
@@ -656,7 +676,11 @@ namespace Rock.Data
             if ( this.Attributes != null &&
                 this.Attributes.ContainsKey( key ) )
             {
+#if !IS_NET_CORE
                 return this.Attributes[key].DefaultValueAsType;
+#else
+                throw new NotImplementedException();
+#endif
             }
 
             return null;

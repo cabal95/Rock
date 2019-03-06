@@ -22,7 +22,13 @@ using System.Data;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
+#if !IS_NET_CORE
 using System.Web.Routing;
+#endif
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Newtonsoft.Json;
 using Rock.Web.Cache;
 using Rock.Data;
@@ -494,14 +500,25 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityState state )
+#else
         public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.EntityState state )
+#endif
         {
+#if IS_NET_CORE
+            if (state == EntityState.Deleted)
+#else
             if (state == System.Data.Entity.EntityState.Deleted)
+#endif
             {
                 Dictionary<string, object> parameters = new Dictionary<string, object>();
                 parameters.Add( "PageId", this.Id );
 
                 // since routes have a cascade delete relationship (their presave won't get called), delete routes from route table
+#if !IS_NET_CORE
+                // EFTODO: Dependency on WebForms. We probably need to build a custom router.
+
                 var routes = RouteTable.Routes;
                 if ( routes != null )
                 {
@@ -519,6 +536,7 @@ namespace Rock.Model
                         }
                     }
                 }
+#endif
             }
 
             base.PreSaveChanges( dbContext, state );
@@ -547,9 +565,17 @@ namespace Rock.Model
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry, EntityState state )
+#else
         public override void PreSaveChanges( Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry, System.Data.Entity.EntityState state )
+#endif
         {
+#if IS_NET_CORE
+            if ( state == EntityState.Modified || state == EntityState.Deleted )
+#else
             if ( state == System.Data.Entity.EntityState.Modified || state == System.Data.Entity.EntityState.Deleted )
+#endif
             {
                 _originalParentPageId = entry.OriginalValues["ParentPageId"]?.ToString().AsIntegerOrNull();
             }
@@ -571,7 +597,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             var oldPageCache = PageCache.Get( this.Id, (RockContext)dbContext );
             if ( oldPageCache != null )
@@ -583,12 +613,20 @@ namespace Rock.Model
 
             if ( this.ParentPageId.HasValue )
             {
+#if IS_NET_CORE
+                PageCache.UpdateCachedEntity( this.ParentPageId.Value, EntityState.Detached );
+#else
                 PageCache.UpdateCachedEntity( this.ParentPageId.Value, System.Data.Entity.EntityState.Detached );
+#endif
             }
 
             if ( _originalParentPageId.HasValue && _originalParentPageId != this.ParentPageId )
             {
+#if IS_NET_CORE
+                PageCache.UpdateCachedEntity( _originalParentPageId.Value, EntityState.Detached );
+#else
                 PageCache.UpdateCachedEntity( _originalParentPageId.Value, System.Data.Entity.EntityState.Detached );
+#endif
             }
         }
 

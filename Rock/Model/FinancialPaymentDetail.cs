@@ -20,12 +20,16 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Configuration;
-using System.Linq;
 using System.Data.Entity;
+using System.Linq;
 using System.Data.Entity.ModelConfiguration;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Text;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Financial;
 using Rock.Web.Cache;
@@ -367,14 +371,22 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
+#else
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
+#endif
         {
             var rockContext = (RockContext)dbContext;
             HistoryChangeList = new History.HistoryChangeList();
 
             switch ( entry.State )
             {
+#if IS_NET_CORE
+                case EntityState.Added:
+#else
                 case System.Data.Entity.EntityState.Added:
+#endif
                     {
                         History.EvaluateChange( HistoryChangeList, "Account Number", string.Empty, AccountNumberMasked );
                         History.EvaluateChange( HistoryChangeList, "Currency Type", (int?)null, CurrencyTypeValue, CurrencyTypeValueId );
@@ -385,8 +397,13 @@ namespace Rock.Model
                         History.EvaluateChange( HistoryChangeList, "Billing Location", string.Empty, History.GetValue<Location>( BillingLocation, BillingLocationId, rockContext ) );
                         break;
                     }
+#if IS_NET_CORE
+                case EntityState.Modified:
+                case EntityState.Deleted:
+#else
                 case System.Data.Entity.EntityState.Modified:
                 case System.Data.Entity.EntityState.Deleted:
+#endif
                     {
                         History.EvaluateChange( HistoryChangeList, "Account Number", entry.OriginalValues["AccountNumberMasked"].ToStringSafe(), AccountNumberMasked );
                         History.EvaluateChange( HistoryChangeList, "Currency Type", entry.OriginalValues["CurrencyTypeValueId"].ToStringSafe().AsIntegerOrNull(), CurrencyTypeValue, CurrencyTypeValueId );

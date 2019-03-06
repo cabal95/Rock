@@ -21,6 +21,9 @@ using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 
 namespace Rock.Model
@@ -85,7 +88,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry"></param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
+#else
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
+#endif
         {
             var rockContext = ( RockContext ) dbContext;
             BinaryFileService binaryFileService = new BinaryFileService( rockContext );
@@ -93,7 +100,11 @@ namespace Rock.Model
 
             switch ( entry.State )
             {
+#if IS_NET_CORE
+                case EntityState.Added:
+#else
                 case System.Data.Entity.EntityState.Added:
+#endif
                     {
                         // if there is an binaryfile (attachment) associated with this, make sure that it is flagged as IsTemporary=False
                         if ( binaryFile.IsTemporary )
@@ -104,7 +115,11 @@ namespace Rock.Model
                         break;
                     }
 
+#if IS_NET_CORE
+                case EntityState.Modified:
+#else
                 case System.Data.Entity.EntityState.Modified:
+#endif
                     {
                         // if there is an binaryfile (attachment) associated with this, make sure that it is flagged as IsTemporary=False
                         if ( binaryFile.IsTemporary )
@@ -114,7 +129,11 @@ namespace Rock.Model
 
                         break;
                     }
+#if IS_NET_CORE
+                case EntityState.Deleted:
+#else
                 case System.Data.Entity.EntityState.Deleted:
+#endif
                     {
                         // if deleting, and there is an binaryfile (attachment) associated with this, make sure that it is flagged as IsTemporary=true 
                         // so that it'll get cleaned up

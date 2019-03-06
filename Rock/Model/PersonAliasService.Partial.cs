@@ -19,6 +19,10 @@ using System.Linq;
 using Rock.Data;
 using System.Data.Entity;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
+
 namespace Rock.Model
 {
     /// <summary>

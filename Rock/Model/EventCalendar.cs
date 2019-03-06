@@ -86,12 +86,21 @@ namespace Rock.Model
         /// <value>
         /// The event calendar items.
         /// </value>
+#if IS_NET_CORE
+        public virtual ICollection<EventCalendarItem> EventCalendarItems
+        {
+            get { return _eventCalendarItems ?? ( _eventCalendarItems = new Collection<EventCalendarItem>() ); }
+            set { _eventCalendarItems = value; }
+        }
+        private ICollection<EventCalendarItem> _eventCalendarItems;
+#else
         public virtual ICollection<EventCalendarItem> EventCalendarItems
         {
             get { return _eventCalenderItems ?? ( _eventCalenderItems = new Collection<EventCalendarItem>() ); }
             set { _eventCalenderItems = value; }
         }
         private ICollection<EventCalendarItem> _eventCalenderItems;
+#endif
 
         /// <summary>
         /// Gets or sets the content channels.
@@ -154,7 +163,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( Microsoft.EntityFrameworkCore.EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             EventCalendarCache.UpdateCachedEntity( this.Id, entityState );
         }

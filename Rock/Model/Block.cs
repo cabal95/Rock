@@ -19,10 +19,16 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
+#if !IS_NET_CORE
 using System.Data.Entity.Infrastructure;
+#endif
 using System.Data.Entity.ModelConfiguration;
 using System.Runtime.Serialization;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+#endif
 using Newtonsoft.Json;
 using Rock.Web.Cache;
 using Rock.Data;
@@ -345,9 +351,17 @@ namespace Rock.Model
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityEntry entry, EntityState state )
+#else
         public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry, EntityState state )
+#endif
         {
+#if IS_NET_CORE
+            if ( state == EntityState.Modified || state == EntityState.Deleted )
+#else
             if ( state == System.Data.Entity.EntityState.Modified || state == System.Data.Entity.EntityState.Deleted )
+#endif
             {
                 originalSiteId = entry.OriginalValues["SiteId"]?.ToString().AsIntegerOrNull();
                 originalLayoutId = entry.OriginalValues["LayoutId"]?.ToString().AsIntegerOrNull();
@@ -371,7 +385,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             BlockCache.UpdateCachedEntity( this.Id, entityState );
 

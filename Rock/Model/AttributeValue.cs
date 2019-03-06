@@ -23,6 +23,10 @@ using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Newtonsoft.Json;
 using Rock.Data;
 using Rock.Web.Cache;
@@ -201,7 +205,11 @@ namespace Rock.Model
                 {
                     if ( attribute.FieldType != null )
                     {
+#if !IS_NET_CORE
+                        // EFTODO: Causes dependency on WebControls via Field Type.
+
                         result = attribute.FieldType.Field;
+#endif
                     }
                 }
 
@@ -243,7 +251,11 @@ namespace Rock.Model
                 var attribute = AttributeCache.Get( this.AttributeId );
                 if ( attribute != null )
                 {
+#if !IS_NET_CORE
+                    // EFTODO: Causes dependency on WebControls via Field Type.
+
                     return attribute.FieldType.Field.FormatValue( null, attribute.EntityTypeId, this.EntityId, Value, attribute.QualifierValues, false );
+#endif
                 }
 
                 return Value;
@@ -370,7 +382,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
+#else
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
+#endif
         {
             var attributeCache = AttributeCache.Get( this.AttributeId );
             if ( attributeCache != null )
@@ -381,6 +397,8 @@ namespace Rock.Model
                 // This attribute value should not effect a file that anything could be using.
                 // The Label field type is a list of existing labels so should not be included, but the image field type uploads a new file so we do want it included.
                 // Don't use BinaryFileFieldType as that type of attribute's file can be used by more than one attribute
+#if !IS_NET_CORE
+                // EFTODO: Causes dependency on WebControls via Field Type.
                 var field = attributeCache.FieldType.Field;
                 if ( field != null && (
                     field is Field.Types.FileFieldType ||
@@ -389,6 +407,7 @@ namespace Rock.Model
                 {
                     PreSaveBinaryFile( dbContext, entry );
                 }
+#endif
 
                 // Check to see if this attribute is for a person or group, and if so, save to history table
                 bool saveToHistoryTable = attributeCache.EntityTypeId.HasValue &&
@@ -474,7 +493,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
+#if IS_NET_CORE
+        protected void PreSaveBinaryFile( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
+#else
         protected void PreSaveBinaryFile( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
+#endif
         {
             Guid? newBinaryFileGuid = null;
             Guid? oldBinaryFileGuid = null;
@@ -516,7 +539,11 @@ namespace Rock.Model
         /// <param name="entry">The entry.</param>
         /// <param name="attributeCache">The attribute cache.</param>
         /// <param name="saveToHistoryTable">if set to <c>true</c> [save to history table].</param>
+#if IS_NET_CORE
+        protected void SaveToHistoryTable( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry, AttributeCache attributeCache, bool saveToHistoryTable )
+#else
         protected void SaveToHistoryTable( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry, AttributeCache attributeCache, bool saveToHistoryTable )
+#endif
         {
             string oldValue = string.Empty;
             string newValue = string.Empty;
@@ -548,8 +575,15 @@ namespace Rock.Model
                 return;
             }
 
+#if !IS_NET_CORE
+            // EFTODO: Causes dependency on WebControls via Field Types.
+
             var formattedOldValue = oldValue.IsNotNullOrWhiteSpace() ? attributeCache.FieldType.Field.FormatValue( null, oldValue, attributeCache.QualifierValues, true ) : string.Empty;
             var formattedNewValue = newValue.IsNotNullOrWhiteSpace() ? attributeCache.FieldType.Field.FormatValue( null, newValue, attributeCache.QualifierValues, true ) : string.Empty;
+#else
+            var formattedOldValue = oldValue ?? string.Empty;
+            var formattedNewValue = newValue ?? string.Empty;
+#endif
 
             if ( saveToHistoryTable )
             {
@@ -615,7 +649,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( Microsoft.EntityFrameworkCore.EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             AttributeCache cacheAttribute = AttributeCache.Get( this.AttributeId, dbContext as RockContext );
 

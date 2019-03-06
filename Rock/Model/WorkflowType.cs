@@ -22,6 +22,9 @@ using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Security;
 using Rock.Data;
 using Rock.Web.Cache;
@@ -296,9 +299,17 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityState state )
+#else
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.EntityState state )
+#endif
         {
+#if IS_NET_CORE
+            if ( state == EntityState.Deleted )
+#else
             if ( state == System.Data.Entity.EntityState.Deleted )
+#endif
             {
                 // manually clear any registrations using this workflow type
                 foreach ( var template in new RegistrationTemplateService( dbContext as RockContext )
@@ -352,7 +363,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             WorkflowTypeCache.UpdateCachedEntity( this.Id, entityState );
         }

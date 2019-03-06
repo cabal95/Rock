@@ -252,6 +252,9 @@ namespace Rock.Model
             return base.ToString();
         }
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Gets the person control for this field's <see cref="PersonFieldType"/>
         /// </summary>
@@ -537,6 +540,7 @@ namespace Rock.Model
 
             return personFieldControl;
         }
+#endif
 
         #endregion
 

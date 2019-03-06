@@ -90,6 +90,9 @@ namespace Rock.Web.Cache
         {
             get
             {
+#if !IS_NET_CORE
+                // EFTODO: Dependency on WebForms.
+
                 var httpContext = HttpContext.Current;
                 var request = httpContext?.Request;
                 if ( request == null ) return ConfiguredTheme;
@@ -148,6 +151,9 @@ namespace Rock.Web.Cache
                 httpContext.Response.SetCookie( cookie );
 
                 return ConfiguredTheme;
+#else
+                return ConfiguredTheme;
+#endif
             }
 
             private set
@@ -552,9 +558,15 @@ namespace Rock.Web.Cache
         /// </summary>
         public void RedirectToDefaultPage()
         {
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             var context = HttpContext.Current;
             context.Response.Redirect( DefaultPageReference.BuildUrl(), false );
             context.ApplicationInstance.CompleteRequest();
+#else
+            throw new NotImplementedException();
+#endif
         }
 
         /// <summary>
@@ -562,6 +574,9 @@ namespace Rock.Web.Cache
         /// </summary>
         public void RedirectToLoginPage( bool includeReturnUrl )
         {
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             var context = HttpContext.Current;
 
             var pageReference = LoginPageReference;
@@ -581,6 +596,9 @@ namespace Rock.Web.Cache
 
             context.Response.Redirect( pageReference.BuildUrl(), false );
             context.ApplicationInstance.CompleteRequest();
+#else
+            throw new NotImplementedException();
+#endif
         }
 
         /// <summary>
@@ -590,6 +608,9 @@ namespace Rock.Web.Cache
         /// <param name="includeReturnUrl">if set to <c>true</c> [include return URL].</param>
         public void RedirectToChangePasswordPage( bool isChangePasswordRequired, bool includeReturnUrl )
         {
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             var context = HttpContext.Current;
 
             var pageReference = ChangePasswordPageReference;
@@ -610,6 +631,9 @@ namespace Rock.Web.Cache
 
             context.Response.Redirect( pageReference.BuildUrl(), false );
             context.ApplicationInstance.CompleteRequest();
+#else
+            throw new NotImplementedException();
+#endif
         }
 
         /// <summary>
@@ -617,9 +641,15 @@ namespace Rock.Web.Cache
         /// </summary>
         public void RedirectToCommunicationPage()
         {
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             var context = HttpContext.Current;
             context.Response.Redirect( CommunicationPageReference.BuildUrl(), false );
             context.ApplicationInstance.CompleteRequest();
+#else
+            throw new NotImplementedException();
+#endif
         }
 
         /// <summary>
@@ -627,9 +657,15 @@ namespace Rock.Web.Cache
         /// </summary>
         public void RedirectToRegistrationPage()
         {
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             var context = HttpContext.Current;
             context.Response.Redirect( RegistrationPageReference.BuildUrl(), false );
             context.ApplicationInstance.CompleteRequest();
+#else
+            throw new NotImplementedException();
+#endif
         }
 
         /// <summary>
@@ -637,9 +673,15 @@ namespace Rock.Web.Cache
         /// </summary>
         public void RedirectToPageNotFoundPage()
         {
+#if !IS_NET_CORE
+            // EFTODO: Dependency on WebForms.
+
             var context = HttpContext.Current;
             context.Response.Redirect( PageNotFoundPageReference.BuildUrl(), false );
             context.ApplicationInstance.CompleteRequest();
+#else
+            throw new NotImplementedException();
+#endif
         }
 
         #endregion

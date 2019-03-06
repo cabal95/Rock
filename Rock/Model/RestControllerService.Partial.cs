@@ -17,7 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+#if !IS_NET_CORE
 using System.Web.Http;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 
@@ -28,6 +30,9 @@ namespace Rock.Model
     /// </summary>
     public partial class RestControllerService 
     {
+#if !IS_NET_CORE
+        // EFTODO: Not sure how to do this in EF Core yet. There is an ApiExplorer, but it requires setup first.
+
         /// <summary>
         /// Registers the controllers.
         /// </summary>
@@ -106,6 +111,7 @@ namespace Rock.Model
 
             rockContext.SaveChanges();
         }
+#endif
 
         /// <summary>
         /// Gets the Guid for the RestController that has the specified Id

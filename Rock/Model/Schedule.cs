@@ -22,7 +22,15 @@ using System.Data.Entity.ModelConfiguration;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+#if !IS_NET_CORE
 using DDay.iCal;
+#else
+
+using Ical.Net;
+using Ical.Net.CalendarComponents;
+using Ical.Net.DataTypes;
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 
@@ -229,8 +237,13 @@ namespace Rock.Model
         {
             get
             {
+#if IS_NET_CORE
+                CalendarEvent calendarEvent = this.GetCalenderEvent();
+                if ( calendarEvent != null && calendarEvent.DtStart != null )
+#else
                 DDay.iCal.Event calendarEvent = this.GetCalenderEvent();
                 if ( calendarEvent != null && calendarEvent.DTStart != null )
+#endif
                 {
                     return !string.IsNullOrWhiteSpace( this.Name ) ?
                         ScheduleType.Named : ScheduleType.Custom;
@@ -317,11 +330,19 @@ namespace Rock.Model
         {
             get
             {
+#if IS_NET_CORE
+                CalendarEvent calendarEvent = this.GetCalenderEvent();
+                if ( calendarEvent != null && calendarEvent.DtStart != null )
+                {
+                    return calendarEvent.DtStart.Value.TimeOfDay;
+                }
+#else
                 DDay.iCal.Event calendarEvent = this.GetCalenderEvent();
                 if ( calendarEvent != null && calendarEvent.DTStart != null )
                 {
                     return calendarEvent.DTStart.TimeOfDay;
                 }
+#endif
 
                 if ( WeeklyTimeOfDay.HasValue )
                 {
@@ -379,13 +400,22 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityState state )
+#else
         public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.EntityState state )
+#endif
         {
             var calEvent = GetCalenderEvent();
             if ( calEvent != null )
             {
+#if IS_NET_CORE
+                EffectiveStartDate = calEvent.DtStart != null ? calEvent.DtStart.Value.Date : (DateTime?)null;
+                EffectiveEndDate = calEvent.DtEnd != null ? calEvent.DtEnd.Value.Date : (DateTime?)null;
+#else
                 EffectiveStartDate = calEvent.DTStart != null ? calEvent.DTStart.Value.Date : (DateTime?)null;
                 EffectiveEndDate = calEvent.DTEnd != null ? calEvent.DTEnd.Value.Date : (DateTime?)null;
+#endif
             }
 
             base.PreSaveChanges( dbContext, state );
@@ -397,7 +427,11 @@ namespace Rock.Model
         /// <value>
         /// A <see cref="DDay.iCal.Event"/> representing the iCalendar event for this Schedule.
         /// </value>
+#if IS_NET_CORE
+        public virtual CalendarEvent GetCalenderEvent()
+#else
         public virtual DDay.iCal.Event GetCalenderEvent()  
+#endif
         {
             return ScheduleICalHelper.GetCalenderEvent( iCalendarContent );
         }
@@ -412,8 +446,13 @@ namespace Rock.Model
         {
             var occurrences = new List<Occurrence>();
 
+#if IS_NET_CORE
+            CalendarEvent calEvent = GetCalenderEvent();
+            if ( calEvent != null && calEvent.DtStart != null )
+#else
             DDay.iCal.Event calEvent = GetCalenderEvent();
             if ( calEvent != null && calEvent.DTStart != null )
+#endif
             {
                 var exclusionDates = new List<DateRange>();
                 if ( this.CategoryId.HasValue && this.CategoryId.Value > 0 )
@@ -562,8 +601,13 @@ namespace Rock.Model
         /// <returns></returns>
         public virtual bool HasSchedule()
         {
+#if IS_NET_CORE
+            CalendarEvent calEvent = GetCalenderEvent();
+            if ( calEvent != null && calEvent.DtStart != null )
+#else
             DDay.iCal.Event calEvent = GetCalenderEvent();
             if ( calEvent != null && calEvent.DTStart != null )
+#endif
             {
                 return true;
             }
@@ -580,12 +624,21 @@ namespace Rock.Model
         /// <returns></returns>
         public virtual bool HasScheduleWarning()
         {
+#if IS_NET_CORE
+            CalendarEvent calEvent = GetCalenderEvent();
+            if ( calEvent != null && calEvent.DtStart != null )
+#else
             DDay.iCal.Event calEvent = GetCalenderEvent();
             if ( calEvent != null && calEvent.DTStart != null )
+#endif
             {
                 if ( calEvent.RecurrenceRules.Any() )
                 {
+#if IS_NET_CORE
+                    var rrule = calEvent.RecurrenceRules[0];
+#else
                     IRecurrencePattern rrule = calEvent.RecurrenceRules[0];
+#endif
                     if ( rrule.Frequency == FrequencyType.Weekly )
                     {
                         // if it has a Weekly schedule, but no days are selected, return true that is has a warning
@@ -637,15 +690,28 @@ namespace Rock.Model
             // init the result to just the schedule name just in case we can't figure out the FriendlyText
             string result = this.Name;
 
+#if IS_NET_CORE
+            CalendarEvent calendarEvent = this.GetCalenderEvent();
+            if ( calendarEvent != null && calendarEvent.DtStart != null )
+#else
             DDay.iCal.Event calendarEvent = this.GetCalenderEvent();
             if ( calendarEvent != null && calendarEvent.DTStart != null )
+#endif
             {
+#if IS_NET_CORE
+                string startTimeText = calendarEvent.DtStart.Value.TimeOfDay.ToTimeString();
+#else
                 string startTimeText = calendarEvent.DTStart.Value.TimeOfDay.ToTimeString();
+#endif
                 if ( calendarEvent.RecurrenceRules.Any() )
                 {
                     // some type of recurring schedule
 
+#if IS_NET_CORE
+                    var rrule = calendarEvent.RecurrenceRules[0];
+#else
                     IRecurrencePattern rrule = calendarEvent.RecurrenceRules[0];
+#endif
                     switch ( rrule.Frequency )
                     {
                         case FrequencyType.Daily:
@@ -703,7 +769,11 @@ namespace Rock.Model
                             else if ( rrule.ByDay.Count > 0 )
                             {
                                 // The Nth <DayOfWeekName> (we only support one day in the ByDay list)
+#if IS_NET_CORE
+                                var bydate = rrule.ByDay[0];
+#else
                                 IWeekDay bydate = rrule.ByDay[0];
+#endif
                                 if ( NthNames.ContainsKey( bydate.Offset ) )
                                 {
                                     result = string.Format( "The {0} {1} of every month", NthNames[bydate.Offset], bydate.DayOfWeek.ConvertToString() );
@@ -759,7 +829,11 @@ namespace Rock.Model
                     }
                     else if ( dates.Count() == 1)
                     {
+#if IS_NET_CORE
+                        result = "Once at " + calendarEvent.DtStart.Value.ToShortDateTimeString();
+#else
                         result = "Once at " + calendarEvent.DTStart.Value.ToShortDateTimeString();
+#endif
                     }
                     else
                     {
@@ -795,14 +869,26 @@ namespace Rock.Model
         public bool WasScheduleActive( DateTime time )
         {
             var calEvent = this.GetCalenderEvent();
+#if IS_NET_CORE
+            if ( calEvent != null && calEvent.DtStart != null )
+#else
             if ( calEvent != null && calEvent.DTStart != null )
+#endif
             {
+#if IS_NET_CORE
+                if ( time.TimeOfDay.TotalSeconds < calEvent.DtStart.Value.TimeOfDay.TotalSeconds )
+#else
                 if ( time.TimeOfDay.TotalSeconds < calEvent.DTStart.TimeOfDay.TotalSeconds )
+#endif
                 {
                     return false;
                 }
 
+#if IS_NET_CORE
+                if ( time.TimeOfDay.TotalSeconds > calEvent.DtEnd.Value.TimeOfDay.TotalSeconds )
+#else
                 if ( time.TimeOfDay.TotalSeconds > calEvent.DTEnd.TimeOfDay.TotalSeconds )
+#endif
                 {
                     return false;
                 }
@@ -827,19 +913,34 @@ namespace Rock.Model
             }
 
             var calEvent = this.GetCalenderEvent();
+#if IS_NET_CORE
+            if ( calEvent != null && calEvent.DtStart != null )
+            {
+                var checkInStart = calEvent.DtStart.AddMinutes( 0 - CheckInStartOffsetMinutes.Value );
+                if ( time.TimeOfDay.TotalSeconds < checkInStart.Value.TimeOfDay.TotalSeconds )
+#else
             if ( calEvent != null && calEvent.DTStart != null )
             {
                 var checkInStart = calEvent.DTStart.AddMinutes( 0 - CheckInStartOffsetMinutes.Value );
                 if ( time.TimeOfDay.TotalSeconds < checkInStart.TimeOfDay.TotalSeconds )
+#endif
                 {
                     return false;
                 }
 
+#if IS_NET_CORE
+                var checkInEnd = calEvent.DtEnd;
+                if ( CheckInEndOffsetMinutes.HasValue )
+                {
+                    checkInEnd = calEvent.DtStart.AddMinutes( CheckInEndOffsetMinutes.Value );
+                }
+#else
                 var checkInEnd = calEvent.DTEnd;
                 if ( CheckInEndOffsetMinutes.HasValue )
                 {
                     checkInEnd = calEvent.DTStart.AddMinutes( CheckInEndOffsetMinutes.Value );
                 }
+#endif
 
                 // If compare is greater than zero, then check-in offset end resulted in an end time in next day, in 
                 // which case, don't need to compare time
@@ -851,7 +952,11 @@ namespace Rock.Model
                     return false;
                 }
 
+#if IS_NET_CORE
+                if ( checkInEndDateCompare == 0 && time.TimeOfDay.TotalSeconds > checkInEnd.Value.TimeOfDay.TotalSeconds )
+#else
                 if ( checkInEndDateCompare == 0 && time.TimeOfDay.TotalSeconds > checkInEnd.TimeOfDay.TotalSeconds )
+#endif
                 {
                     // Same day, but end time has passed
                     return false;
@@ -1159,7 +1264,11 @@ namespace Rock.Model
     public static class ScheduleICalHelper
     {
         private static object _initLock;
+#if IS_NET_CORE
+        private static Dictionary<string, CalendarEvent> _iCalSchedules = new Dictionary<string, CalendarEvent>();
+#else
         private static Dictionary<string, DDay.iCal.Event> _iCalSchedules = new Dictionary<string, Event>();
+#endif
 
         static ScheduleICalHelper()
         {
@@ -1171,7 +1280,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="iCalendarContent">Content of the i calendar.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public static CalendarEvent GetCalenderEvent( string iCalendarContent )
+#else
         public static DDay.iCal.Event GetCalenderEvent( string iCalendarContent )
+#endif
         {
             string trimmedContent = iCalendarContent.Trim();
 
@@ -1180,7 +1293,11 @@ namespace Rock.Model
                 return null;
             }
 
+#if IS_NET_CORE
+            CalendarEvent calendarEvent = null;
+#else
             DDay.iCal.Event calendarEvent = null;
+#endif
 
             lock ( ScheduleICalHelper._initLock )
             {
@@ -1190,16 +1307,28 @@ namespace Rock.Model
                 }
 
                 StringReader stringReader = new StringReader( trimmedContent );
+#if IS_NET_CORE
+                var calendarList = CalendarCollection.Load( stringReader );
+#else
                 var calendarList = DDay.iCal.iCalendar.LoadFromStream( stringReader );
+#endif
 
                 //// iCal is stored as a list of Calendar's each with a list of Events, etc.  
                 //// We just need one Calendar and one Event
                 if ( calendarList.Count > 0 )
                 {
+#if IS_NET_CORE
+                    var calendar = calendarList[0] as Calendar;
+#else
                     var calendar = calendarList[0] as DDay.iCal.iCalendar;
+#endif
                     if ( calendar != null )
                     {
+#if IS_NET_CORE
+                        calendarEvent = calendar.Events[0] as CalendarEvent;
+#else
                         calendarEvent = calendar.Events[0] as DDay.iCal.Event;
+#endif
                         _iCalSchedules.AddOrReplace( trimmedContent, calendarEvent );
                     }
                 }
@@ -1214,11 +1343,19 @@ namespace Rock.Model
         /// <param name="icalEvent">The ical event.</param>
         /// <param name="startTime">The start time.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public static IList<Occurrence> GetOccurrences( CalendarEvent icalEvent, DateTime startTime )
+#else
         public static IList<Occurrence> GetOccurrences( DDay.iCal.Event icalEvent, DateTime startTime )
+#endif
         {
             lock ( ScheduleICalHelper._initLock )
             {
+#if IS_NET_CORE
+                return icalEvent.GetOccurrences( startTime ).ToList();
+#else
                 return icalEvent.GetOccurrences( startTime );
+#endif
             }
         }
 
@@ -1229,11 +1366,19 @@ namespace Rock.Model
         /// <param name="startTime">The start time.</param>
         /// <param name="endTime">The end time.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public static IList<Occurrence> GetOccurrences( CalendarEvent icalEvent, DateTime startTime, DateTime endTime )
+#else
         public static IList<Occurrence> GetOccurrences( DDay.iCal.Event icalEvent, DateTime startTime, DateTime endTime )
+#endif
         {
             lock ( ScheduleICalHelper._initLock )
             {
+#if IS_NET_CORE
+                return icalEvent.GetOccurrences( startTime, endTime ).ToList();
+#else
                 return icalEvent.GetOccurrences( startTime, endTime );
+#endif
             }
         }
     }

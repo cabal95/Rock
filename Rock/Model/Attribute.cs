@@ -21,11 +21,18 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
 using System.Runtime.Serialization;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 using Rock.Security;
 using System.Linq;
+#if !IS_NET_CORE
 using System.Data.Entity.Infrastructure;
+#endif
 
 namespace Rock.Model
 {
@@ -308,6 +315,10 @@ namespace Rock.Model
         /// <value>
         /// A collection of <see cref="Rock.Model.Category">Categories</see> that this Attribute is associated with.
         /// </value>
+#if IS_NET_CORE
+        // EFTODO: Many-to-many relationships are not supported.
+        [NotMapped]
+#endif
         [DataMember]
         public virtual ICollection<Category> Categories
         {
@@ -358,12 +369,23 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityState state )
+#else
         public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.EntityState state )
+#endif
         {
+#if IS_NET_CORE
+            if ( state != EntityState.Deleted )
+#else
             if ( state != System.Data.Entity.EntityState.Deleted )
+#endif
             {
                 // ensure that the BinaryFile.IsTemporary flag is set to false for any BinaryFiles that are associated with this record
                 var fieldTypeCache = FieldTypeCache.Get( this.FieldTypeId );
+#if !IS_NET_CORE
+                // EFTODO: Dependency on WebControls.
+
                 if ( fieldTypeCache?.Field is Rock.Field.Types.BinaryFileFieldType )
                 {
                     Guid? binaryFileGuid = DefaultValue.AsGuidOrNull();
@@ -377,6 +399,7 @@ namespace Rock.Model
                         }
                     }
                 }
+#endif
             }
 
             base.PreSaveChanges( dbContext, state );
@@ -407,9 +430,17 @@ namespace Rock.Model
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityEntry entry, EntityState state )
+#else
         public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry, System.Data.Entity.EntityState state )
+#endif
         {
+#if IS_NET_CORE
+            if ( state == EntityState.Modified || state == EntityState.Deleted )
+#else
             if ( state == System.Data.Entity.EntityState.Modified || state == System.Data.Entity.EntityState.Deleted )
+#endif
             {
                 originalEntityTypeId = entry.OriginalValues["EntityTypeId"]?.ToString().AsIntegerOrNull();
                 originalEntityTypeQualifierColumn = entry.OriginalValues["EntityTypeQualifierColumn"]?.ToString();
@@ -433,7 +464,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             AttributeCache.UpdateCachedEntity( this.Id, entityState );
             AttributeCache.UpdateCacheEntityAttributes( this, entityState );
@@ -442,7 +477,11 @@ namespace Rock.Model
             string entityTypeQualifierColumn;
             string entityTypeQualifierValue;
 
+#if IS_NET_CORE
+            if ( entityState == EntityState.Deleted )
+#else
             if ( entityState == System.Data.Entity.EntityState.Deleted )
+#endif
             {
                 entityTypeId = originalEntityTypeId;
                 entityTypeQualifierColumn = originalEntityTypeQualifierColumn;
@@ -462,7 +501,11 @@ namespace Rock.Model
 
             if ( ( !entityTypeId.HasValue || entityTypeId.Value == 0 ) && entityTypeQualifierColumn== Attribute.SYSTEM_SETTING_QUALIFIER && string.IsNullOrEmpty( entityTypeQualifierValue ) )
             {
+#if IS_NET_CORE
+                if ( entityState != EntityState.Modified )
+#else
                 if ( entityState != System.Data.Entity.EntityState.Modified )
+#endif
                 {
                     // if a SystemSettings was Added or Removed, flush the SystemSettings cache (if it was only modified, it'll will point to the updated AttributeCache value)
                     Rock.Web.SystemSettings.Remove();
@@ -570,9 +613,13 @@ namespace Rock.Model
         {
             this.HasRequired( a => a.FieldType ).WithMany().HasForeignKey( a => a.FieldTypeId ).WillCascadeOnDelete( false );
             this.HasOptional( a => a.EntityType ).WithMany().HasForeignKey( a => a.EntityTypeId ).WillCascadeOnDelete( false );
+#if !IS_NET_CORE
+            // EFTODO: Many-to-many relationships are not supported.
+
             this.HasMany( a => a.Categories ).WithMany().Map( a => { a.MapLeftKey( "AttributeId" ); a.MapRightKey( "CategoryId" ); a.ToTable( "AttributeCategory" ); } );
+#endif
         }
     }
 
-    #endregion
+#endregion
 }

@@ -16,10 +16,16 @@
 //
 using System;
 using System.Collections.Generic;
+#if !IS_NET_CORE
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
+#endif
 using System.Linq;
 using System.Linq.Expressions;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Web.Cache;
 using Z.EntityFramework.Plus;
 
@@ -120,7 +126,11 @@ namespace Rock.Data
         /// <returns></returns>
         public virtual IQueryable<T> Queryable( string includes )
         {
+#if IS_NET_CORE
+            IQueryable<T> value = _objectSet;
+#else
             DbQuery<T> value = _objectSet;
+#endif
             if ( !String.IsNullOrEmpty( includes ) )
             {
                 foreach ( var include in includes.SplitDelimitedValues() )
@@ -568,7 +578,11 @@ namespace Rock.Data
         /// <exception cref="System.NotImplementedException"></exception>
         public IEnumerable<T> ExecuteQuery( string query, params object[] parameters )
         {
+#if IS_NET_CORE
+            return _objectSet.FromSql( query, parameters );
+#else
             return _objectSet.SqlQuery( query, parameters );
+#endif
         }
 
         /// <summary>

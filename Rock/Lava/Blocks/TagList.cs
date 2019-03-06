@@ -22,8 +22,10 @@ using System.Linq;
 using System.Runtime.Caching;
 using System.Text.RegularExpressions;
 using System.Web;
+#if !IS_NET_CORE
 using dotless.Core;
 using dotless.Core.configuration;
+#endif
 using DotLiquid;
 using Rock.Utility;
 using Rock.Web.Cache;

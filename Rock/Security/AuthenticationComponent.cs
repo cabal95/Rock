@@ -52,6 +52,9 @@ namespace Rock.Security
         /// <returns></returns>
         public abstract Boolean Authenticate( UserLogin user, string password );
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebForms.
+
         /// <summary>
         /// Authenticates the user based on a request from a third-party provider.  Will set the username and returnUrl values.
         /// </summary>
@@ -60,6 +63,7 @@ namespace Rock.Security
         /// <param name="returnUrl">The return URL.</param>
         /// <returns></returns>
         public abstract Boolean Authenticate( HttpRequest request, out string userName, out string returnUrl );
+#endif
 
         /// <summary>
         /// Encodes the password.
@@ -68,6 +72,9 @@ namespace Rock.Security
         /// <param name="password">The password.</param>
         /// <returns></returns>
         public abstract String EncodePassword( UserLogin user, string password );
+
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebForms.
 
         /// <summary>
         /// Generates the login URL.
@@ -83,6 +90,7 @@ namespace Rock.Security
         /// <param name="request">The request.</param>
         /// <returns></returns>
         public abstract Boolean IsReturningFromAuthentication( HttpRequest request );
+#endif
 
         /// <summary>
         /// Gets the URL of an image that should be displayed.

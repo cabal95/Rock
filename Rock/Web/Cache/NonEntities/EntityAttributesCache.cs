@@ -20,6 +20,9 @@ using System.Data.Entity;
 using System.Linq;
 using System.Runtime.Serialization;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Model;
 
@@ -138,7 +141,11 @@ namespace Rock.Web.Cache
         /// </summary>
         /// <param name="attribute">The attribute.</param>
         /// <param name="entityState">State of the entity.</param>
+#if IS_NET_CORE
+        internal static void UpdateCacheEntityAttributes( Rock.Model.Attribute attribute, EntityState entityState )
+#else
         internal static void UpdateCacheEntityAttributes( Rock.Model.Attribute attribute, System.Data.Entity.EntityState entityState )
+#endif
         {
             var entityAttributesList = EntityAttributesCache.Get().EntityAttributes.ToList();
             if ( entityAttributesList == null || attribute == null )

@@ -63,6 +63,9 @@ namespace Rock.Model
             return Queryable().Where( t => t.Path == path );
         }
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Registers any block types that are not currently registered in Rock.
         /// </summary>
@@ -158,6 +161,7 @@ namespace Rock.Model
             }
        
         }
+#endif
 
         /// <summary>
         /// Finds all the <see cref="Rock.Model.BlockType">BlockTypes</see> within a given path.

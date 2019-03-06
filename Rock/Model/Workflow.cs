@@ -25,6 +25,9 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Web;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock;
 using Rock.Data;
 using Rock.Web.Cache;
@@ -377,7 +380,11 @@ namespace Rock.Model
         {
             if ( !InitiatorPersonAliasId.HasValue &&
                 HttpContext.Current != null &&
+#if IS_NET_CORE
+                HttpContext.Current.Items.ContainsKey( "CurrentPerson" ) )
+#else
                 HttpContext.Current.Items.Contains( "CurrentPerson" ) )
+#endif
             {
                 var currentPerson = HttpContext.Current.Items["CurrentPerson"] as Person;
                 if ( currentPerson != null )
@@ -536,7 +543,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityState state )
+#else
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.EntityState state )
+#endif
         {
             if ( _logEntries != null )
             {
@@ -556,7 +567,11 @@ namespace Rock.Model
             }
 
             // Set the workflow number
+#if IS_NET_CORE
+            if ( state == EntityState.Added )
+#else
             if ( state == System.Data.Entity.EntityState.Added )
+#endif
             {
                 int maxNumber = new WorkflowService( dbContext as RockContext )
                     .Queryable().AsNoTracking()

@@ -24,6 +24,9 @@ namespace Rock.Pbx
     /// <summary>
     /// MEF Component for PBX Systems
     /// </summary>
+#if !IS_NET_CORE
+    // EFTODO: Causes dependency on WebControls via Field Types.
+
     [CustomDropdownListField( "Internal Phone Type", "The phone type to that is connected to the PBX.", @"  SELECT 
 	dv.[Value] AS [Text],
 	dv.[Id] AS [Value]
@@ -31,6 +34,7 @@ FROM
 	[DefinedValue] dv
 	INNER JOIN [DefinedType] dt ON dt.[Id] = dv.[DefinedTypeId]
 WHERE dt.[Guid] = '8345DD45-73C6-4F5E-BEBD-B77FC83F18FD'", true, order: 999 )]
+#endif
     public abstract class PbxComponent : Component
     {
         /// <summary>

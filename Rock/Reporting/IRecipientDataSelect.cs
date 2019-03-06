@@ -39,6 +39,10 @@ namespace Rock.Reporting
         /// <param name="entityIdProperty">The entity identifier property.</param>
         /// <param name="selection">The selection.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        Expression GetRecipientPersonIdExpression( Microsoft.EntityFrameworkCore.DbContext context, MemberExpression entityIdProperty, string selection );
+#else
         Expression GetRecipientPersonIdExpression( System.Data.Entity.DbContext context, MemberExpression entityIdProperty, string selection );
+#endif
     }
 }

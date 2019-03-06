@@ -67,6 +67,9 @@ namespace Rock.Model
         /// </summary>
         public BinaryFileDataConfiguration()
         {
+#if IS_NET_CORE
+            Builder.HasOne( typeof( BinaryFile ) ).WithOne().HasForeignKey( typeof( BinaryFileData ), "Id" ).IsRequired().OnDelete( Microsoft.EntityFrameworkCore.DeleteBehavior.Cascade );
+#endif
         }
     }
 

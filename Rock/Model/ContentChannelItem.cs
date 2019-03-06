@@ -23,6 +23,10 @@ using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.UniversalSearch;
 using Rock.UniversalSearch.IndexModels;
@@ -413,11 +417,19 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Data.DbContext dbContext, Microsoft.EntityFrameworkCore.EntityState state )
+#else
         public override void PreSaveChanges( Data.DbContext dbContext, System.Data.Entity.EntityState state )
+#endif
         {
             var channel = this.ContentChannel;
 
+#if IS_NET_CORE
+            if ( state == Microsoft.EntityFrameworkCore.EntityState.Deleted )
+#else
             if ( state == System.Data.Entity.EntityState.Deleted )
+#endif
             {
                 ChildItems.Clear();
                 ParentItems.Clear();

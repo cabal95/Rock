@@ -245,7 +245,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
+#else
         public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
+#endif
         {
             var transaction = new Rock.Transactions.ConnectionRequestChangeTransaction( entry );
             Rock.Transactions.RockQueue.TransactionQueue.Enqueue( transaction );

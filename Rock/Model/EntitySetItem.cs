@@ -30,6 +30,9 @@ namespace Rock.Model
     [Table( "EntitySetItem" )]
     [DataContract]
     [NotAudited]
+#if IS_NET_CORE
+    [IgnoreProperties( new[] { "AdditionalMergeValues" } )]
+#endif
     public partial class EntitySetItem : Model<EntitySetItem>, IOrdered
     {
         #region Entity Properties
@@ -94,6 +97,9 @@ namespace Rock.Model
         ///  A <see cref="System.Collections.Generic.Dictionary&lt;String,String&gt;"/> of <see cref="System.String"/> objects containing additional merge values for the <see cref="Rock.Model.EntitySetItem"/>
         /// </value>
         [DataMember]
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual Dictionary<string, object> AdditionalMergeValues
         {
             get { return _additionalMergeValues; }

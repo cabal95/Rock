@@ -342,7 +342,9 @@ namespace Rock.Model
         /// The amount.
         /// </value>
         [DataMember]
+#if !IS_NET_CORE
         [BoundFieldTypeAttribute( typeof( Rock.Web.UI.Controls.CurrencyField ) )]
+#endif
         public decimal Amount { get; set; }
 
         /// <summary>

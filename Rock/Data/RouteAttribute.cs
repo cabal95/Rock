@@ -16,7 +16,9 @@
 //
 using System;
 using System.ComponentModel.DataAnnotations;
+#if !IS_NET_CORE
 using System.Web.Routing;
+#endif
 
 namespace Rock.Data
 {
@@ -37,9 +39,15 @@ namespace Rock.Data
         {
             try
             {
+#if !IS_NET_CORE
+                // EFTODO: Dependency on WebForms.
+
                 string routeText = ( value as string );
                 Route testRoute = new Route( routeText, null );
                 return true;
+#else
+                throw new NotImplementedException();
+#endif
             }
             catch ( Exception ex )
             {

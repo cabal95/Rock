@@ -15,12 +15,22 @@
 // </copyright>
 //
 using System;
+#if !IS_NET_CORE
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+#endif
 using System.IO;
 using System.Web;
+#if IS_NET_CORE
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.MetaData;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.Primitives;
+#else
 using Goheer.EXIF;
+#endif
 
 namespace Rock.Utility
 {
@@ -35,15 +45,43 @@ namespace Rock.Utility
         /// <param name="uploadedFile">The uploaded file.</param>
         /// <param name="resizeIfImage">if set to <c>true</c> [resize if image].</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        public static Stream GetFileContentStream( Microsoft.AspNetCore.Http.IFormFile uploadedFile, bool resizeIfImage = true )
+#else
         public static Stream GetFileContentStream( HttpPostedFile uploadedFile, bool resizeIfImage = true )
+#endif
         {
             if ( uploadedFile.ContentType == "image/svg+xml" || uploadedFile.ContentType == "image/tiff" || !uploadedFile.ContentType.StartsWith( "image/" ) )
             {
+#if IS_NET_CORE
+                return uploadedFile.OpenReadStream();
+#else
                 return uploadedFile.InputStream;
+#endif
             }
 
             try
             {
+#if IS_NET_CORE
+                var image = Image.Load( uploadedFile.OpenReadStream() );
+                var orientation = image.MetaData.ExifProfile?.GetValue( SixLabors.ImageSharp.MetaData.Profiles.Exif.ExifTag.Orientation );
+                if ( orientation != null )
+                {
+                    // EFTODO: Implement the rotation mutation.
+                }
+
+                if ( resizeIfImage )
+                {
+                    image.Mutate( a =>
+                    {
+                        a = a.Resize( new ResizeOptions { Mode = ResizeMode.Max, Size = new Size( 1024, 768 ) } );
+                    } );
+                }
+
+                var stream = new MemoryStream();
+                image.Save( stream, ContentTypeToImageFormat( uploadedFile.ContentType ) );
+                return stream;
+#else
                 var bmp = new Bitmap( uploadedFile.InputStream );
 
                 // Check to see if we should flip the image.
@@ -68,11 +106,16 @@ namespace Rock.Utility
                 var stream = new MemoryStream();
                 bmp.Save( stream, ContentTypeToImageFormat( uploadedFile.ContentType ) );
                 return stream;
+#endif
             }
             catch
             {
                 // if it couldn't be converted to a bitmap or if the exif or resize thing failed, just return the original stream
+#if IS_NET_CORE
+                return uploadedFile.OpenReadStream();
+#else
                 return uploadedFile.InputStream;
+#endif
             }
         }
 
@@ -82,6 +125,29 @@ namespace Rock.Utility
         /// </summary>
         /// <param name="contentType">the content type</param>
         /// <returns>ImageFormat</returns>
+#if IS_NET_CORE
+        private static IImageFormat ContentTypeToImageFormat( string contentType )
+        {
+            switch ( contentType )
+            {
+                case "image/jpg":
+                case "image/jpeg":
+                    return SixLabors.ImageSharp.Formats.Jpeg.JpegFormat.Instance;
+
+                case "image/png":
+                    return SixLabors.ImageSharp.Formats.Png.PngFormat.Instance;
+
+                case "image/gif":
+                    return SixLabors.ImageSharp.Formats.Gif.GifFormat.Instance;
+
+                case "image/bmp":
+                    return SixLabors.ImageSharp.Formats.Bmp.BmpFormat.Instance;
+
+                default:
+                    throw new NotSupportedException( string.Format( "unknown ImageFormat for {0}", contentType ) );
+            }
+        }
+#else
         private static ImageFormat ContentTypeToImageFormat( string contentType )
         {
             switch ( contentType )
@@ -106,6 +172,10 @@ namespace Rock.Utility
                     throw new NotSupportedException( string.Format( "unknown ImageFormat for {0}", contentType ) );
             }
         }
+#endif
+
+#if !IS_NET_CORE
+        // EFTODO: Implement this.
 
         /// <summary>
         /// Orientations the type of to flip.
@@ -144,7 +214,9 @@ namespace Rock.Utility
                     return RotateFlipType.RotateNoneFlipNone;
             }
         }
+#endif
 
+#if !IS_NET_CORE
         /// <summary>
         /// Roughes the resize.
         /// </summary>
@@ -204,5 +276,6 @@ namespace Rock.Utility
 
             return ( Image ) b;
         }
+#endif
     }
 }

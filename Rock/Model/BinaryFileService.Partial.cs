@@ -27,6 +27,9 @@ namespace Rock.Model
     /// </summary>
     public partial class BinaryFileService
     {
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebForms
+
         /// <summary>
         /// Initiates an asynchronous get of the binary file specified by fileGuid
         /// </summary>
@@ -153,5 +156,6 @@ namespace Rock.Model
                 return binaryFile;
             }
         }
+#endif
     }
 }

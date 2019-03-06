@@ -20,6 +20,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Web.Cache;
 using Rock.Data;
 
@@ -186,14 +190,22 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
+#if IS_NET_CORE
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
+#else
         public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+#endif
         {
             var cachedDefinedValues = DefinedTypeCache.Get( this.Id, (RockContext)dbContext )?.DefinedValues;
             if ( cachedDefinedValues?.Any() == true )
             {
                 foreach ( var cachedDefinedValue in cachedDefinedValues )
                 {
+#if IS_NET_CORE
+                    DefinedValueCache.UpdateCachedEntity( cachedDefinedValue.Id, EntityState.Detached );
+#else
                     DefinedValueCache.UpdateCachedEntity( cachedDefinedValue.Id, System.Data.Entity.EntityState.Detached );
+#endif
                 }
             }
 

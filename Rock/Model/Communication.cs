@@ -23,12 +23,17 @@ using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Newtonsoft.Json;
 
 using Rock.Data;
 using Rock.Communication;
 using Rock.Web.Cache;
+#if !IS_NET_CORE
 using System.Data.Entity;
+#endif
 using System.Linq.Expressions;
 using Rock.Web;
 
@@ -431,6 +436,9 @@ namespace Rock.Model
         [DataMember]
         [RockObsolete( "1.7" )]
         [Obsolete( "MediumData is no longer used. Communication now has specific properties for medium data.", true )]
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual Dictionary<string, string> MediumData
         {
             get
@@ -487,6 +495,9 @@ namespace Rock.Model
         /// A <see cref="System.Collections.Generic.List{String}"/> of values containing the additional merge field list.
         /// </value>
         [DataMember]
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual List<string> AdditionalMergeFields
         {
             get { return _additionalMergeFields; }

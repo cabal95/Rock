@@ -182,6 +182,9 @@ namespace Rock.Model
         /// <value>
         /// A <see cref="System.Int32"/> representing the count of <see cref="Rock.Model.BinaryFile"/> entities that are children of this <see cref="Rock.Model.BinaryFileType"/>.
         /// </value>
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual int FileCount
         {
             get
@@ -196,6 +199,9 @@ namespace Rock.Model
         /// <value>
         /// A queryable collection of <see cref="Rock.Model.BinaryFile"/> entities that are children of this<see cref="Rock.Model.BinaryFileType"/>.
         /// </value>
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual IQueryable<BinaryFile> FileQuery
         {
             get

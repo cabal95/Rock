@@ -221,6 +221,9 @@ namespace Rock.Model
         /// An enumerable collection containing the active <see cref="Rock.Model.WorkflowAction">WorkflowActions</see> for this WorkflowActivity.
         /// </value>
         [LavaInclude]
+#if IS_NET_CORE
+        [NotMapped]
+#endif
         public virtual IEnumerable<Rock.Model.WorkflowAction> ActiveActions
         {
             get

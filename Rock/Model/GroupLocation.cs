@@ -19,11 +19,17 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration;
+#if !IS_NET_CORE
+using System.Data.Entity.Infrastructure;
+#endif
 using System.Linq;
 using System.Runtime.Serialization;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 
@@ -164,6 +170,11 @@ namespace Rock.Model
         /// A collection of <see cref="Rock.Model.Schedule"/> that are associated with this GroupLocation.
         /// </value>
         [DataMember]
+#if IS_NET_CORE
+        // EFTODO: Many-to-many relationships are not supported.
+
+        [NotMapped]
+#endif
         public virtual ICollection<Schedule> Schedules
         {
             get { return _schedules ?? ( _schedules = new Collection<Schedule>() ); }
@@ -189,7 +200,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
+#if IS_NET_CORE
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityEntry entry )
+#else
         public override void PreSaveChanges( DbContext dbContext, DbEntityEntry entry )
+#endif
         {
             var rockContext = (RockContext)dbContext;
 
@@ -197,7 +212,11 @@ namespace Rock.Model
 
             switch ( entry.State )
             {
+#if IS_NET_CORE
+                case EntityState.Added:
+#else
                 case System.Data.Entity.EntityState.Added:
+#endif
                     {
                         string locationType = History.GetDefinedValueValue( null, GroupLocationTypeValueId );
                         locationType = locationType.IsNotNullOrWhiteSpace() ? locationType : "Unknown";
@@ -208,7 +227,11 @@ namespace Rock.Model
                         break;
                     }
 
+#if IS_NET_CORE
+                case EntityState.Modified:
+#else
                 case System.Data.Entity.EntityState.Modified:
+#endif
                     {
                         string locationTypeName = DefinedValueCache.GetName( GroupLocationTypeValueId ) ?? "Unknown";
                         int? oldLocationTypeId = entry.OriginalValues["GroupLocationTypeValueId"].ToStringSafe().AsIntegerOrNull();
@@ -229,7 +252,11 @@ namespace Rock.Model
                         break;
                     }
 
+#if IS_NET_CORE
+                case EntityState.Deleted:
+#else
                 case System.Data.Entity.EntityState.Deleted:
+#endif
                     {
                         string locationType = History.GetDefinedValueValue( null, entry.OriginalValues["GroupLocationTypeValueId"].ToStringSafe().AsIntegerOrNull() );
                         locationType = locationType.IsNotNullOrWhiteSpace() ? locationType : "Unknown";
@@ -300,7 +327,10 @@ namespace Rock.Model
             this.HasRequired( t => t.Location ).WithMany( l => l.GroupLocations).HasForeignKey( t => t.LocationId );
             this.HasOptional( t => t.GroupLocationTypeValue ).WithMany().HasForeignKey( t => t.GroupLocationTypeValueId ).WillCascadeOnDelete( false );
             this.HasOptional( t => t.GroupMemberPersonAlias ).WithMany().HasForeignKey( t => t.GroupMemberPersonAliasId ).WillCascadeOnDelete( true );
+#if !IS_NET_CORE
+            // EFTODO: Many-to-many relationships are not yet supported.
             this.HasMany( t => t.Schedules ).WithMany().Map( t => { t.MapLeftKey( "GroupLocationId" ); t.MapRightKey( "ScheduleId" ); t.ToTable( "GroupLocationSchedule" ); } );
+#endif
         }
     }
 

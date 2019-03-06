@@ -36,7 +36,9 @@ namespace Rock.Security.Authentication
     [Description( "Database Authentication Provider" )]
     [Export(typeof(AuthenticationComponent))]
     [ExportMetadata("ComponentName", "Database")]
+#if !IS_NET_CORE
     [IntegerField( "BCrypt Cost Factor", "The higher this number, the more secure BCrypt can be. However it also will be slower.", false, 11 )]
+#endif
     public class Database : AuthenticationComponent
     {
         private static byte[] _encryptionKey;
@@ -138,6 +140,7 @@ namespace Rock.Security.Authentication
             return EncodeBcrypt( password );
         }
 
+#if !IS_NET_CORE
         /// <summary>
         /// Authenticates the user based on a request from a third-party provider.  Will set the username and returnUrl values.
         /// </summary>
@@ -173,6 +176,7 @@ namespace Rock.Security.Authentication
         {
             throw new NotImplementedException();
         }
+#endif
 
         /// <summary>
         /// Gets the URL of an image that should be displayed.

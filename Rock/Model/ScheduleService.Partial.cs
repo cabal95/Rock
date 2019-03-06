@@ -15,10 +15,13 @@
 // </copyright>
 //
 using System;
-using System.Data.Entity;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 using Rock.Web.Cache;
 
@@ -73,7 +76,11 @@ namespace Rock.Model
                 var scheduleService = new ScheduleService( rockContext );
                 var locationService = new LocationService( rockContext );
 
+#if !IS_NET_CORE
+                // EFTODO: Interceptors not supported.
+
                 using ( new Rock.Data.QueryHintScope( rockContext, QueryHintType.RECOMPILE ) )
+#endif
                 {
 
                     // Set up an 'occurrences' query for the group
@@ -85,12 +92,20 @@ namespace Rock.Model
                     if ( fromDateTime.HasValue )
                     {
                         var fromDate = fromDateTime.Value.Date;
+#if IS_NET_CORE
+                        qry = qry.Where( a => a.StartDateTime.Date >= fromDate );
+#else
                         qry = qry.Where( a => DbFunctions.TruncateTime( a.StartDateTime ) >= ( fromDate ) );
+#endif
                     }
                     if ( toDateTime.HasValue )
                     {
                         var toDate = toDateTime.Value.Date;
+#if IS_NET_CORE
+                        qry = qry.Where( a => a.StartDateTime.Date < toDate );
+#else
                         qry = qry.Where( a => DbFunctions.TruncateTime( a.StartDateTime ) < ( toDate ) );
+#endif
                     }
 
                     // Location Filter
@@ -111,7 +126,11 @@ namespace Rock.Model
                     {
                         a.LocationId,
                         a.ScheduleId,
+#if IS_NET_CORE
+                        a.StartDateTime.Date
+#else
                         Date = DbFunctions.TruncateTime( a.StartDateTime )
+#endif
                     } )
                     .Distinct()
                     .ToList();
@@ -156,11 +175,19 @@ namespace Rock.Model
                             scheduleStartTimes.Add( s.Id, s.StartTimeOfDay );
                         } );
 
+#if IS_NET_CORE
+                    foreach ( var occurrence in occurrenceDates )
+#else
                     foreach ( var occurrence in occurrenceDates.Where( o => o.Date.HasValue ) )
+#endif
                     {
                         occurrences.Add(
                             new ScheduleOccurrence(
+#if IS_NET_CORE
+                                occurrence.Date,
+#else
                                 occurrence.Date.Value,
+#endif
                                 occurrence.ScheduleId.HasValue && scheduleStartTimes.ContainsKey( occurrence.ScheduleId.Value ) ?
                                     scheduleStartTimes[occurrence.ScheduleId.Value] : new TimeSpan(),
                                 occurrence.ScheduleId,
@@ -292,7 +319,11 @@ namespace Rock.Model
                         foreach ( var occurrence in groupSchedule.GetOccurrences( startDate, endDate ) )
                         {
                             var scheduleOccurrence = new ScheduleOccurrence(
+#if IS_NET_CORE
+                                occurrence.Period.StartTime.Date, occurrence.Period.StartTime.Value.TimeOfDay, groupSchedule.Id, groupSchedule.Name );
+#else
                                 occurrence.Period.StartTime.Date, occurrence.Period.StartTime.TimeOfDay, groupSchedule.Id, groupSchedule.Name );
+#endif
                             if ( !existingDates.Contains( scheduleOccurrence.Date ) )
                             {
                                 newOccurrences.Add( scheduleOccurrence );
@@ -389,7 +420,11 @@ namespace Rock.Model
                     a.GroupId == group.Id &&
                     a.LocationId.Equals( occurrence.LocationId ) &&
                     a.ScheduleId.Equals( occurrence.ScheduleId ) &&
+#if IS_NET_CORE
+                    a.StartDateTime.Date.Equals( occurrence.Date ) )
+#else
                     DbFunctions.TruncateTime( a.StartDateTime ).Equals( occurrence.Date ) )
+#endif
                 .ToList();
 
                 if ( attendances.Any() )

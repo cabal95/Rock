@@ -170,6 +170,9 @@ namespace Rock.Model
 
         #region Helper Methods
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
+
         /// <summary>
         /// Builds the single option single quantity checkbox
         /// </summary>
@@ -516,6 +519,7 @@ namespace Rock.Model
 
             return null;
         }
+#endif
 
         #endregion
     }

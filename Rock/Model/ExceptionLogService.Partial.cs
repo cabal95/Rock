@@ -20,7 +20,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+#if IS_NET_CORE
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+#else
 using System.Web;
+#endif
 
 namespace Rock.Model
 {
@@ -303,12 +308,19 @@ namespace Rock.Model
                 {
                     cookies.Append( "<table class=\"cookies exception-table\">" );
 
+#if IS_NET_CORE
+                    foreach ( var httpCookie in cookieList )
+                    {
+                        cookies.Append( "<tr><td><b>" + httpCookie.Key + "</b></td><td>" + httpCookie.Value.EncodeHtml() + "</td></tr>" );
+                    }
+#else
                     foreach ( string cookie in cookieList )
                     {
                         var httpCookie = cookieList[cookie];
                         if ( httpCookie != null )
                             cookies.Append( "<tr><td><b>" + cookie + "</b></td><td>" + httpCookie.Value.EncodeHtml() + "</td></tr>" );
                     }
+#endif
 
                     cookies.Append( "</table>" );
                 }
@@ -319,12 +331,25 @@ namespace Rock.Model
                 if ( formList.Count > 0 )
                 {
                     formItems.Append( "<table class=\"form-items exception-table\">" );
+#if IS_NET_CORE
+                    foreach ( var formItem in formList )
+#else
                     foreach ( string formItem in formList )
+#endif
                     {
+#if IS_NET_CORE
+                        if ( formItem.Key.IsNotNullOrWhiteSpace() )
+#else
                         if ( formItem.IsNotNullOrWhiteSpace() )
+#endif
                         {
+#if IS_NET_CORE
+                            string formValue = formItem.Value.ToString().EncodeHtml();
+                            string lc = formItem.Key.ToLower();
+#else
                             string formValue = formList[formItem].EncodeHtml();
                             string lc = formItem.ToLower();
+#endif
                             if ( lc.Contains( "nolog" ) ||
                                 lc.Contains( "creditcard" ) ||
                                 lc.Contains( "cc-number" ) ||
@@ -342,6 +367,9 @@ namespace Rock.Model
                 }
 
                 StringBuilder serverVars = new StringBuilder();
+#if !IS_NET_CORE
+                // EFTODO: ServerVariables no longer exists in ASP.Net Core.
+
                 var serverVarList = request.ServerVariables;
 
                 if ( serverVarList.Count > 0 )
@@ -363,12 +391,19 @@ namespace Rock.Model
 
                     serverVars.Append( "</table>" );
                 }
+#endif
 
                 exceptionLog.Cookies = cookies.ToString();
                 exceptionLog.StatusCode = context.Response.StatusCode.ToString();
+#if IS_NET_CORE
+                exceptionLog.PageUrl = request.GetDisplayUrl();
+                exceptionLog.ServerVariables = serverVars.ToString();
+                exceptionLog.QueryString = request.QueryString.ToUriComponent();
+#else
                 exceptionLog.PageUrl = request.Url.ToString();
                 exceptionLog.ServerVariables = serverVars.ToString();
                 exceptionLog.QueryString = request.Url.Query;
+#endif
                 exceptionLog.Form = formItems.ToString();
             }
             catch { }

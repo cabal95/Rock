@@ -61,7 +61,11 @@ namespace Rock.Model
         /// The attribute matrix items.
         /// </value>
         [DataMember]
+#if IS_NET_CORE
         public virtual ICollection<AttributeMatrixItem> AttributeMatrixItems { get; set; }
+#else
+        public ICollection<AttributeMatrixItem> AttributeMatrixItems { get; set; }
+#endif
 
         #endregion
     }

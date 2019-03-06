@@ -22,6 +22,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Web;
 using System.Web.UI.WebControls;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Attribute;
 using Rock.Data;
 using Rock.Model;
@@ -386,7 +390,11 @@ namespace Rock
                             var model = models.FirstOrDefault( m => m.Id == attributeValue.EntityId.Value );
                             if ( model != null )
                             {
+#if IS_NET_CORE
+                                model.CustomSortValue = attributeValue.Value;
+#else
                                 model.CustomSortValue = field.SortValue( null, attributeValue.Value, attributeCache.QualifierValues );
+#endif
                             }
                         }
                     }
