@@ -735,9 +735,11 @@ namespace Rock.Model
             this.HasRequired( t => t.TransactionTypeValue ).WithMany().HasForeignKey( t => t.TransactionTypeValueId ).WillCascadeOnDelete( false );
             this.HasOptional( t => t.SourceTypeValue ).WithMany().HasForeignKey( t => t.SourceTypeValueId ).WillCascadeOnDelete( false );
 #if !IS_NET_CORE
-            // EFTODO: Relationship moved to FinancialTransactionRefund model.
+            // EFTODO: I have no idea what this is supposed to be doing. There doesn't seem to be any actual SQL column that links the two.
 
             this.HasOptional( t => t.RefundDetails ).WithRequired( r => r.FinancialTransaction ).WillCascadeOnDelete( true );
+#else
+            Builder.Ignore( t => t.RefundDetails );
 #endif
             this.HasOptional( t => t.ScheduledTransaction ).WithMany( s => s.Transactions ).HasForeignKey( t => t.ScheduledTransactionId ).WillCascadeOnDelete( false );
             this.HasOptional( t => t.ProcessedByPersonAlias ).WithMany().HasForeignKey( t => t.ProcessedByPersonAliasId ).WillCascadeOnDelete( false );

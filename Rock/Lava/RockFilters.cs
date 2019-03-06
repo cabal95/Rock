@@ -2967,7 +2967,9 @@ namespace Rock.Lava
             {
                 var groupQuery = new GroupMemberService( GetRockContext( context ) )
                     .Queryable( "Group, GroupRole" )
+#if !IS_NET_CORE
                     .AsNoTracking()
+#endif
                     .Where( m =>
                         m.PersonId == person.Id &&
                         m.Group.GroupTypeId == numericalGroupTypeId.Value &&
