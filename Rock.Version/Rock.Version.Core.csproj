@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <AssemblyName>Rock.Version</AssemblyName>
+    <RootNamespace>Rock.Version</RootNamespace>
+    <DefineConstants>$(DefineConstants);IS_NET_CORE</DefineConstants>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove=".gitignore" />
+    <None Remove="AssemblySharedInfo.tt" />
+  </ItemGroup>
+
+</Project>
