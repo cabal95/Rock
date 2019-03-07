@@ -20,9 +20,10 @@ using System.Data.Entity;
 using System.Linq;
 #if !IS_NET_CORE
 using System.Web.Compilation;
-#endif
+#else
 
 using Microsoft.EntityFrameworkCore;
+#endif
 using Rock.Data;
 
 namespace Rock.Model

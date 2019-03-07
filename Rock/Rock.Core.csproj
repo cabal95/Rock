@@ -235,6 +235,7 @@
     <Compile Include="Data\LavaIgnoreAttribute.cs" />
     <Compile Include="Data\LavaIncludeAttribute.cs" />
     <Compile Include="Data\LinqRuntimeTypeBuilder.cs" />
+    <Compile Include="Data\MigrationHelper.cs" />
     <Compile Include="Data\Model.cs" />
     <Compile Include="Data\NoAttributeFilterExpression.cs" />
     <Compile Include="Data\NotAuditedAttribute.cs" />

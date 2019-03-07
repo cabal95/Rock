@@ -111,7 +111,11 @@ namespace Rock.Storage
                 {
                     if ( HttpContext.Current != null && HttpContext.Current.Request != null )
                     {
+#if IS_NET_CORE
                         uri = new Uri( HttpContext.Current.Request.GetDisplayUrl() );
+#else
+                        uri = new Uri( HttpContext.Current.Request.Url.ToString() );
+#endif
                     }
                 }
                 catch { }

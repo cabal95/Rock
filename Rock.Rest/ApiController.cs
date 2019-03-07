@@ -27,9 +27,10 @@ using System.ServiceModel.Channels;
 using System.Web.Http;
 using System.Web.Http.OData;
 
-#endif
+#else
 using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Mvc;
+#endif
 using Rock;
 using Rock.Attribute;
 using Rock.Data;

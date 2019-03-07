@@ -1804,7 +1804,9 @@ namespace Rock.Data
     /// </summary>
     public static class ContextHelper
     {
+#if IS_NET_CORE
         public static ModelBuilder ModelBuilder { get; set; }
+#endif
 
         /// <summary>
         /// Adds the configurations.
