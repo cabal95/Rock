@@ -149,9 +149,9 @@
                     <asp:Button ID="btnRetakeTest" runat="server" Visible="false" Text="Retake Test" CssClass="btn btn-default" OnClick="btnRetakeTest_Click" />
                 </div>
 
-                <div class="spiritual-attribution margin-t-lg">
+                <!--<div class="spiritual-attribution margin-t-lg">
                     <small>Spiritual Gifts test courtesy of Jackson Snyder at <a href="http://positivepublications.com/">positivepublications.com/</a>.</small>
-                </div>
+                </div>-->
             </div>
             </div>
         </asp:Panel>

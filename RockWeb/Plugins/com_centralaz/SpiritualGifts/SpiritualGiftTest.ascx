@@ -84,9 +84,9 @@
 
                 </div>
 
-                <div class="disc-attribution margin-t-xl">
+                <!--<div class="disc-attribution margin-t-xl">
                     <small>Spiritual Gifts test courtesy of Jackson Snyder at <a href="http://positivepublications.com/">positivepublications.com/</a>.</small>
-                </div>
+                </div>-->
             </div>
         </asp:Panel>
     </ContentTemplate>
