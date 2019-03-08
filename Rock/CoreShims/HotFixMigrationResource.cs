@@ -1,12 +1,12 @@
 ﻿using System.IO;
 
-namespace Rock.Migrations.Migrations
+namespace Rock.Plugin.HotFixes
 {
-    public partial class RockMigrationSQL
+    public partial class HotFixMigrationResource
     {
         private static string GetRealPath( string path )
         {
-            string basePath = Path.GetDirectoryName( typeof( RockMigrationSQL ).Assembly.Location );
+            string basePath = Path.GetDirectoryName( typeof( HotFixMigrationResource ).Assembly.Location );
 
             var segments = path.Split( '\\' );
             var realPath = basePath;

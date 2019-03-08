@@ -127,16 +127,48 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Plugin\HotFixes\HotFixMigrationResource.Designer.cs" />
     <Compile Remove="Scripting.evaluator.cs" />
     <Compile Remove="Scripting.Extensions.cs" />
     <Compile Remove="Scripting.native.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Remove="Plugin\HotFixes\HotFixMigrationResource.resx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove=".gitignore" />
     <None Remove="App.config" />
+    <None Remove="CoreShims\HotFixMigrationResource.sh" />
     <None Remove="LICENSE.txt" />
     <None Remove="packages.config" />
+    <None Remove="Plugin\HotFixes\039_MigrationRollupsForV7_2_UpdateCheckInMergefieldDebugInfo.sql" />
+    <None Remove="Plugin\HotFixes\041_MigrationRollupsForV7_3_UpdateWizardCommunicationDetailApprovers.sql" />
+    <None Remove="Plugin\HotFixes\043_MoreMigrationRollupsForV7_3_spCrm_PersonDuplicateFinder.sql" />
+    <None Remove="Plugin\HotFixes\043_MoreMigrationRollupsForV7_3_ufnUtility_CsvToTable.sql" />
+    <None Remove="Plugin\HotFixes\047_DataAutomation_FixBenevolenceCaseWorker.sql" />
+    <None Remove="Plugin\HotFixes\047_DataAutomation_ShortLinkInteractionFix.sql" />
+    <None Remove="Plugin\HotFixes\049_GivingAnalyticsAccounts_AccountTotals.sql" />
+    <None Remove="Plugin\HotFixes\049_GivingAnalyticsAccounts_PersonSummary.sql" />
+    <None Remove="Plugin\HotFixes\049_GivingAnalyticsAccounts_TransactionData.sql" />
+    <None Remove="Plugin\HotFixes\050_MigrationRollupsForV7_4_AddVimeoShortCode.sql" />
+    <None Remove="Plugin\HotFixes\050_MigrationRollupsForV7_4_FixAccordionShortCode.sql" />
+    <None Remove="Plugin\HotFixes\050_MigrationRollupsForV7_4_FixThankyouAndOngoingHyphenations.sql" />
+    <None Remove="Plugin\HotFixes\050_MigrationRollupsForV7_4_spAnalytics_ETL_Campus.sql" />
+    <None Remove="Plugin\HotFixes\050_MigrationRollupsForV7_4_spCrm_PersonDuplicateFinder.sql" />
+    <None Remove="Plugin\HotFixes\050_MigrationRollupsForV7_4_spCrm_PersonMerge.sql" />
+    <None Remove="Plugin\HotFixes\052_MigrationRollupsForV8_1_spCrm_FamilyAnalyticsGiving.sql" />
+    <None Remove="Plugin\HotFixes\052_MigrationRollupsForV8_1_ufnCrm_GetFamilyTitle.sql" />
+    <None Remove="Plugin\HotFixes\052_MigrationRollupsForV8_1_ufnCrm_GetFamilyTitleIncludeInactive.sql" />
+    <None Remove="Plugin\HotFixes\056_MigrationRollupsForV8_4_spCrm_FamilyAnalyticsEraDataset.sql" />
+    <None Remove="Plugin\HotFixes\057_MigrationRollupsForV8_5_AddCheck-inLabelToInstallIconFont.sql" />
+    <None Remove="Plugin\HotFixes\057_MigrationRollupsForV8_5_spCheckin_BadgeAttendance.sql" />
+    <None Remove="Plugin\HotFixes\057_MigrationRollupsForV8_5_spCrm_FamilyAnalyticsFirstVisitsAttributeUpdate.sql" />
+    <None Remove="Plugin\HotFixes\059_MigrationRollupsForV8_5_2_spCheckin_AttendanceAnalyticsQuery_NonAttendees.sql" />
+    <None Remove="Plugin\HotFixes\060_MigrationRollupsForV8_6_FixChartShortcode.sql" />
+    <None Remove="Plugin\HotFixes\060_MigrationRollupsForV8_6_spFinance_PledgeAnalyticsQuery_Down.sql" />
+    <None Remove="Plugin\HotFixes\060_MigrationRollupsForV8_6_spFinance_PledgeAnalyticsQuery_Up.sql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -1008,6 +1040,87 @@
     <Compile Include="Workflow\ActionComponent.cs" />
     <Compile Include="Workflow\ActionContainer.cs" />
     <Compile Include="Workflow\TriggerCache.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Plugin\HotFixes\039_MigrationRollupsForV7_2_UpdateCheckInMergefieldDebugInfo.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\041_MigrationRollupsForV7_3_UpdateWizardCommunicationDetailApprovers.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\043_MoreMigrationRollupsForV7_3_spCrm_PersonDuplicateFinder.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\043_MoreMigrationRollupsForV7_3_ufnUtility_CsvToTable.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\047_DataAutomation_FixBenevolenceCaseWorker.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\047_DataAutomation_ShortLinkInteractionFix.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\049_GivingAnalyticsAccounts_AccountTotals.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\049_GivingAnalyticsAccounts_PersonSummary.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\049_GivingAnalyticsAccounts_TransactionData.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\050_MigrationRollupsForV7_4_AddVimeoShortCode.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\050_MigrationRollupsForV7_4_FixAccordionShortCode.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\050_MigrationRollupsForV7_4_FixThankyouAndOngoingHyphenations.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\050_MigrationRollupsForV7_4_spAnalytics_ETL_Campus.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\050_MigrationRollupsForV7_4_spCrm_PersonDuplicateFinder.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\050_MigrationRollupsForV7_4_spCrm_PersonMerge.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\052_MigrationRollupsForV8_1_spCrm_FamilyAnalyticsGiving.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\052_MigrationRollupsForV8_1_ufnCrm_GetFamilyTitle.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\052_MigrationRollupsForV8_1_ufnCrm_GetFamilyTitleIncludeInactive.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\056_MigrationRollupsForV8_4_spCrm_FamilyAnalyticsEraDataset.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\057_MigrationRollupsForV8_5_AddCheck-inLabelToInstallIconFont.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\057_MigrationRollupsForV8_5_spCheckin_BadgeAttendance.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\057_MigrationRollupsForV8_5_spCrm_FamilyAnalyticsFirstVisitsAttributeUpdate.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\059_MigrationRollupsForV8_5_2_spCheckin_AttendanceAnalyticsQuery_NonAttendees.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\060_MigrationRollupsForV8_6_FixChartShortcode.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\060_MigrationRollupsForV8_6_spFinance_PledgeAnalyticsQuery_Down.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Plugin\HotFixes\060_MigrationRollupsForV8_6_spFinance_PledgeAnalyticsQuery_Up.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
