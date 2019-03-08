@@ -1,18 +1,32 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="SpiritualGiftResult.ascx.cs" Inherits="Rockweb.Plugins.com_centralaz.SpiritualGifts.SpiritualGiftResult" ViewStateMode="Enabled" EnableViewState="true" %>
 <style>
+    @media (max-width: 767px) {
+        .spiritualchart {
+            width: 100% !important;
+        }
+
+        .spiritualchart li {
+            width: 25% !important;
+        }
+
+        .spiritualbar-label {
+            font-size: 10px !important;
+        }
+    }
+
     .spiritual-assessment th {
         padding: 6px;
     }
 
-        .spiritual-assessment th:last-child {
-            border-radius: 0 4px 0 0;
-        }
+    .spiritual-assessment th:last-child {
+        border-radius: 0 4px 0 0;
+    }
 
-        .spiritual-assessment th.spiritual-question {
-            font-weight: 700;
-            padding: 6px;
-            border-radius: 4px 0 0 0;
-        }
+    .spiritual-assessment th.spiritual-question {
+        font-weight: 700;
+        padding: 6px;
+        border-radius: 4px 0 0 0;
+    }
 
     .spiritual-assessment .spiritual-question {
         width: 100%;
@@ -115,9 +129,13 @@
                 </div>
             </div>
             <div class="panel-body">
-                <asp:Literal ID="lHeading" runat="server"></asp:Literal>
+                <div class="disc-heading">
+                    <asp:Literal ID="lHeading" runat="server"></asp:Literal>
+                    <asp:Literal ID="lDescription" runat="server"></asp:Literal>
+                </div>
+                <br />
                 <ul class="spiritualchart" style="text-align: center">
-                    <li style="height: 100%; width: 0px;"></li>
+                    <!--<li style="height: 100%; width: 0px;"></li>-->
                     <li id="giftScore_Prophecy" runat="server" class="spiritualbar">
                         <div class="spiritualbar-label" style="text-transform: initial; font-size: 19px">Prophecy</div>
                     </li>
@@ -128,7 +146,7 @@
                         <div class="spiritualbar-label" style="text-transform: initial; font-size: 19px">Teaching</div>
                     </li>
                     <li id="giftScore_Encouragement" runat="server" class="spiritualbar">
-                        <div class="spiritualbar-label" style="text-transform: initial; font-size: 17px">Encouragement</div>
+                        <div class="spiritualbar-label" style="text-transform: initial; font-size: 15px">Encouragement</div>
                     </li>
                     <li id="giftScore_Giving" runat="server" class="spiritualbar">
 
@@ -141,9 +159,6 @@
                         <div class="spiritualbar-label" style="text-transform: initial; font-size: 19px">Mercy</div>
                     </li>
                 </ul>
-
-                <h3>Description</h3>
-                <asp:Literal ID="lDescription" runat="server"></asp:Literal>
 
                 <div class="actions margin-t-lg">
                     <asp:Button ID="btnRetakeTest" runat="server" Visible="false" Text="Retake Test" CssClass="btn btn-default" OnClick="btnRetakeTest_Click" />

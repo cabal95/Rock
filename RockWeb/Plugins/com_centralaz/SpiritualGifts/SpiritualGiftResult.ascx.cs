@@ -138,7 +138,7 @@ namespace Rockweb.Plugins.com_centralaz.SpiritualGifts
             hlTestDate.Text = String.Format( "Test Date: {0}", savedScores.LastSaveDate.ToShortDateString() );
             lPersonName.Text = person.FullName;
 
-            lHeading.Text = string.Format( "<div class='disc-heading'><h1>{0}</h1><h4>Spiritual Gifting: {1}</h4></div>", person.FullName, savedScores.Gifting );
+            lHeading.Text = string.Format( "<h4>{0}, your Spiritual Gifting is:</h4><h2>{1}</h2>", person.NickName, savedScores.Gifting );
         }
 
         private void ShowExplaination( string gifting )
