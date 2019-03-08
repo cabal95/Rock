@@ -501,8 +501,12 @@ namespace Rock.Data
             EntityFramework.Utilities.Configuration.SqlBulkCopyOptions = System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints;
             EntityFramework.Utilities.EFBatchOperation.For( this, this.Set<T>() ).InsertAll( records );
 #else
-            // TODO: Need to find a way to do this in core.
-            throw new NotImplementedException();
+            var bulkConfig = new EFCore.BulkExtensions.BulkConfig
+            {
+                BulkCopyTimeout = 300,
+                SqlBulkCopyOptions = System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints
+            };
+            EFCore.BulkExtensions.DbContextBulkExtensions.BulkInsert( this, records.ToList(), bulkConfig );
 #endif
         }
 
