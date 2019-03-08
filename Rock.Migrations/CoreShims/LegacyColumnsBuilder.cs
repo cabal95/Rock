@@ -44,7 +44,7 @@ namespace Rock.Migrations.CoreShims
                 defaultValue = false;
             }
 
-            var column = _builder.Column<int>( null, null, null, false, name, nullable.Value, defaultValue, defaultValueSql, null, null );
+            var column = _builder.Column<bool>( null, null, null, false, name, nullable.Value, defaultValue, defaultValueSql, null, null );
 
             return column;
         }

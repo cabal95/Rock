@@ -21,11 +21,112 @@
     <Compile Remove="Migrations\Configuration.cs" />
     <Compile Remove="Migrations\RockCSharpMigrationCodeGenerator.cs" />
     <Compile Remove="Migrations\RockMigrationsLogger.cs" />
+    <Compile Remove="Migrations\RockMigrationSQL.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="Migrations\CreateDatabase\201707311527250_AddMetaData.resx" />
+    <EmbeddedResource Remove="Migrations\RockMigrationSQL.resx" />
   </ItemGroup>
 
   <ItemGroup>
     <None Remove=".gitignore" />
+    <None Remove="CoreShims\RockMigrationSQL.sh" />
+    <None Remove="Migrations\201808062254493_Rollup_0806_spCrm_FamilyAnalyticsGiving.sql" />
+    <None Remove="Migrations\201808062254493_Rollup_0806_ufnCrm_GetFamilyTitle.sql" />
+    <None Remove="Migrations\201808062254493_Rollup_0806_ufnCrm_GetFamilyTitleIncludeInactive.sql" />
+    <None Remove="Migrations\201809142151587_ContentComponents_AdUnit.Lava" />
+    <None Remove="Migrations\201809142151587_ContentComponents_Card.Lava" />
+    <None Remove="Migrations\201809142151587_ContentComponents_CreateContentComponentChannelType.sql" />
+    <None Remove="Migrations\201809142151587_ContentComponents_Hero.Lava" />
+    <None Remove="Migrations\201809142151587_ContentComponents_SideBySide.Lava" />
+    <None Remove="Migrations\201809252117562_Rollup_0925_spCrm_FamilyAnalyticsEraDataset.sql" />
+    <None Remove="Migrations\201810021839212_Rollup_1002_spCheckin_BadgeAttendance.sql" />
+    <None Remove="Migrations\201810161814574_Rollup_1016_AddCheck-inLabelToInstallIconFont.sql" />
+    <None Remove="Migrations\201810161814574_Rollup_1016_spCrm_FamilyAnalyticsFirstVisitsAttributeUpdate.sql" />
+    <None Remove="Migrations\201810301818354_Rollup_1030_spCheckin_AttendanceAnalyticsQuery_NonAttendees.sql" />
+    <None Remove="Migrations\201811271852316_Rollup_1127_spFinance_PledgeAnalyticsQuery_Down.sql" />
+    <None Remove="Migrations\201811271852316_Rollup_1127_spFinance_PledgeAnalyticsQuery_Up.sql" />
+    <None Remove="Migrations\201812111901295_Rollup_1211_FixChartShortcode.sql" />
+    <None Remove="Migrations\CreateDatabase\201311251734059_CreateDatabase.sql" />
+    <None Remove="Migrations\CreateDatabase\201707311527250_FirstNameGender.txt" />
+    <None Remove="Migrations\CreateDatabase\201707311527250_LastName.gz" />
+    <None Remove="Migrations\CreateDatabase\201707311527250_NickName.txt" />
+    <None Remove="Migrations\CreateDatabase\201707311527250_PersonicxCluster.txt" />
+    <None Remove="Migrations\CreateDatabase\201707311527250_PersonicxGroup.txt" />
     <None Remove="packages.config" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Migrations\201808062254493_Rollup_0806_spCrm_FamilyAnalyticsGiving.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201808062254493_Rollup_0806_ufnCrm_GetFamilyTitle.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201808062254493_Rollup_0806_ufnCrm_GetFamilyTitleIncludeInactive.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201809142151587_ContentComponents_AdUnit.Lava">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201809142151587_ContentComponents_Card.Lava">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201809142151587_ContentComponents_CreateContentComponentChannelType.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201809142151587_ContentComponents_Hero.Lava">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201809142151587_ContentComponents_SideBySide.Lava">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201809252117562_Rollup_0925_spCrm_FamilyAnalyticsEraDataset.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201810021839212_Rollup_1002_spCheckin_BadgeAttendance.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201810161814574_Rollup_1016_AddCheck-inLabelToInstallIconFont.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201810161814574_Rollup_1016_spCrm_FamilyAnalyticsFirstVisitsAttributeUpdate.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201810301818354_Rollup_1030_spCheckin_AttendanceAnalyticsQuery_NonAttendees.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201811271852316_Rollup_1127_spFinance_PledgeAnalyticsQuery_Down.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201811271852316_Rollup_1127_spFinance_PledgeAnalyticsQuery_Up.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201812111901295_Rollup_1211_FixChartShortcode.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\CreateDatabase\201311251734059_CreateDatabase.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\CreateDatabase\201707311527250_AddMetaData.resx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\CreateDatabase\201707311527250_FirstNameGender.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\CreateDatabase\201707311527250_LastName.gz">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\CreateDatabase\201707311527250_NickName.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\CreateDatabase\201707311527250_PersonicxCluster.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\CreateDatabase\201707311527250_PersonicxGroup.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -170,7 +271,9 @@
     <EmbeddedResource Include="Migrations\Version 8.0\Version 1.8.0\201801301528009_GroupSyncByRole2.resx" />
     <EmbeddedResource Include="Migrations\Version 8.0\Version 1.8.0\201802021609074_AllowForInactiveFees.resx" />
     <EmbeddedResource Include="Migrations\Version 8.0\Version 1.8.0\201802092340176_Rollup_0209.resx" />
-    <EmbeddedResource Include="Migrations\Version 8.0\Version 1.8.0\201802260423490_Rollup_0225.resx" />
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201802260423490_Rollup_0225.resx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <EmbeddedResource Include="Migrations\Version 8.0\Version 1.8.0\201803022215255_PagesForHttpModules.resx" />
     <EmbeddedResource Include="Migrations\Version 8.0\Version 1.8.0\201803022309306_FrontPorchIntegration.resx" />
     <EmbeddedResource Include="Migrations\Version 8.0\Version 1.8.0\201803051554031_AddCanManageToGroupTypeRole.resx" />
@@ -237,47 +340,129 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201802092340176_Rollup_0209_spCrm_PersonDuplicateFinder.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201802092340176_Rollup_0209_ufnUtility_CsvToTable.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201802260423490_Rollup_0225_spCheckin_AttendanceAnalyticsQuery_Attendees.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201802260423490_Rollup_0225_spCheckin_AttendanceAnalyticsQuery_NonAttendees.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201803201440110_UpdateLegacyLava.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201803201617508_DaysUntilAnniversary.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201803301619284_Rollup_0330.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_AddVimeoShortCode.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_FixAccordionShortCode.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_FixThankyouAndOngoingHyphenations.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_GivingAnalyticsAccounts_AccountTotals.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_GivingAnalyticsAccounts_PersonSummary.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_GivingAnalyticsAccounts_TransactionData.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_spAnalytics_ETL_Campus.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_spCrm_PersonDuplicateFinder.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_spCrm_PersonMerge.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805072022522_GroupHistory_spCrm_PersonMerge.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805072022522_GroupHistory_spCrm_PersonMergeRelationships.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spAnalytics_ETL_Attendance.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_AttendanceAnalyticsQuery_AttendeeDates.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_AttendanceAnalyticsQuery_AttendeeFirstDates.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_AttendanceAnalyticsQuery_AttendeeLastAttendance.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_AttendanceAnalyticsQuery_Attendees.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_AttendanceAnalyticsQuery_NonAttendees.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_BadgeAttendance.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_WeeksAttendedInDuration.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCrm_FamilyAnalyticsAttendance.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCrm_FamilyAnalyticsEraDataset.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCrm_FamilyAnalyticsUpdateVisitDates.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_vCheckin_Attendance.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_vCheckin_GroupTypeAttendance.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805171836577_Rollup_0517_CreatePresenceUser.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805171836577_Rollup_0517_spAnalytics_ETL_Attendance.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805171836577_Rollup_0517_vCheckin_Attendance.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805211735573_Homepage_ContentChannel.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805211735573_Homepage_ContentChannel_Down.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805211735573_Homepage_Metrics.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201805211735573_Homepage_Metrics_Down.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201806081810282_LandingPage.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201806111950515_ContentChannelViewDetail.sql" />
-    <None Include="Migrations\Version 8.0\Version 1.8.0\201807191932379_Rollup_0719_Fix Accordion Bug.sql" />
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201802092340176_Rollup_0209_spCrm_PersonDuplicateFinder.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201802092340176_Rollup_0209_ufnUtility_CsvToTable.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201802260423490_Rollup_0225_spCheckin_AttendanceAnalyticsQuery_Attendees.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201802260423490_Rollup_0225_spCheckin_AttendanceAnalyticsQuery_NonAttendees.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201803201440110_UpdateLegacyLava.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201803201617508_DaysUntilAnniversary.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201803301619284_Rollup_0330.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_AddVimeoShortCode.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_FixAccordionShortCode.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_FixThankyouAndOngoingHyphenations.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_GivingAnalyticsAccounts_AccountTotals.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_GivingAnalyticsAccounts_PersonSummary.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_GivingAnalyticsAccounts_TransactionData.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_spAnalytics_ETL_Campus.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_spCrm_PersonDuplicateFinder.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201804272301456_MergeFromV7_4_spCrm_PersonMerge.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805072022522_GroupHistory_spCrm_PersonMerge.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805072022522_GroupHistory_spCrm_PersonMergeRelationships.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spAnalytics_ETL_Attendance.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_AttendanceAnalyticsQuery_AttendeeDates.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_AttendanceAnalyticsQuery_AttendeeFirstDates.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_AttendanceAnalyticsQuery_AttendeeLastAttendance.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_AttendanceAnalyticsQuery_Attendees.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_AttendanceAnalyticsQuery_NonAttendees.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_BadgeAttendance.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCheckin_WeeksAttendedInDuration.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCrm_FamilyAnalyticsAttendance.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCrm_FamilyAnalyticsEraDataset.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_spCrm_FamilyAnalyticsUpdateVisitDates.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_vCheckin_Attendance.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805152055059_AttendanceOccurrence_vCheckin_GroupTypeAttendance.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805171836577_Rollup_0517_CreatePresenceUser.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805171836577_Rollup_0517_spAnalytics_ETL_Attendance.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805171836577_Rollup_0517_vCheckin_Attendance.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805211735573_Homepage_ContentChannel.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805211735573_Homepage_ContentChannel_Down.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805211735573_Homepage_Metrics.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201805211735573_Homepage_Metrics_Down.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201806081810282_LandingPage.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201806111950515_ContentChannelViewDetail.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\Version 8.0\Version 1.8.0\201807191932379_Rollup_0719_Fix Accordion Bug.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

@@ -78,6 +78,7 @@ namespace Rock.Data
             _nameOrConnectionString = nameOrConnectionString;
         }
 
+        private readonly Microsoft.Extensions.Logging.LoggerFactory _myLoggerFactory = new Microsoft.Extensions.Logging.LoggerFactory( new[] { new Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider( (_, __) => true, true ) } );
         /// <summary>
         /// Configures the context parameters and initializes any extensions.
         /// </summary>
@@ -91,6 +92,7 @@ namespace Rock.Data
 
             optionsBuilder.UseSqlServer( connectionString, a => a.UseNetTopologySuite() )
                 .UseLazyLoadingProxies()
+//                .UseLoggerFactory(_myLoggerFactory)
                 .ReplaceService<IMigrationsAssembly, CoreShims.RockMigrationsAssembly>()
                 .ReplaceService<IMigrationsSqlGenerator, CoreShims.RockSqlServerMigrationsSqlGenerator>();
         }
