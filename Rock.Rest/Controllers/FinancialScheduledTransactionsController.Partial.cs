@@ -162,9 +162,15 @@ namespace Rock.Rest.Controllers
             }
 
             var transaction = automatedPaymentProcessor.ProcessCharge( out errorMessage );
+            var gatewayException = automatedPaymentProcessor.GetMostRecentException();
 
             if ( !string.IsNullOrEmpty( errorMessage ) )
             {
+                if ( gatewayException != null )
+                {
+                    throw gatewayException;
+                }
+
 #if IS_NET_CORE
                 return StatusCode( 500, errorMessage );
 #else
@@ -175,6 +181,11 @@ namespace Rock.Rest.Controllers
 
             if ( transaction == null )
             {
+                if ( gatewayException != null )
+                {
+                    throw gatewayException;
+                }
+
 #if IS_NET_CORE
                 return StatusCode( 500, "No transaction was created" );
 #else

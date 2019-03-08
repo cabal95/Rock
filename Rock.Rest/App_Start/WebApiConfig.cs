@@ -157,6 +157,7 @@ namespace Rock.Rest
 #endif
 
             // Add any custom api routes
+            // OBSOLETE - this foreach block is targeted for removal for v9
             foreach ( var type in Rock.Reflection.FindTypes(
                 typeof( Rock.Rest.IHasCustomRoutes ) ) )
             {

@@ -104,9 +104,15 @@ namespace Rock.Rest.Controllers
             }
 
             var transaction = automatedPaymentProcessor.ProcessCharge( out errorMessage );
+            var gatewayException = automatedPaymentProcessor.GetMostRecentException();
 
             if ( !string.IsNullOrEmpty( errorMessage ) )
             {
+                if ( gatewayException != null )
+                {
+                    throw gatewayException;
+                }
+
 #if IS_NET_CORE
                 return BadRequest( errorMessage );
 #else
@@ -117,6 +123,11 @@ namespace Rock.Rest.Controllers
 
             if ( transaction == null )
             {
+                if ( gatewayException != null )
+                {
+                    throw gatewayException;
+                }
+
 #if IS_NET_CORE
                 return StatusCode( ( int ) HttpStatusCode.InternalServerError, "No transaction was created" );
 #else

@@ -1,4 +1,4 @@
-﻿// <copyright>
+// <copyright>
 // Copyright by the Spark Development Network
 //
 // Licensed under the Rock Community License (the "License");
@@ -14,26 +14,30 @@
 // limitations under the License.
 // </copyright>
 //
-using System;
-
-namespace Rock.Rest
+namespace Rock.Migrations
 {
+    using System;
+    using System.Data.Entity.Migrations;
+    
     /// <summary>
-    /// Interface for controllers that need to add additional routes beyond the default
-    /// api/{controller}/{id} route.
+    ///
     /// </summary>
-    [RockObsolete( "1.9" )]
-    [Obsolete( "Use IHasCustomHttpRoutes instead.", false )]
-    public interface IHasCustomRoutes
+    public partial class FinancialScheduledTransactionSummary : Rock.Migrations.RockMigration
     {
         /// <summary>
-        /// Adds the routes.
+        /// Operations to be performed during the upgrade process.
         /// </summary>
-        /// <param name="routes">The routes.</param>
-#if IS_NET_CORE
-        void AddRoutes( Microsoft.AspNetCore.Routing.IRouteBuilder routes );
-#else
-        void AddRoutes( System.Web.Routing.RouteCollection routes );
-#endif
+        public override void Up()
+        {
+            AddColumn("dbo.FinancialScheduledTransaction", "Summary", c => c.String());
+        }
+        
+        /// <summary>
+        /// Operations to be performed during the downgrade process.
+        /// </summary>
+        public override void Down()
+        {
+            DropColumn("dbo.FinancialScheduledTransaction", "Summary");
+        }
     }
 }
