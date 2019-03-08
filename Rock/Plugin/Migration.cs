@@ -17,10 +17,12 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+#if !IS_NET_CORE
 using System.Data.Entity.Migrations.Builders;
 using System.Data.Entity.Migrations.Model;
 using System.Data.Entity.Migrations.Sql;
 using System.Data.Entity.SqlServer;
+#endif
 using System.Data.SqlClient;
 using System.Reflection;
 using System.Text;
@@ -117,6 +119,9 @@ namespace Rock.Plugin
                 throw new NullReferenceException( "The Plugin Migration requires valid SqlConnection and SqlTransaction values when executing SQL" );
             }
         }
+
+#if !IS_NET_CORE
+        // EFTODO: Implement this, or more likely redo it as full EF Core style.
 
         /// <summary>
         ///     Adds an operation to create a new table.  This is a wrapper for the default DBMigration CreateTable.
@@ -309,5 +314,6 @@ namespace Rock.Plugin
             }
 
         }
+#endif
     }
 }

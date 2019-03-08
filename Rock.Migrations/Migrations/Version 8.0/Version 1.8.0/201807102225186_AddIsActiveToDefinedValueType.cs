@@ -40,11 +40,15 @@ namespace Rock.Migrations
         /// </summary>
         private static void MoveOriginalCssOverrides()
         {
+#if IS_NET_CORE
+            return;
+#else
             if ( !System.Web.Hosting.HostingEnvironment.IsHosted )
             {
                 // We only want to backup if this is a production environment, so if this migration was run from Package Manager Console, don't copy the files
                 return;
             }
+#endif
 
             // Copy the existing (old) _css-overrides.less to RockOriginal to preserve any customizations that were made, then replace it with a blank one for the new v8 Rock Theme
             var rockCssOverridesPath = System.IO.Path.Combine( AppDomain.CurrentDomain.BaseDirectory, "Themes\\Rock\\Styles\\_css-overrides.less" );

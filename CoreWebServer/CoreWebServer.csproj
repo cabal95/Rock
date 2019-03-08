@@ -12,7 +12,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DotLiquid\DotLiquid.Core.csproj" />
+    <ProjectReference Include="..\Rock.Migrations\Rock.Migrations.Core.csproj" />
     <ProjectReference Include="..\Rock.Rest\Rock.Rest.Core.csproj" />
+    <ProjectReference Include="..\Rock.Version\Rock.Version.Core.csproj" />
     <ProjectReference Include="..\Rock\Rock.Core.csproj" />
   </ItemGroup>
 

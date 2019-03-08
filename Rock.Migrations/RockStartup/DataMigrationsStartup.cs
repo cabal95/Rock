@@ -51,7 +51,9 @@ namespace Rock.Migrations.RockStartup
 
             foreach ( var runOnceJobId in runOnceJobIds )
             {
+#if !IS_NET_CORE
                 new Transactions.RunJobNowTransaction( runOnceJobId ).Enqueue();
+#endif
             }
         }
     }

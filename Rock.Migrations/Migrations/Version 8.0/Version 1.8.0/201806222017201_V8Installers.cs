@@ -50,10 +50,12 @@ namespace Rock.Migrations
     WHERE [Guid] = '7ADC1B5B-D374-4B77-9DE1-4D788B572A10'
 " );
 
+#if !IS_NET_CORE
             // clear migration table
             Sql( @"
     UPDATE [__MigrationHistory] SET [Model] = 0x
 " );
+#endif
         }
         
         /// <summary>

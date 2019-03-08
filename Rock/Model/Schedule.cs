@@ -238,7 +238,7 @@ namespace Rock.Model
             get
             {
 #if IS_NET_CORE
-                CalendarEvent calendarEvent = this.GetCalenderEvent();
+                CalendarEvent calendarEvent = this.GetCalendarEvent();
                 if ( calendarEvent != null && calendarEvent.DtStart != null )
 #else
                 DDay.iCal.Event calendarEvent = this.GetCalendarEvent();
@@ -331,7 +331,7 @@ namespace Rock.Model
             get
             {
 #if IS_NET_CORE
-                CalendarEvent calendarEvent = this.GetCalenderEvent();
+                CalendarEvent calendarEvent = this.GetCalendarEvent();
                 if ( calendarEvent != null && calendarEvent.DtStart != null )
                 {
                     return calendarEvent.DtStart.Value.TimeOfDay;

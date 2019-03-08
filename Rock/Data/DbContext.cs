@@ -28,6 +28,8 @@ using Z.EntityFramework.Plus;
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Rock.Data.Validation;
 #endif
 using Rock.Model;
@@ -88,7 +90,9 @@ namespace Rock.Data
             var connectionString = System.Configuration.ConfigurationManager.ConnectionStrings[_nameOrConnectionString]?.ConnectionString ?? _nameOrConnectionString;
 
             optionsBuilder.UseSqlServer( connectionString, a => a.UseNetTopologySuite() )
-                .UseLazyLoadingProxies();
+                .UseLazyLoadingProxies()
+                .ReplaceService<IMigrationsAssembly, CoreShims.RockMigrationsAssembly>()
+                .ReplaceService<IMigrationsSqlGenerator, CoreShims.RockSqlServerMigrationsSqlGenerator>();
         }
 #endif
 

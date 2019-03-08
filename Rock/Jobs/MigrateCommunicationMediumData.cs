@@ -16,8 +16,14 @@
 //
 using System;
 using System.Collections.Generic;
+#if !IS_NET_CORE
 using System.Data.Entity.SqlServer;
+#endif
 using System.Linq;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 using Quartz;
 using Rock.Attribute;
 using Rock.Communication;
@@ -36,8 +42,10 @@ namespace Rock.Jobs
     /// </summary>
     /// <seealso cref="Quartz.IJob" />
     [DisallowConcurrentExecution]
+#if !IS_NET_CORE
     [IntegerField( "How Many Records", "The number of communication records to process on each run of this job.", false, 100000, "", 0, "HowMany" )]
     [IntegerField( "Command Timeout", "Maximum amount of time (in seconds) to wait for the SQL Query to complete. Leave blank to use the default for this job (3600). Note, it could take several minutes, so you might want to set it at 3600 (60 minutes) or higher", false, 60 * 60, "General", 1, "CommandTimeout" )]
+#endif
     [RockObsolete("1.7")]
     [Obsolete( "The Communication.MediumDataJson and CommunicationTemplate.MediumDataJson fields will be removed in Rock 1.10" )]
     public class MigrateCommunicationMediumData : IJob
@@ -49,7 +57,11 @@ namespace Rock.Jobs
         /// <exception cref="System.NotImplementedException"></exception>
         [RockObsolete( "1.7" )]
         [Obsolete( "The Communication.MediumDataJson and CommunicationTemplate.MediumDataJson fields will be removed in Rock 1.10")]
+#if IS_NET_CORE
+        public System.Threading.Tasks.Task Execute( IJobExecutionContext context )
+#else
         public void Execute( IJobExecutionContext context )
+#endif
         {
             JobDataMap dataMap = context.JobDetail.JobDataMap;
 
@@ -65,12 +77,20 @@ namespace Rock.Jobs
                 // Verify that there are not any communication records with medium data.
                 using ( var rockContext = new RockContext() )
                 {
+#if IS_NET_CORE
+                    rockContext.Database.SetCommandTimeout( commandTimeout );
+#else
                     rockContext.Database.CommandTimeout = commandTimeout;
+#endif
 
                     // if there is any v6 MediumDataJson data, it would be have a datalength of 2 or more (blank would be null, '', or '{}')
                     if ( !new CommunicationService( rockContext )
                         .Queryable()
+#if IS_NET_CORE
+                        .Where( c => c.MediumDataJson.Length > 2 )
+#else
                         .Where( c => SqlFunctions.DataLength( c.MediumDataJson ) > 2 )
+#endif
                         .Any() )
                     {
 
@@ -82,11 +102,19 @@ namespace Rock.Jobs
                         {
                             jobService.Delete( job );
                             rockContext.SaveChanges();
+#if IS_NET_CORE
+                            return System.Threading.Tasks.Task.FromResult<object>( null );
+#else
                             return;
+#endif
                         }
                     }
                 }
             }
+
+#if IS_NET_CORE
+            return System.Threading.Tasks.Task.FromResult<object>( null );
+#endif
         }
 
         /// <summary>
@@ -172,14 +200,22 @@ END
                 {
                     if ( commandTimeout.HasValue )
                     {
+#if IS_NET_CORE
+                        rockContext.Database.SetCommandTimeout( commandTimeout );
+#else
                         rockContext.Database.CommandTimeout = commandTimeout;
+#endif
                     }
 
                     var binaryFileService = new BinaryFileService( rockContext );
 
                     // if there is any pre-v7 MediumDataJson data, it would be have a datalength of 2 or more (blank would be null, '', or '{}')
                     foreach ( var comm in new CommunicationTemplateService( rockContext ).Queryable()
+#if IS_NET_CORE
+                        .Where( c => c.MediumDataJson.Length > 2 ) )
+#else
                         .Where( c => SqlFunctions.DataLength( c.MediumDataJson ) > 2 ) )
+#endif
                     {
                         var attachmentBinaryFileIds = new List<int>();
                         SetPropertiesFromMediumDataJson( comm, comm.MediumDataJson, attachmentBinaryFileIds );
@@ -211,7 +247,11 @@ END
 
                     // if there is any pre-v7 MediumDataJson data, it would be have a datalength of 2 or more (blank would be null, '', or '{}')
                     var communications = new CommunicationService( rockContext ).Queryable()
+#if IS_NET_CORE
+                        .Where( c => c.MediumDataJson.Length > 2 )
+#else
                         .Where( c => SqlFunctions.DataLength( c.MediumDataJson ) > 2 )
+#endif
                         .OrderByDescending( c => c.Id )
                         .Take( take )
                         .ToList();

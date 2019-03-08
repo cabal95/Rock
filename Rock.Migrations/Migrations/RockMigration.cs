@@ -15,13 +15,23 @@
 // </copyright>
 //
 using System;
+#if !IS_NET_CORE
 using System.Data.Entity.Migrations;
+#endif
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Web;
+#if !IS_NET_CORE
 using System.Web.Hosting;
+
+#else
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
+using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
+using Rock.Migrations.CoreShims;
+#endif
 using Rock;
 using Rock.Data;
 using Rock.Model;
@@ -32,7 +42,11 @@ namespace Rock.Migrations
     /// <summary>
     /// Custom Migration methods
     /// </summary>
+#if IS_NET_CORE
+    public abstract class RockMigration : Rock.Data.IMigration, Rock.CoreShims.ILegacyMigration
+#else
     public abstract class RockMigration : DbMigration, Rock.Data.IMigration
+#endif
     {
         /// <summary>
         /// Gets the migration helper.
@@ -73,8 +87,19 @@ namespace Rock.Migrations
         /// <param name="sql">The SQL.</param>
         public void Sql(string sql)
         {
+#if IS_NET_CORE
+            Sql( sql, false );
+#else
             Sql(sql, false, null);
+#endif
         }
+
+#if IS_NET_CORE
+        public void Sql( string sql, bool suppressTransaction )
+        {
+            MigrationBuilder.Sql( sql, suppressTransaction );
+        }
+#endif
 
         /// <summary>
         /// Runs the SQL found in a file.
@@ -110,10 +135,12 @@ namespace Rock.Migrations
         /// <returns></returns>
         private string EfMapPath( string seedFile )
         {
+#if !IS_NET_CORE
             if ( HttpContext.Current != null )
             {
                 return HostingEnvironment.MapPath( seedFile );
             }
+#endif
 
             var absolutePath = new Uri( Assembly.GetExecutingAssembly().CodeBase ).AbsolutePath;
             var directoryName = Path.GetDirectoryName( absolutePath ).Replace( "Rock.Migrations\\bin", "RockWeb" );
@@ -121,5 +148,189 @@ namespace Rock.Migrations
 
             return path;
         }
+
+#if IS_NET_CORE
+        public MigrationBuilder MigrationBuilder { get; set; }
+
+        public virtual void Up() { }
+
+        public virtual void Down() { }
+
+        public LegacyCreateTableBuilder<TColumns> CreateTable<TColumns>( string name, Func<LegacyColumnsBuilder, TColumns> columns )
+        {
+            string schema = null;
+
+            if ( name.Contains( '.' ) )
+            {
+                schema = name.Split( '.' )[0];
+                name = name.Split( '.' )[1];
+            }
+
+            var createTableBuilder = MigrationBuilder.CreateTable( name, ( cb ) => columns( new LegacyColumnsBuilder( cb, false ) ), schema, null );
+
+            return new LegacyCreateTableBuilder<TColumns>( createTableBuilder, this, schema, name );
+        }
+
+        public void CreateIndex( string table, string column, bool unique = false, string name = null )
+        {
+            CreateIndex( table, new[] { column }, unique, name );
+        }
+
+        public void CreateIndex( string table, string[] columns, bool unique = false, string name = null )
+        {
+            var qTable = new QualifiedTableName( table );
+
+            if ( name == null )
+            {
+                name = $"IX_{string.Join( '_', columns )}";
+            }
+
+            if ( columns.Length == 1 )
+            {
+                MigrationBuilder.CreateIndex( name, qTable.Table, columns[0], qTable.Schema, unique );
+            }
+            else
+            {
+                MigrationBuilder.CreateIndex( name, qTable.Table, columns, qTable.Schema, unique );
+            }
+        }
+
+        public void AddColumn( string table, string name, Func<LegacyColumnsBuilder, OperationBuilder<AddColumnOperation>> columnAction )
+        {
+            var operation = ExtractOperation( columnAction( new LegacyColumnsBuilder( new ColumnsBuilder( new CreateTableOperation() ), true ) ) );
+            var qTable = new QualifiedTableName( table );
+
+            operation.Name = name;
+            operation.Table = qTable.Table;
+            operation.Schema = qTable.Schema;
+
+            MigrationBuilder.Operations.Add( operation );
+        }
+
+        public void AddForeignKey( string dependentTable, string dependentColumn, string principalTable, string principalColumn, bool cascadeDelete = false, string name = null )
+        {
+            AddForeignKey( dependentTable, new[] { dependentColumn }, principalTable, new string[] { principalColumn }, cascadeDelete, name );
+        }
+
+        public void AddForeignKey( string dependentTable, string[] dependentColumns, string principalTable, string[] principalColumns, bool cascadeDelete = false, string name = null )
+        {
+            var principal = new QualifiedTableName( principalTable );
+            var dependent = new QualifiedTableName( dependentTable );
+
+            if ( name == null )
+            {
+                name = $"FK_{dependent.FullName}_{principal.FullName}_{string.Join( '_', dependentColumns )}";
+            }
+
+            var operation = new AddForeignKeyOperation
+            {
+                Schema = dependent.Schema,
+                Table = dependent.Table,
+                Name = name,
+                Columns = dependentColumns,
+                PrincipalSchema = principal.Schema,
+                PrincipalTable = principal.Table,
+                PrincipalColumns = principalColumns,
+                OnUpdate = ReferentialAction.NoAction,
+                OnDelete = cascadeDelete ? ReferentialAction.Cascade : ReferentialAction.NoAction
+            };
+
+            MigrationBuilder.Operations.Add( operation );
+        }
+
+        public void AlterColumn( string table, string name, Func<LegacyColumnsBuilder, OperationBuilder<AddColumnOperation>> columnAction )
+        {
+            var op = ExtractOperation( columnAction( new LegacyColumnsBuilder( new ColumnsBuilder( new CreateTableOperation() ), true ) ) );
+            var qTable = new QualifiedTableName( table );
+
+            var operation = new AlterColumnOperation
+            {
+                Schema = qTable.Schema,
+                Table = qTable.Table,
+                Name = name,
+                ClrType = op.ClrType,
+                ColumnType = op.ColumnType,
+                IsUnicode = op.IsUnicode,
+                MaxLength = op.MaxLength,
+                IsRowVersion = op.IsRowVersion,
+                IsNullable = op.IsNullable,
+                DefaultValue = op.DefaultValue,
+                DefaultValueSql = op.DefaultValueSql,
+                ComputedColumnSql = op.ComputedColumnSql,
+                IsFixedLength = op.IsFixedLength,
+                OldColumn = new ColumnOperation
+                {
+                    ClrType = op.ClrType,
+                    ColumnType = null,
+                    IsUnicode = null,
+                    MaxLength = null,
+                    IsRowVersion = false,
+                    IsNullable = false, //?
+                    DefaultValue = null,
+                    DefaultValueSql = null,
+                    ComputedColumnSql = null,
+                    IsFixedLength = null
+                }
+            };
+
+            MigrationBuilder.Operations.Add( operation );
+        }
+
+        public void DropColumn( string table, string name )
+        {
+            var qTable = new QualifiedTableName( table );
+
+            MigrationBuilder.DropColumn( name, qTable.Table, qTable.Schema );
+        }
+
+        public void DropIndex( string table, string name )
+        {
+            var qTable = new QualifiedTableName( table );
+
+            MigrationBuilder.DropIndex( name, qTable.Table, qTable.Schema );
+        }
+
+        public void DropIndex( string table, string[] columns )
+        {
+            var name = $"IX_{string.Join( '_', columns )}";
+
+            DropIndex( table, name );
+        }
+
+        public void DropForeignKey( string dependentTable, string dependentColumn, string principalTable )
+        {
+            DropForeignKey( dependentTable, new[] { dependentColumn }, principalTable );
+        }
+
+        public void DropForeignKey( string dependentTable, string[] dependentColumns, string principalTable )
+        {
+            var principal = new QualifiedTableName( principalTable );
+            var dependent = new QualifiedTableName( dependentTable );
+            var name = $"FK_{dependent.FullName}_{principal.FullName}_{string.Join( '_', dependentColumns )}";
+
+            MigrationBuilder.DropForeignKey( name, dependent.Table, dependent.Schema );
+        }
+
+        public void DropTable( string name )
+        {
+            var table = new QualifiedTableName( name );
+
+            MigrationBuilder.DropTable( table.Table, table.Schema );
+        }
+
+        public void RenameTable( string name, string newName )
+        {
+            var qName = new QualifiedTableName( name );
+            var qNewName = new QualifiedTableName( newName );
+
+            MigrationBuilder.RenameTable( qName.Table, qName.Schema, qNewName.Table, qNewName.Schema );
+        }
+
+        public T ExtractOperation<T>( OperationBuilder<T> builder )
+            where T : MigrationOperation
+        {
+            return ( T ) builder.GetType().GetProperty( "Operation", BindingFlags.NonPublic | BindingFlags.Instance ).GetValue( builder );
+        }
+#endif
    }
 }

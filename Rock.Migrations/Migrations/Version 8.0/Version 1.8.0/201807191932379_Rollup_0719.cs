@@ -32,10 +32,12 @@ namespace Rock.Migrations
             // GJ: Fix Accordion Bug
             Sql( MigrationSQL._201807191932379_Rollup_0719_Fix_Accordion_Bug );
 
+#if !IS_NET_CORE
             // clear migration table
            Sql( @"
     UPDATE [__MigrationHistory] SET [Model] = 0x
 " );
+#endif
         }
         
         /// <summary>

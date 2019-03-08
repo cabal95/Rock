@@ -18,6 +18,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreWebServer", "CoreWebSer
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rock.Version.Core", "Rock.Version\Rock.Version.Core.csproj", "{95BF8200-A2D9-474F-BD7C-60FDD0507C0E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rock.Migrations.Core", "Rock.Migrations\Rock.Migrations.Core.csproj", "{FA244DEA-C998-4B26-BAAC-93ABFFFD792F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{95BF8200-A2D9-474F-BD7C-60FDD0507C0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{95BF8200-A2D9-474F-BD7C-60FDD0507C0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{95BF8200-A2D9-474F-BD7C-60FDD0507C0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA244DEA-C998-4B26-BAAC-93ABFFFD792F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA244DEA-C998-4B26-BAAC-93ABFFFD792F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA244DEA-C998-4B26-BAAC-93ABFFFD792F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA244DEA-C998-4B26-BAAC-93ABFFFD792F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

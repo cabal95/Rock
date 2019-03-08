@@ -37,7 +37,6 @@
     <Compile Remove="Net\**" />
     <Compile Remove="Pbx\**" />
     <Compile Remove="PersonProfile\**" />
-    <Compile Remove="Plugin\**" />
     <Compile Remove="Reporting\**" />
     <Compile Remove="Scripts\**" />
     <Compile Remove="Search\**" />
@@ -74,7 +73,6 @@
     <EmbeddedResource Remove="Net\**" />
     <EmbeddedResource Remove="Pbx\**" />
     <EmbeddedResource Remove="PersonProfile\**" />
-    <EmbeddedResource Remove="Plugin\**" />
     <EmbeddedResource Remove="Reporting\**" />
     <EmbeddedResource Remove="Scripts\**" />
     <EmbeddedResource Remove="Search\**" />
@@ -111,7 +109,6 @@
     <None Remove="Net\**" />
     <None Remove="Pbx\**" />
     <None Remove="PersonProfile\**" />
-    <None Remove="Plugin\**" />
     <None Remove="Reporting\**" />
     <None Remove="Scripts\**" />
     <None Remove="Search\**" />
@@ -285,6 +282,7 @@
     <Compile Include="Follow\SuggestionComponent.cs" />
     <Compile Include="Follow\SuggestionContainer.cs" />
     <Compile Include="Jobs\JobLoadFailedException.cs" />
+    <Compile Include="Jobs\MigrateCommunicationMediumData.cs" />
     <Compile Include="Lava\Blocks\Cache.cs" />
     <Compile Include="Lava\Blocks\Execute.cs" />
     <Compile Include="Lava\Blocks\RockLavaBlockBase.cs" />
@@ -929,6 +927,7 @@
     <Compile Include="Utility\ExtensionMethods\LinqExtensions.cs" />
     <Compile Include="Utility\ExtensionMethods\LocationExtensions.cs" />
     <Compile Include="Utility\ExtensionMethods\ObjectExtensions.cs" />
+    <Compile Include="Utility\ExtensionMethods\QuartzExtensions.cs" />
     <Compile Include="Utility\ExtensionMethods\ReportingExtensions.cs" />
     <Compile Include="Utility\ExtensionMethods\StringExtensions.cs" />
     <Compile Include="Utility\ExtensionMethods\StringHtmlExtensions.cs" />

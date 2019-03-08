@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing.Constraints;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -72,6 +73,13 @@ namespace CoreWebServer
             System.Web.HttpContext.Configure( app.ApplicationServices.GetRequiredService<IHttpContextAccessor>() );
 
             app.UseRockApi();
+
+            new TestContext().Database.Migrate();
         }
+    }
+
+    public class TestContext : Rock.Data.DbContext
+    {
+        public TestContext() : base( "RockContext" ) { }
     }
 }
