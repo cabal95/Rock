@@ -23,7 +23,7 @@
             </div>
             <div class="panel-body">
                 <div class="grid grid-panel">
-                    <Rock:Grid ID="gReservations" runat="server" RowItemText="Reservation" TooltipField="Description">
+                    <Rock:Grid ID="gReservations" runat="server" RowItemText="Reservation" OnRowSelected="gReservations_Edit" TooltipField="Description">
                         <Columns>
                             <Rock:RockBoundField DataField="Id" HeaderText="Id" Visible="false" />
                             <Rock:RockBoundField DataField="ReservationName" HeaderText="Name" />
