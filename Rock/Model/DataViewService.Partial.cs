@@ -25,9 +25,7 @@ using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 #endif
 using Rock.Data;
-#if !IS_NET_CORE
 using Rock.Reporting.DataFilter;
-#endif
 using Rock.Web.Cache;
 
 namespace Rock.Model
@@ -124,7 +122,7 @@ namespace Rock.Model
         public bool IsViewInFilter( int dataViewId, DataViewFilter filter )
         {
 #if !IS_NET_CORE
-            // EFTODO: Caused dependency on WebControls via Field Types.
+            // EFTODO: Causes dependency on WebControls.
 
             var dataViewFilterEntityId = new EntityTypeService( (RockContext)this.Context ).Get( typeof( OtherDataViewFilter ), false, null ).Id;
 

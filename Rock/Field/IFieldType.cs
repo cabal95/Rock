@@ -60,13 +60,16 @@ namespace Rock.Field
         void SetConfigurationValues( List<Control> controls, Dictionary<string, ConfigurationValue> configurationValues );
 
         #endregion
+#endif
 
         #region Formatting
 
+#if !IS_NET_CORE
         /// <summary>
         /// Gets the align value that should be used when displaying value
         /// </summary>
         System.Web.UI.WebControls.HorizontalAlign AlignValue { get; }
+#endif
 
         /// <summary>
         /// Formats the value based on the type and qualifiers
@@ -76,7 +79,11 @@ namespace Rock.Field
         /// <param name="configurationValues">The configuration values.</param>
         /// <param name="condensed">if set to <c>true</c> [condensed].</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        string FormatValue( object parentControl, string value, Dictionary<string, ConfigurationValue> configurationValues, bool condensed );
+#else
         string FormatValue( Control parentControl, string value, Dictionary<string, ConfigurationValue> configurationValues, bool condensed );
+#endif
 
         /// <summary>
         /// Formats the value.
@@ -88,7 +95,11 @@ namespace Rock.Field
         /// <param name="configurationValues">The configuration values.</param>
         /// <param name="condensed">if set to <c>true</c> [condensed].</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        string FormatValue( object parentControl, int? entityTypeId, int? entityId, string value, Dictionary<string, ConfigurationValue> configurationValues, bool condensed );
+#else
         string FormatValue( Control parentControl, int? entityTypeId, int? entityId, string value, Dictionary<string, ConfigurationValue> configurationValues, bool condensed );
+#endif
 
         /// <summary>
         /// Formats the value as HTML.
@@ -98,7 +109,11 @@ namespace Rock.Field
         /// <param name="configurationValues">The configuration values.</param>
         /// <param name="condensed">if set to <c>true</c> [condensed].</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        string FormatValueAsHtml( object parentControl, string value, Dictionary<string, ConfigurationValue> configurationValues, bool condensed = false );
+#else
         string FormatValueAsHtml( Control parentControl, string value, Dictionary<string, ConfigurationValue> configurationValues, bool condensed = false );
+#endif
 
         /// <summary>
         /// Formats the value as HTML.
@@ -110,7 +125,11 @@ namespace Rock.Field
         /// <param name="configurationValues">The configuration values.</param>
         /// <param name="condensed">if set to <c>true</c> [condensed].</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        string FormatValueAsHtml( object parentControl, int? entityTypeId, int? entityId, string value, Dictionary<string, ConfigurationValue> configurationValues, bool condensed = false );
+#else
         string FormatValueAsHtml( Control parentControl, int? entityTypeId, int? entityId, string value, Dictionary<string, ConfigurationValue> configurationValues, bool condensed = false );
+#endif
 
         /// <summary>
         /// Returns the value using the most appropriate datatype
@@ -119,7 +138,11 @@ namespace Rock.Field
         /// <param name="value">The value.</param>
         /// <param name="configurationValues">The configuration values.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        object ValueAsFieldType( object parentControl, string value, Dictionary<string, ConfigurationValue> configurationValues );
+#else
         object ValueAsFieldType( Control parentControl, string value, Dictionary<string, ConfigurationValue> configurationValues );
+#endif
 
         /// <summary>
         /// Returns the value that should be used for sorting, using the most appropriate datatype
@@ -128,7 +151,11 @@ namespace Rock.Field
         /// <param name="value">The value.</param>
         /// <param name="configurationValues">The configuration values.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        object SortValue( object parentControl, string value, Dictionary<string, ConfigurationValue> configurationValues );
+#else
         object SortValue( Control parentControl, string value, Dictionary<string, ConfigurationValue> configurationValues );
+#endif
 
         /// <summary>
         /// Setting to determine whether the value from this control is sensitive.  This is used for determining
@@ -140,6 +167,9 @@ namespace Rock.Field
         bool IsSensitive();
 
         #endregion
+
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls.
 
         #region Edit Control
 
@@ -276,6 +306,7 @@ namespace Rock.Field
         /// <param name="configurationValues">The configuration values.</param>
         /// <param name="filterValues">The filter values.</param>
         void SetFilterValues( Control filterControl, Dictionary<string, ConfigurationValue> configurationValues, List<string> filterValues );
+#endif
 
         /// <summary>
         /// Formats the filter values.
@@ -285,6 +316,7 @@ namespace Rock.Field
         /// <returns></returns>
         string FormatFilterValues( Dictionary<string, ConfigurationValue> configurationValues, List<string> filterValues );
 
+#if !IS_NET_CORE
         /// <summary>
         /// Gets the filter format script.
         /// </summary>

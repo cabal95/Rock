@@ -782,14 +782,10 @@ namespace Rock.Reporting
         /// <returns></returns>
         public string FormattedFilterDescription( List<string> filterValues )
         {
-#if !IS_NET_CORE
-            // EFTODO: Causes dependency on WebControls via Field Types.
-
             if ( this.FieldType != null && this.FieldType.Field != null )
             {
                 return string.Format( "{0} {1}", this.Title, this.FieldType.Field.FormatFilterValues( this.FieldConfig, filterValues ) );
             }
-#endif
             return string.Empty;
         }
 

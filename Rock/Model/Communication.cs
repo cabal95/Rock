@@ -31,9 +31,7 @@ using Newtonsoft.Json;
 using Rock.Data;
 using Rock.Communication;
 using Rock.Web.Cache;
-#if !IS_NET_CORE
 using System.Data.Entity;
-#endif
 using System.Linq.Expressions;
 using Rock.Web;
 

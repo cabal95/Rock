@@ -352,11 +352,7 @@ namespace Rock.Model
 
                     foreach ( var a in attributes )
                     {
-#if !IS_NET_CORE
-                        // EFTODO: Causes dependency on WebControls via Field Types.
-
                         dynamicFields.Add( string.Format( "Attribute_{0}_{1}", a.Value.Id, a.Key ), a.Value.FieldType.Field.AttributeValueFieldType );
-#endif
                     }
 
                     foreach ( var reportField in selectComponents )

@@ -86,14 +86,10 @@ namespace Rock.Field
                 var comparedToAttribute = AttributeCache.Get( fieldVisibilityRule.ComparedToAttributeGuid.Value );
 
                 // if this is a TextFieldType, In-Memory LINQ is case-sensitive but LinqToSQL is not, so lets compare values using ToLower()
-#if !IS_NET_CORE
-                // EFTODO: Dependency on WebControls via Field Types.
-
                 if ( comparedToAttribute.FieldType.Field is Rock.Field.Types.TextFieldType )
                 {
                     fieldVisibilityRule.ComparedToValue = fieldVisibilityRule.ComparedToValue?.ToLower();
                 }
-#endif
 
                 filterValues.Add( fieldVisibilityRule.ComparisonType.ConvertToString( false ) );
                 filterValues.Add( fieldVisibilityRule.ComparedToValue );
@@ -101,13 +97,7 @@ namespace Rock.Field
 
                 ParameterExpression parameterExpression = Expression.Parameter( typeof( Rock.Model.AttributeValue ) );
 
-#if !IS_NET_CORE
-                // EFTODO: Dependency on WebControls via Field Types.
-
                 entityCondition = comparedToAttribute.FieldType.Field.AttributeFilterExpression( comparedToAttribute.QualifierValues, filterValues, parameterExpression );
-#else
-                entityCondition = new NoAttributeFilterExpression();
-#endif
                 if ( entityCondition is NoAttributeFilterExpression )
                 {
                     continue;
@@ -118,14 +108,10 @@ namespace Rock.Field
                 var comparedToAttributeValue = attributeValues.GetValueOrNull( comparedToAttribute.Id )?.Value;
 
                 // if this is a TextFieldType, In-Memory LINQ is case-sensitive but LinqToSQL is not, so lets compare values using ToLower()
-#if !IS_NET_CORE
-                // EFTODO: Dependency on WebControls via Field Types.
-
                 if ( comparedToAttribute.FieldType.Field is Rock.Field.Types.TextFieldType )
                 {
                     comparedToAttributeValue = comparedToAttributeValue?.ToLower();
                 }
-#endif
 
                 // create an instance of an AttributeValue to run the expressions against
                 var attributeValueToEvaluate = new Rock.Model.AttributeValue
@@ -236,11 +222,7 @@ namespace Rock.Field
         {
             var comparedToAttribute = this.ComparedToAttributeGuid.HasValue ? AttributeCache.Get( this.ComparedToAttributeGuid.Value ) : null;
             List<string> filterValues = new List<string>( new string[2] { this.ComparisonType.ConvertToString(), this.ComparedToValue } );
-#if IS_NET_CORE
-            var result = $"{comparedToAttribute?.Name} {string.Join( ",", filterValues )} ";
-#else
             var result = $"{comparedToAttribute?.Name} {comparedToAttribute?.FieldType.Field.FormatFilterValues( comparedToAttribute.QualifierValues, filterValues ) } ";
-#endif
             return result;
         }
     }

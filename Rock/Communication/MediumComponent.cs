@@ -22,20 +22,14 @@ using Rock.Attribute;
 using Rock.Extension;
 using Rock.Model;
 using Rock.Web.Cache;
-#if !IS_NET_CORE
 using Rock.Web.UI.Controls.Communication;
-#endif
 
 namespace Rock.Communication
 {
     /// <summary>
     /// Base class for components communication mediums (i.e. email, sms, twitter, etc) 
     /// </summary>
-#if !IS_NET_CORE
-    // EFTODO: Causes dependency on WebControls via Field Type.
-
     [ComponentField( "Rock.Communication.TransportContainer, Rock", "Transport Container", "", false, "", "", 1 )]
-#endif
     public abstract class MediumComponent : Component
     {
         /// <summary>

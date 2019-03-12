@@ -15,9 +15,7 @@
 // </copyright>
 //
 using System;
-#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
-#endif
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

@@ -322,11 +322,7 @@ namespace Rock
                     foreach ( var objAttr in objWithAttrs.Attributes )
                     {
                         var attributeCache = objAttr.Value;
-#if IS_NET_CORE
-                        string value = objWithAttrs.GetAttributeValue( attributeCache.Key );
-#else
                         string value = attributeCache.FieldType.Field.FormatValue( null, attributeCache.EntityTypeId, objWithAttrs.Id, objWithAttrs.GetAttributeValue( attributeCache.Key ), attributeCache.QualifierValues, false );
-#endif
                         objAttrs.Add( attributeCache.Key, value.Truncate( 50 ).EncodeHtml() );
                     }
 

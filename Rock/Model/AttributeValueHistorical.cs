@@ -160,13 +160,7 @@ namespace Rock.Model
         public static AttributeValueHistorical CreateCurrentRowFromAttributeValue( AttributeValue attributeValue, DateTime effectiveDateTime )
         {
             var attributeCache = AttributeCache.Get( attributeValue.AttributeId );
-#if !IS_NET_CORE
-            // EFTODO: Causes dependency on WebControls via Field Types.
-
             string formattedValue = attributeCache.FieldType.Field.FormatValue( null, attributeValue.Value, attributeCache.QualifierValues, true );
-#else
-            string formattedValue = attributeValue.Value;
-#endif
             var attributeValueHistoricalCurrent = new AttributeValueHistorical
             {
                 AttributeValueId = attributeValue.Id,

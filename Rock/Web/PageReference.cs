@@ -20,9 +20,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
-#if !IS_NET_CORE
 using System.Web.Routing;
-#endif
 
 using Rock.Web.Cache;
 using Rock.Web.UI;

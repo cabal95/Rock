@@ -821,7 +821,7 @@ namespace Rock.Model
             this.HasOptional( p => p.SiteLogoBinaryFile ).WithMany().HasForeignKey( p => p.SiteLogoBinaryFileId ).WillCascadeOnDelete( false );
 
 #pragma warning disable 0618
-#if false
+#if !IS_NET_CORE
             // EFTODO: Many-to-Many relationships are not currently supported.
 
             // Need Associative table for IconExtensions (which are Defined Values)

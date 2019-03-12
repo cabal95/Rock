@@ -17,9 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-#if !IS_NET_CORE
 using System.Web.Compilation;
-#endif
 
 using Rock.Data;
 using Rock.Web.Cache;

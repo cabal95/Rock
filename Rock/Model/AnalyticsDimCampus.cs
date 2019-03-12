@@ -16,9 +16,7 @@
 //
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
-#endif
 using System.Runtime.Serialization;
 
 #if IS_NET_CORE

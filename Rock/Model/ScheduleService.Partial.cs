@@ -15,8 +15,8 @@
 // </copyright>
 //
 using System;
-using System.Collections.Generic;
 using System.Data.Entity;
+using System.Collections.Generic;
 using System.Linq;
 
 #if IS_NET_CORE

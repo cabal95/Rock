@@ -30,9 +30,7 @@ using Rock.Data;
 using Rock.Web.Cache;
 using Rock.Security;
 using System.Linq;
-#if !IS_NET_CORE
 using System.Data.Entity.Infrastructure;
-#endif
 
 namespace Rock.Model
 {
@@ -383,9 +381,6 @@ namespace Rock.Model
             {
                 // ensure that the BinaryFile.IsTemporary flag is set to false for any BinaryFiles that are associated with this record
                 var fieldTypeCache = FieldTypeCache.Get( this.FieldTypeId );
-#if !IS_NET_CORE
-                // EFTODO: Dependency on WebControls.
-
                 if ( fieldTypeCache?.Field is Rock.Field.Types.BinaryFileFieldType )
                 {
                     Guid? binaryFileGuid = DefaultValue.AsGuidOrNull();
@@ -399,7 +394,6 @@ namespace Rock.Model
                         }
                     }
                 }
-#endif
             }
 
             base.PreSaveChanges( dbContext, state );
@@ -621,5 +615,5 @@ namespace Rock.Model
         }
     }
 
-#endregion
+    #endregion
 }

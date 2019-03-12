@@ -390,11 +390,7 @@ namespace Rock
                             var model = models.FirstOrDefault( m => m.Id == attributeValue.EntityId.Value );
                             if ( model != null )
                             {
-#if IS_NET_CORE
-                                model.CustomSortValue = attributeValue.Value;
-#else
                                 model.CustomSortValue = field.SortValue( null, attributeValue.Value, attributeCache.QualifierValues );
-#endif
                             }
                         }
                     }

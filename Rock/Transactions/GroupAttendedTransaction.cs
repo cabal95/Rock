@@ -16,10 +16,8 @@
 //
 using System;
 using System.Collections.Generic;
-#if !IS_NET_CORE
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
-#endif
 using System.Linq;
 
 #if IS_NET_CORE

@@ -24,12 +24,10 @@ using System.Reflection;
 using System.Runtime.Caching;
 using System.Text;
 using System.Web;
-#if !IS_NET_CORE
 using System.Web.Security;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
-#endif
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
@@ -517,7 +515,7 @@ namespace Rock.Web.UI
         /// </value>
         public bool EnableViewStateInspection { get; set; }
 
-    #endregion
+        #endregion
 
         #region Overridden Properties
 
@@ -3059,11 +3057,30 @@ Sys.Application.add_load(function () {
         public event PageNavigateEventHandler PageNavigate;
 
         #endregion
+#else
+        public Person CurrentPerson { get; }
+
+        public Microsoft.AspNetCore.Http.HttpRequest Request { get; }
+
+        public Dictionary<string, object> PageParameters()
+        {
+            return new Dictionary<string, object>();
+        }
+
+        public List<EntityTypeCache> GetContextEntityTypes()
+        {
+            return new List<EntityTypeCache>();
+        }
+
+        public Rock.Data.IEntity GetCurrentContext( EntityTypeCache entity )
+        {
+            return null;
+        }
 #endif
     }
 
 #if !IS_NET_CORE
-    #region Event Argument Classes
+        #region Event Argument Classes
 
     /// <summary>
     /// Delegate used for the ScriptManager's Navigate Event
@@ -3135,7 +3152,7 @@ Sys.Application.add_load(function () {
     }
 
 
-    #endregion
+        #endregion
 #endif
 
 }

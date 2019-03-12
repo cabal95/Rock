@@ -288,7 +288,6 @@ namespace Rock.Web.Cache
         [DataMember]
         public Dictionary<string, ConfigurationValue> QualifierValues { get; private set; }
 
-#if !IS_NET_CORE
         /// <summary>
         /// The default value using the most appropriate datatype
         /// </summary>
@@ -312,7 +311,6 @@ namespace Rock.Web.Cache
         /// The default sort value.
         /// </value>
         public object DefaultSortValue => FieldType.Field.SortValue( null, DefaultValue, QualifierValues );
-#endif
 
         #endregion
 

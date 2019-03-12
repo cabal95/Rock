@@ -16,6 +16,11 @@
 //
 using System.ComponentModel;
 using System.ComponentModel.Composition;
+
+#if IS_NET_CORE
+using Microsoft.AspNetCore.Http;
+#endif
+
 using Rock.Model;
 
 namespace Rock.Security.Authentication
@@ -72,7 +77,11 @@ namespace Rock.Security.Authentication
         /// <param name="returnUrl">The return URL.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
+#if IS_NET_CORE
+        public override bool Authenticate( HttpRequest request, out string userName, out string returnUrl )
+#else
         public override bool Authenticate( System.Web.HttpRequest request, out string userName, out string returnUrl )
+#endif
         {
             throw new System.NotImplementedException();
         }
@@ -95,7 +104,11 @@ namespace Rock.Security.Authentication
         /// <param name="request">The request.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
+#if IS_NET_CORE
+        public override System.Uri GenerateLoginUrl( HttpRequest request )
+#else
         public override System.Uri GenerateLoginUrl( System.Web.HttpRequest request )
+#endif
         {
             // return NULL so that a nice error message will be displayed if they happen to configure this as a remote auth type for the Login block
             return null;
@@ -108,7 +121,11 @@ namespace Rock.Security.Authentication
         /// <param name="request">The request.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
+#if IS_NET_CORE
+        public override bool IsReturningFromAuthentication( HttpRequest request )
+#else
         public override bool IsReturningFromAuthentication( System.Web.HttpRequest request )
+#endif
         {
             return false;
         }

@@ -17,9 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
-#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
-#endif
 using System.Linq;
 
 #if IS_NET_CORE

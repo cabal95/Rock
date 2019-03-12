@@ -16,9 +16,7 @@
 //
 using System;
 using System.Collections.Generic;
-#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
-#endif
 using System.Linq;
 
 #if IS_NET_CORE
@@ -449,9 +447,6 @@ namespace Rock.Model
         /// <returns></returns>
         public MapCoordinate GetMapCoordinateFromPostalCode( string postalCode )
         {
-#if !IS_NET_CORE
-            // EFTODO: Dependency on WebControls via Field Types.
-
             Address.SmartyStreets smartyStreets = new Address.SmartyStreets();
             string resultMsg = string.Empty;
             var coordinate =  smartyStreets.GetLocationFromPostalCode( postalCode, out resultMsg );
@@ -471,9 +466,6 @@ namespace Rock.Model
                 rockContext.SaveChanges();
             }
             return coordinate;
-#else
-            throw new NotImplementedException();
-#endif
         }
 
         /// <summary>

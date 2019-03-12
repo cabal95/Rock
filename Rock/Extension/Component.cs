@@ -48,12 +48,8 @@ namespace Rock.Extension
     ///     string licenseKey = AttributeValues["LicenseKey"].Value;
     /// </code>
     /// </summary>
-#if !IS_NET_CORE
-    // EFTODO: Causes dependency on WebControls via Field Types.
-        
     [IntegerField( "Order", "The order that this service should be used (priority)" )]
     [BooleanField( "Active", "Should Service be used?", false, "", 0)]
-#endif
     public abstract class Component : Attribute.IHasAttributes, ISecured
     {
         /// <summary>
@@ -142,7 +138,6 @@ namespace Rock.Extension
             }
         }
 
-#if !IS_NET_CORE
         /// <summary>
         /// Method that is called before attribute values are updated. Components can
         /// override this to perform any needed initialization of attribute
@@ -150,10 +145,13 @@ namespace Rock.Extension
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="rootUrl">The root URL.</param>
+#if IS_NET_CORE
+        public virtual void InitializeAttributeValues( Microsoft.AspNetCore.Http.HttpRequest request, string rootUrl )
+#else
         public virtual void InitializeAttributeValues( System.Web.HttpRequest request, string rootUrl )
+#endif
         {
         }
-#endif
 
         /// <summary>
         /// Method that is called when attribute values are updated. Components can

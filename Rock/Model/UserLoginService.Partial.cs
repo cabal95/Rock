@@ -19,10 +19,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
-#if !IS_NET_CORE
 using System.Web.Security;
-#else
 
+#if IS_NET_CORE
 using Microsoft.AspNetCore.Http.Extensions;
 #endif
 using Rock.Web.Cache;

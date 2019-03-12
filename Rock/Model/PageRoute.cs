@@ -18,15 +18,11 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
-#if !IS_NET_CORE
 using System.Data.Entity.Infrastructure;
-#endif
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
-#if !IS_NET_CORE
 using System.Web.Routing;
-#endif
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;

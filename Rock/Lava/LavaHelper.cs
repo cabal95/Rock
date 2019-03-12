@@ -21,9 +21,7 @@ using System.Web;
 using Rock.Model;
 using Rock.Web.Cache;
 using Rock.Web.UI;
-#if !IS_NET_CORE
 using UAParser;
-#endif
 
 namespace Rock.Lava
 {
@@ -43,12 +41,14 @@ namespace Rock.Lava
         {
             var mergeFields = new Dictionary<string, object>();
 
-#if !IS_NET_CORE
             if ( rockPage == null && HttpContext.Current != null )
             {
+#if IS_NET_CORE
+                rockPage = HttpContext.Current.Features.Get<RockPage>();
+#else
                 rockPage = HttpContext.Current.Handler as RockPage;
-            }
 #endif
+            }
 
             if ( options == null )
             {
@@ -57,16 +57,18 @@ namespace Rock.Lava
 
             if ( currentPerson == null )
             {
-#if !IS_NET_CORE
                 if ( rockPage != null )
                 {
                     currentPerson = rockPage.CurrentPerson;
                 }
+#if IS_NET_CORE
+                else if ( HttpContext.Current != null && HttpContext.Current.Items.ContainsKey( "CurrentPerson" ) )
+#else
                 else if ( HttpContext.Current != null && HttpContext.Current.Items.Contains( "CurrentPerson" ) )
+#endif
                 {
                     currentPerson = HttpContext.Current.Items["CurrentPerson"] as Person;
                 }
-#endif
             }
 
             if ( options.GetLegacyGlobalMergeFields )
@@ -82,7 +84,6 @@ namespace Rock.Lava
                 }
             }
 
-#if !IS_NET_CORE
             if ( options.GetPageContext && rockPage != null )
             {
                 var contextObjects = new Dictionary<string, object>();
@@ -105,7 +106,11 @@ namespace Rock.Lava
                 }
             }
 
+#if IS_NET_CORE
+            Microsoft.AspNetCore.Http.HttpRequest request = null;
+#else
             HttpRequest request = null;
+#endif
             try
             {
                 if ( rockPage != null )
@@ -129,10 +134,18 @@ namespace Rock.Lava
 
             if ( options.GetOSFamily || options.GetDeviceFamily )
             {
+#if IS_NET_CORE
+                if ( request != null && !string.IsNullOrEmpty( request.Headers["User-Agent"] ) )
+#else
                 if ( request != null && !string.IsNullOrEmpty( request.UserAgent ) )
+#endif
                 {
                     Parser uaParser = Parser.GetDefault();
+#if IS_NET_CORE
+                    ClientInfo client = uaParser.Parse( request.Headers["User-Agent"] );
+#else
                     ClientInfo client = uaParser.Parse( request.UserAgent );
+#endif
                     if ( options.GetOSFamily )
                     {
                         mergeFields.Add( "OSFamily", client.OS.Family.ToLower() );
@@ -144,7 +157,6 @@ namespace Rock.Lava
                     }
                 }
             }
-#endif
 
             if ( options.GetCurrentPerson )
             {

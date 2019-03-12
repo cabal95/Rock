@@ -31,17 +31,13 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
-#if !IS_NET_CORE
 using System.Web.UI.HtmlControls;
 using DDay.iCal;
-#endif
 using DotLiquid;
 using DotLiquid.Util;
 using Humanizer;
 using Humanizer.Localisation;
-#if !IS_NET_CORE
 using ImageResizer;
-#endif
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
@@ -1976,9 +1972,6 @@ namespace Rock.Lava
                         return rawValue;
                     }
 
-#if !IS_NET_CORE
-                    // EFTODO: Causes dependencies on WebControls via Field Types.
-
                     // Check qualifier for 'Url' and if present and attribute's field type is a ILinkableFieldType, then return the formatted url value
                     var field = attribute.FieldType.Field;
                     if ( qualifier.Equals( "Url", StringComparison.OrdinalIgnoreCase ) && field is Rock.Field.ILinkableFieldType )
@@ -2034,9 +2027,6 @@ namespace Rock.Lava
 
                     // Otherwise return the formatted value
                     return field.FormatValue( null, attribute.EntityTypeId, entityId, rawValue, attribute.QualifierValues, false );
-#else
-                    return rawValue;
-#endif
                 }
             }
 

@@ -16,9 +16,7 @@
 //
 using System;
 using System.Collections.Generic;
-#if !IS_NET_CORE
 using System.Data.Entity.SqlServer;
-#endif
 using System.Linq;
 
 #if IS_NET_CORE
@@ -42,10 +40,8 @@ namespace Rock.Jobs
     /// </summary>
     /// <seealso cref="Quartz.IJob" />
     [DisallowConcurrentExecution]
-#if !IS_NET_CORE
     [IntegerField( "How Many Records", "The number of communication records to process on each run of this job.", false, 100000, "", 0, "HowMany" )]
     [IntegerField( "Command Timeout", "Maximum amount of time (in seconds) to wait for the SQL Query to complete. Leave blank to use the default for this job (3600). Note, it could take several minutes, so you might want to set it at 3600 (60 minutes) or higher", false, 60 * 60, "General", 1, "CommandTimeout" )]
-#endif
     [RockObsolete("1.7")]
     [Obsolete( "The Communication.MediumDataJson and CommunicationTemplate.MediumDataJson fields will be removed in Rock 1.10" )]
     public class MigrateCommunicationMediumData : IJob

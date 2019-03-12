@@ -253,15 +253,11 @@ namespace Rock.Web.Cache
             string value = GetValue( key, rockContext );
             if ( !string.IsNullOrWhiteSpace( value ) )
             {
-#if !IS_NET_CORE
-                // EFTODO: Dependency on WebControls via Field Type.
-
                 var attributeCache = Attributes.FirstOrDefault( a => a.Key.Equals( key, StringComparison.OrdinalIgnoreCase ) );
                 if ( attributeCache != null )
                 {
                     value = attributeCache.FieldType.Field.FormatValue( null, value, attributeCache.QualifierValues, false );
                 }
-#endif
             }
 
             AttributeValuesFormatted.AddOrUpdate( key, value, ( k, v ) => value );
@@ -336,15 +332,11 @@ namespace Rock.Web.Cache
 
             AttributeValues.AddOrUpdate( key, value, ( k, v ) => value );
 
-#if !IS_NET_CORE
-            // EFTODO: Dependency on WebControls via Field Type.
-
             var attributeCache = Attributes.FirstOrDefault( a => a.Key.Equals( key, StringComparison.OrdinalIgnoreCase ) );
             if ( attributeCache != null )
             {
                 value = attributeCache.FieldType.Field.FormatValue( null, value, attributeCache.QualifierValues, false );
             }
-#endif
             AttributeValuesFormatted.AddOrUpdate( key, value, ( k, v ) => value );
 
         }

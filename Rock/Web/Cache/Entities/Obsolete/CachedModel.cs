@@ -481,11 +481,7 @@ namespace Rock.Web.Cache
                                 return ( (Rock.Field.ILinkableFieldType)field ).UrlLink( value, attribute.QualifierValues );
                             }
 
-#if !IS_NET_CORE
                             return field.FormatValue( null, attribute.EntityTypeId, this.Id, value, attribute.QualifierValues, false );
-#else
-                            return value;
-#endif
                         }
                     }
                 }

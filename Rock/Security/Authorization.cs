@@ -16,15 +16,11 @@
 //
 using System;
 using System.Collections.Generic;
-#if !IS_NET_CORE
 using System.Data.Entity;
-#endif
 using System.Linq;
 using System.Text;
 using System.Web;
-#if !IS_NET_CORE
 using System.Web.Security;
-#endif
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;

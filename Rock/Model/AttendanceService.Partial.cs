@@ -17,10 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-#if !IS_NET_CORE
 using System.Data.Entity;
 using System.Data.Entity.SqlServer;
-#endif
 using System.Linq;
 using System.Linq.Expressions;
 

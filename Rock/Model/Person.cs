@@ -22,9 +22,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
-#if !IS_NET_CORE
 using System.Data.Entity.SqlServer;
-#endif
 using System.IO;
 using System.Linq;
 using System.Net;

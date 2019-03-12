@@ -17,9 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-#if !IS_NET_CORE
 using System.Data.Entity;
-#endif
 using System.IO;
 using System.Linq;
 using System.Text;

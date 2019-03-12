@@ -91,12 +91,8 @@ namespace Rock.Web.Cache
         {
             get
             {
-#if !IS_NET_CORE
                 var attribute = AttributeCache.Get( AttributeId );
                 return attribute != null ? attribute.FieldType.Field.ValueAsFieldType( null, Value, attribute.QualifierValues ) : Value;
-#else
-                throw new NotImplementedException();
-#endif
             }
         }
 
@@ -111,13 +107,7 @@ namespace Rock.Web.Cache
             get
             {
                 var attribute = AttributeCache.Get( AttributeId );
-#if !IS_NET_CORE
-                // EFTODO: Causes dependency on WebControls via Field Type.
-
                 return attribute != null ? attribute.FieldType.Field.SortValue( null, Value, attribute.QualifierValues ) : Value;
-#else
-                return Value;
-#endif
             }
         }
 
@@ -132,14 +122,8 @@ namespace Rock.Web.Cache
         {
             get
             {
-#if false
-                // EFTODO: Causes dependency on WebControls via Field Types.
-
                 var attribute = AttributeCache.Get( AttributeId );
                 return attribute != null ? attribute.FieldType.Field.FormatValue( null, attribute.EntityTypeId, EntityId, Value, attribute.QualifierValues, false ) : Value;
-#else
-                return Value;
-#endif
             }
         }
 

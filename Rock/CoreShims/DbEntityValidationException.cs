@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
-namespace Rock.Data.Validation
+namespace System.Data.Entity.Validation
 {
-    public class EntityValidationException : Exception
+    public class DbEntityValidationException : Exception
     {
-        public IEnumerable<EntityValidationResult> EntityValidationErrors { get; protected set; }
+        public IEnumerable<DbEntityValidationResult> EntityValidationErrors { get; protected set; }
     }
 
-    public class EntityValidationResult
+    public class DbEntityValidationResult
     {
         public EntityEntry Entry { get; private set; }
 

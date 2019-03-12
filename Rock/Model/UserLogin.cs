@@ -22,9 +22,7 @@ using System.Runtime.Serialization;
 using System.Security.Principal;
 using System.Threading;
 using System.Web;
-#if !IS_NET_CORE
 using System.Web.Hosting;
-#endif
 
 using Rock.Data;
 

@@ -205,11 +205,7 @@ namespace Rock.Model
                 {
                     if ( attribute.FieldType != null )
                     {
-#if !IS_NET_CORE
-                        // EFTODO: Causes dependency on WebControls via Field Type.
-
                         result = attribute.FieldType.Field;
-#endif
                     }
                 }
 
@@ -251,11 +247,7 @@ namespace Rock.Model
                 var attribute = AttributeCache.Get( this.AttributeId );
                 if ( attribute != null )
                 {
-#if !IS_NET_CORE
-                    // EFTODO: Causes dependency on WebControls via Field Type.
-
                     return attribute.FieldType.Field.FormatValue( null, attribute.EntityTypeId, this.EntityId, Value, attribute.QualifierValues, false );
-#endif
                 }
 
                 return Value;
@@ -397,8 +389,6 @@ namespace Rock.Model
                 // This attribute value should not effect a file that anything could be using.
                 // The Label field type is a list of existing labels so should not be included, but the image field type uploads a new file so we do want it included.
                 // Don't use BinaryFileFieldType as that type of attribute's file can be used by more than one attribute
-#if !IS_NET_CORE
-                // EFTODO: Causes dependency on WebControls via Field Type.
                 var field = attributeCache.FieldType.Field;
                 if ( field != null && (
                     field is Field.Types.FileFieldType ||
@@ -407,7 +397,6 @@ namespace Rock.Model
                 {
                     PreSaveBinaryFile( dbContext, entry );
                 }
-#endif
 
                 // Check to see if this attribute is for a person or group, and if so, save to history table
                 bool saveToHistoryTable = attributeCache.EntityTypeId.HasValue &&
@@ -575,15 +564,8 @@ namespace Rock.Model
                 return;
             }
 
-#if !IS_NET_CORE
-            // EFTODO: Causes dependency on WebControls via Field Types.
-
             var formattedOldValue = oldValue.IsNotNullOrWhiteSpace() ? attributeCache.FieldType.Field.FormatValue( null, oldValue, attributeCache.QualifierValues, true ) : string.Empty;
             var formattedNewValue = newValue.IsNotNullOrWhiteSpace() ? attributeCache.FieldType.Field.FormatValue( null, newValue, attributeCache.QualifierValues, true ) : string.Empty;
-#else
-            var formattedOldValue = oldValue ?? string.Empty;
-            var formattedNewValue = newValue ?? string.Empty;
-#endif
 
             if ( saveToHistoryTable )
             {

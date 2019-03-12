@@ -16,9 +16,7 @@
 //
 using System;
 using System.Collections.Generic;
-#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
-#endif
 using System.Linq;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;

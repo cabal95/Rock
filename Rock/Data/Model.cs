@@ -18,9 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-#if !IS_NET_CORE
 using System.Data.Services;
-#endif
 using System.Runtime.Serialization;
 
 using Rock.Attribute;
@@ -529,13 +527,7 @@ namespace Rock.Data
                                     return ( (Rock.Field.ILinkableFieldType)field ).UrlLink( value, attribute.QualifierValues );
                                 }
 
-#if !IS_NET_CORE
-                                // EFTODO: Causes dependency on WebControls via Field Types.
-
                                 return field.FormatValue( null, attribute.EntityTypeId, this.Id, value, attribute.QualifierValues, false );
-#else
-                                return value;
-#endif
                             }
                         }
                     }

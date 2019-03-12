@@ -16,10 +16,8 @@
 //
 using System;
 using System.Collections.Generic;
-#if !IS_NET_CORE
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
-#endif
 using System.Linq;
 using System.Reflection;
 using System.Web;
@@ -30,7 +28,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Rock.Data.Validation;
 #endif
 using Rock.Model;
 using Rock.Transactions;
@@ -201,11 +198,7 @@ namespace Rock.Data
                     // Save the context changes
                     result = base.SaveChanges();
                 }
-#if IS_NET_CORE
-                catch ( EntityValidationException ex )
-#else
                 catch ( System.Data.Entity.Validation.DbEntityValidationException ex )
-#endif
                 {
                     var validationErrors = new List<string>();
                     foreach ( var error in ex.EntityValidationErrors )
