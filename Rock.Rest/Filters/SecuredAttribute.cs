@@ -123,10 +123,11 @@ namespace Rock.Rest.Filters
             {
 #if IS_NET_CORE
                 var principal = actionContext.HttpContext.User;
+                if ( principal != null && principal.Identity != null && !string.IsNullOrEmpty( principal.Identity.Name ) )
 #else
                 var principal = actionContext.Request.GetUserPrincipal();
-#endif
                 if ( principal != null && principal.Identity != null )
+#endif
                 {
                     using ( var rockContext = new RockContext() )
                     {

@@ -75,6 +75,8 @@ namespace Rock.Rest.Controllers
         /// </summary>
         /// <param name="key">The Id of the record</param>
         /// <returns></returns>
+#if !IS_NET_CORE
+        // EFTODO: Duplicate route.. not sure how this one is supposed to work? Probably need an action constraint.
         [Authenticate, Secured]
         [EnableQuery]
         public override Person Get( [FromODataUri] int key )
@@ -82,6 +84,7 @@ namespace Rock.Rest.Controllers
             // NOTE: We want PrimaryAliasId to be populated, so call this.GetById( key ) which includes "Aliases"
             return this.GetById( key );
         }
+#endif
 
         /// <summary>
         /// Queryable GET endpoint. Note that records that are marked as Deceased are not included
@@ -102,6 +105,10 @@ namespace Rock.Rest.Controllers
         /// <returns></returns>
         [Authenticate, Secured]
         [EnableQuery]
+#if IS_NET_CORE
+        // EFTODO: Duplicate route.
+        [Microsoft.AspNetCore.Mvc.Route( "GetDeceased" )]
+#endif
         public IQueryable<Person> Get( bool includeDeceased )
         {
             var rockContext = this.Service.Context as RockContext;

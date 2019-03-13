@@ -115,8 +115,7 @@ namespace Rock.Rest
         [EnableQuery]
 #if IS_NET_CORE
         // EFTODO: Duplicate route.. not sure how this one is supposed to work? Probably need an action constraint.
-
-        [NonAction]
+        [HttpOptions]
 #endif
         public virtual T Get( [FromODataUri] int key )
         {
