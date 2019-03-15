@@ -1725,6 +1725,21 @@ namespace Rock.Data
 #endif
         {
 #if IS_NET_CORE
+            // Fix for datetime2 => datetime issues. Default all DateTime property
+            // types to be datetime.
+            var dtList = Reflection.FindTypes( typeof( Rock.Data.IEntity ) )
+                .Where( a => !a.Value.IsAbstract && ( a.Value.GetCustomAttribute<NotMappedAttribute>() == null ) && ( a.Value.GetCustomAttribute<System.Runtime.Serialization.DataContractAttribute>() != null ) )
+                .OrderBy( a => a.Key ).Select( a => a.Value );
+            foreach ( var entityType in dtList )
+            {
+                var model = modelBuilder.Entity( entityType );
+                var dateTimeProperties = model.Metadata.GetProperties().Where( p => p.ClrType == typeof( DateTime ) || p.ClrType == typeof( DateTime? ) );
+                foreach ( var p in dateTimeProperties )
+                {
+                    model.Property( p.Name ).HasColumnType( "datetime" );
+                }
+            }
+
             ContextHelper.ModelBuilder = modelBuilder;
 #endif
             ContextHelper.AddConfigurations( modelBuilder );
@@ -1839,7 +1854,6 @@ namespace Rock.Data
             foreach ( var type in types )
             {
                 Activator.CreateInstance( type );
-                var e = modelBuilder.Entity<Category>();
             }
         }
 
