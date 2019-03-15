@@ -354,9 +354,9 @@ namespace Rock.Web
             }
 
             // add base path to url -- Fixed bug #84
-#if !IS_NET_CORE
-            // EFTODO: Dependency on WebForms.
-
+#if IS_NET_CORE
+            url = HttpContext.Current.Request.PathBase + "/" + url;
+#else
             url = ( HttpContext.Current.Request.ApplicationPath == "/" ) ? "/" + url : HttpContext.Current.Request.ApplicationPath + "/" + url;
 #endif
 

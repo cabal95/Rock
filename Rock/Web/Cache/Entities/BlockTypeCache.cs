@@ -197,7 +197,7 @@ namespace Rock.Web.Cache
                 physicalPath = System.Web.Hosting.HostingEnvironment.MapPath( Path );
             }
 #else
-            physicalPath = string.Empty;
+            physicalPath = "missing_file_that_does_not_exist";
 #endif
 
             var fileinfo = new FileInfo( physicalPath );
