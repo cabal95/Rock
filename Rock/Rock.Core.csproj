@@ -7,6 +7,7 @@
     <StartupObject />
     <RootNamespace>Rock</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyName>Rock</AssemblyName>
   </PropertyGroup>
 
   <Target Name="AddNetCoreDefine" BeforeTargets="CoreCompile" Condition="'$(TargetFramework)' == 'netcoreapp2.2'">

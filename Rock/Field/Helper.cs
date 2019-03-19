@@ -40,11 +40,7 @@ namespace Rock.Field
             if ( type != null )
                 return ( IFieldType )Activator.CreateInstance( type );
             else
-#if !IS_NET_CORE
                 return ( IFieldType )Activator.CreateInstance( typeof( Rock.Field.Types.TextFieldType ) );
-#else
-                throw new NotImplementedException();
-#endif
         }
 
         /// <summary>
