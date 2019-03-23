@@ -104,9 +104,8 @@ namespace Rock.Model
                     // Attempt to load the control
                     try
                     {
-                        System.Web.UI.Control control = page.LoadControl( path );
-                        var rockBlock = control as Web.UI.RockBlock;
-                        if ( rockBlock != null )
+                        var blockCompiledType = System.Web.Compilation.BuildManager.GetCompiledType( path );
+                        if ( blockCompiledType != null )
                         {
                             using ( var rockContext = new RockContext() )
                             {
@@ -121,7 +120,7 @@ namespace Rock.Model
                                     blockTypeService.Add( blockType );
                                 }
 
-                                Type controlType = rockBlock.GetType();
+                                Type controlType = blockCompiledType;
 
                                 // Update Name, Category, and Description based on block's attribute definitions
                                 blockType.Name = Reflection.GetDisplayName( controlType ) ?? string.Empty;
@@ -155,6 +154,7 @@ namespace Rock.Model
                     }
                     catch ( Exception ex )
                     {
+                        System.Diagnostics.Debug.WriteLine( $"RegisterBlockTypes failed for {path} with exception: {ex.Message}" );
                         ExceptionLogService.LogException( new Exception( string.Format("Problem processing block with path '{0}'.", path ), ex ), null );
                     }
                 }

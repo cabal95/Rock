@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using Rock.Web.Cache;
+using Rock.Web.UI.Controls;
 
 namespace Rock.Financial
 {
@@ -49,6 +50,14 @@ namespace Rock.Financial
         /// Gets or sets the last name.
         /// </summary>
         public string LastName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the business (if giving as a business)
+        /// </summary>
+        /// <value>
+        /// The name of the business.
+        /// </value>
+        public string BusinessName { get; set; }
 
         /// <summary>
         /// Gets the full name.
@@ -139,7 +148,7 @@ namespace Rock.Financial
         public virtual string Comment1 { get; set; }
 
         /// <summary>
-        /// Gets or sets the first comment line.
+        /// Gets or sets the second comment line.
         /// </summary>
         public virtual string Comment2 { get; set; }
 
@@ -185,6 +194,24 @@ namespace Rock.Financial
                 return result;
             }
         }
+
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebControls
+
+        /// <summary>
+        /// Updates the address fields from an address control.
+        /// </summary>
+        /// <param name="addressControl">The address control.</param>
+        public void UpdateAddressFieldsFromAddressControl( AddressControl addressControl )
+        {
+            Street1 = addressControl.Street1;
+            Street2 = addressControl.Street2;
+            City = addressControl.City;
+            State = addressControl.State;
+            PostalCode = addressControl.PostalCode;
+            Country = addressControl.Country;
+        }
+#endif
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PaymentInfo"/> class.

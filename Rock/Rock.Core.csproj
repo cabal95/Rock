@@ -413,6 +413,8 @@
     <Compile Include="Financial\GatewayComponent.cs" />
     <Compile Include="Financial\GatewayContainer.cs" />
     <Compile Include="Financial\IAutomatedGatewayComponent.cs" />
+    <Compile Include="Financial\IGatewayComponent.cs" />
+    <Compile Include="Financial\IHostedGatewayPaymentControlTokenEvent.cs" />
     <Compile Include="Financial\IThreeStepGatewayComponent.cs" />
     <Compile Include="Financial\ITransactionDetail.cs" />
     <Compile Include="Financial\IWebhookGatewayComponent.cs" />
@@ -421,6 +423,7 @@
     <Compile Include="Financial\PaymentSchedule.cs" />
     <Compile Include="Financial\ReferencePaymentInfo.cs" />
     <Compile Include="Financial\SwipePaymentInfo.cs" />
+    <Compile Include="Financial\TestGateway.cs" />
     <Compile Include="Financial\ThreeStepGatewayComponent.cs" />
     <Compile Include="Follow\EventComponent.cs" />
     <Compile Include="Follow\EventContainer.cs" />

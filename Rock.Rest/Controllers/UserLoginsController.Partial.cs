@@ -41,7 +41,7 @@ namespace Rock.Rest.Controllers
         [System.Web.Http.Route( "api/userlogins/available" )]
         public bool Available( string username )
         {
-            return ( (UserLoginService)Service ).GetByUserName( username ) == null;
+            return ( (UserLoginService)Service ).Exists( username ) == false;
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace Rock.Rest.Controllers
         public override System.Net.Http.HttpResponseMessage Post( UserLogin value )
 #endif
         {
-            if ( ( ( UserLoginService ) Service ).GetByUserName( value.UserName ) != null )
+            if ( ( ( UserLoginService ) Service ).Exists( value.UserName ) )
             {
 #if IS_NET_CORE
                 return Conflict( "The username already exists." );

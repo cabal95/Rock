@@ -48,6 +48,7 @@
     <None Remove="Migrations\201811271852316_Rollup_1127_spFinance_PledgeAnalyticsQuery_Down.sql" />
     <None Remove="Migrations\201811271852316_Rollup_1127_spFinance_PledgeAnalyticsQuery_Up.sql" />
     <None Remove="Migrations\201812111901295_Rollup_1211_FixChartShortcode.sql" />
+    <None Remove="Migrations\201903202308416_ScheduledTransactionHistory_MigrateScheduledTransactionNotesToHistory.sql" />
     <None Remove="Migrations\CreateDatabase\201311251734059_CreateDatabase.sql" />
     <None Remove="Migrations\CreateDatabase\201707311527250_FirstNameGender.txt" />
     <None Remove="Migrations\CreateDatabase\201707311527250_LastName.gz" />
@@ -104,6 +105,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Migrations\201812111901295_Rollup_1211_FixChartShortcode.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Migrations\201903202308416_ScheduledTransactionHistory_MigrateScheduledTransactionNotesToHistory.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Migrations\CreateDatabase\201311251734059_CreateDatabase.sql">

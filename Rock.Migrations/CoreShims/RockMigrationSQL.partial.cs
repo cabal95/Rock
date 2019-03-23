@@ -32,6 +32,8 @@ namespace Rock.Migrations.Migrations {
 
         public static string _201812111901295_Rollup_1211_FixChartShortcode => GetSqlResource( @"Migrations\201812111901295_Rollup_1211_FixChartShortcode.sql" );
 
+        public static string _201903202308416_ScheduledTransactionHistory_MigrateScheduledTransactionNotesToHistory => GetSqlResource( @"Migrations\201903202308416_ScheduledTransactionHistory_MigrateScheduledTransactionNotesToHistory.sql" );
+
         public static string _201311251734059_CreateDatabase => GetSqlResource( @"Migrations\CreateDatabase\201311251734059_CreateDatabase.sql" );
 
         public static string _201707311527250_AddMetaData => GetSqlResource( @"Migrations\CreateDatabase\201707311527250_AddMetaData.resx" );
