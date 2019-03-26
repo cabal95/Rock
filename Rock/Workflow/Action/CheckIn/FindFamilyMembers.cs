@@ -20,6 +20,11 @@ using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Data.Entity;
 using System.Linq;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
+
 using Rock.CheckIn;
 using Rock.Data;
 using Rock.Model;

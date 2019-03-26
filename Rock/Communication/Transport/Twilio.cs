@@ -387,10 +387,12 @@ namespace Rock.Communication.Transport
                         }
                     }
 
+#if !IS_NET_CORE
                     if ( System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment )
                     {
                         createMessageOptions.StatusCallback = null;
                     }
+#endif
 
                     response = MessageResource.Create( createMessageOptions );
                 }
@@ -413,10 +415,12 @@ namespace Rock.Communication.Transport
                     createMessageOptions.MediaUrl = attachmentMediaUrls;
                 }
 
+#if !IS_NET_CORE
                 if ( System.Web.Hosting.HostingEnvironment.IsDevelopmentEnvironment )
                 {
                     createMessageOptions.StatusCallback = null;
                 }
+#endif
 
                 response = MessageResource.Create( createMessageOptions );
             }

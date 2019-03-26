@@ -21,6 +21,10 @@ using System.ComponentModel.Composition;
 using System.Data.Entity;
 using System.Linq;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
+
 using Rock;
 using Rock.Attribute;
 using Rock.Data;

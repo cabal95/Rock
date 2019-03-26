@@ -55,7 +55,11 @@ namespace Rock.Workflow.Action
 
             // Get the current person alias if possible
             PersonAlias personAlias = null;
+#if IS_NET_CORE
+            if ( HttpContext.Current != null && HttpContext.Current.Items.ContainsKey( "CurrentPerson" ) )
+#else
             if ( HttpContext.Current != null && HttpContext.Current.Items.Contains( "CurrentPerson" ) )
+#endif
             {
                 var currentPerson = HttpContext.Current.Items["CurrentPerson"] as Person;
                 if ( currentPerson != null && currentPerson.PrimaryAlias != null )

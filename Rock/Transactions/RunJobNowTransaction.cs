@@ -70,8 +70,12 @@ namespace Rock.Transactions
                         var runNowSchedulerName = ( "RunNow:" + job.Guid.ToString( "N" ) ).Truncate( 40 );
                         scheduleConfig.Add( StdSchedulerFactory.PropertySchedulerInstanceName, runNowSchedulerName );
                         var schedulerFactory = new StdSchedulerFactory( scheduleConfig );
+#if IS_NET_CORE
+                        var sched = new StdSchedulerFactory( scheduleConfig ).GetScheduler().Result;
+#else
                         var sched = new StdSchedulerFactory( scheduleConfig ).GetScheduler();
-                        if (sched.IsStarted)
+#endif
+                        if ( sched.IsStarted)
                         {
                             // the job is currently running as a RunNow job
                             return;

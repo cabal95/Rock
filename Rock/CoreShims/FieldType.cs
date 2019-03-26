@@ -108,4 +108,26 @@ namespace Rock.Field.Types
             return new List<KeyValuePair<string, object>>();
         }
     }
+
+    public partial class SSNFieldType
+    {
+        /// <summary>
+        /// Unencrypts and strips any non-numeric characters from value.
+        /// </summary>
+        /// <param name="encryptedValue">The encrypted value.</param>
+        /// <returns></returns>
+        public static string UnencryptAndClean( string encryptedValue )
+        {
+            if ( encryptedValue.IsNotNullOrWhiteSpace() )
+            {
+                string ssn = Rock.Security.Encryption.DecryptString( encryptedValue );
+                if ( !string.IsNullOrEmpty( ssn ) )
+                {
+                    return ssn.AsNumeric(); ;
+                }
+            }
+
+            return string.Empty;
+        }
+    }
 }

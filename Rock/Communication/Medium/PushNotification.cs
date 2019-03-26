@@ -35,6 +35,7 @@ namespace Rock.Communication.Medium
 
         public override CommunicationType CommunicationType { get { return CommunicationType.PushNotification; } }
 
+#if !IS_NET_CORE
         /// <summary>
         /// Gets the control.
         /// </summary>
@@ -44,6 +45,7 @@ namespace Rock.Communication.Medium
         {
             return new Web.UI.Controls.Communication.PushNotification();
         }
+#endif
 
         #region Obsolete 
 

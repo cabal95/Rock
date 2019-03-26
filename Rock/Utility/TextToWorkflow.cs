@@ -20,6 +20,10 @@ using System.Data.Entity;
 using System.Linq;
 using System.Text.RegularExpressions;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
+
 using Rock;
 using Rock.Web.Cache;
 using Rock.Data;

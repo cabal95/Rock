@@ -1740,6 +1740,8 @@ namespace Rock.Data
                 }
             }
 
+            modelBuilder.HasDbFunction( typeof( Rock.ExtensionMethods ).GetMethod( "Left", BindingFlags.Static ) );
+
             ContextHelper.ModelBuilder = modelBuilder;
 #endif
             ContextHelper.AddConfigurations( modelBuilder );

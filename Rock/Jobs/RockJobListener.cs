@@ -17,6 +17,11 @@
 using System;
 using System.Linq;
 using System.Text;
+#if IS_NET_CORE
+using System.Threading;
+using System.Threading.Tasks;
+#endif
+
 using DotLiquid;
 using Quartz;
 
@@ -60,7 +65,11 @@ namespace Rock.Jobs
         /// </summary>
         /// <param name="context"></param>
         /// <seealso cref="JobExecutionVetoed(IJobExecutionContext)"/>
+#if IS_NET_CORE
+        public Task JobToBeExecuted( IJobExecutionContext context, CancellationToken cancellationToken )
+#else
         public void JobToBeExecuted( IJobExecutionContext context )
+#endif
         {
             StringBuilder message = new StringBuilder();
 
@@ -78,6 +87,10 @@ namespace Rock.Jobs
                 job.LastStatusMessage = "Started at " + RockDateTime.Now.ToString();
                 rockContext.SaveChanges();
             }
+
+#if IS_NET_CORE
+            return Task.CompletedTask;
+#endif
         }
 
         /// <summary>
@@ -88,9 +101,16 @@ namespace Rock.Jobs
         /// </summary>
         /// <param name="context"></param>
         /// <seealso cref="JobToBeExecuted(IJobExecutionContext)"/>
+#if IS_NET_CORE
+        public Task JobExecutionVetoed( IJobExecutionContext context, CancellationToken cancellationToken )
+        {
+            return Task.CompletedTask;
+        }
+#else
         public void JobExecutionVetoed( IJobExecutionContext context )
         {
         }
+#endif
 
         /// <summary>
         /// Adds the service job history.
@@ -120,7 +140,11 @@ namespace Rock.Jobs
         /// </summary>
         /// <param name="context"></param>
         /// <param name="jobException"></param>
+#if IS_NET_CORE
+        public Task JobWasExecuted( IJobExecutionContext context, JobExecutionException jobException, CancellationToken cancellationToken )
+#else
         public void JobWasExecuted( IJobExecutionContext context, JobExecutionException jobException )
+#endif
         {
             bool sendMessage = false;
 
@@ -135,7 +159,11 @@ namespace Rock.Jobs
             if ( job == null )
             {
                 // if job was deleted or wasn't found, just exit
+#if IS_NET_CORE
+                return Task.CompletedTask;
+#else
                 return;
+#endif
             }
 
             // if notification status is all set flag to send message
@@ -251,6 +279,10 @@ namespace Rock.Jobs
 
                 emailMessage.Send();
             }
+
+#if IS_NET_CORE
+            return Task.CompletedTask;
+#endif
         }
     }
 }

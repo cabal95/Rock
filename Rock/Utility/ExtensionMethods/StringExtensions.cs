@@ -446,6 +446,9 @@ namespace Rock
         /// <param name="str">The string.</param>
         /// <param name="length">The desired length.</param>
         /// <returns></returns>
+#if IS_NET_CORE
+        [Microsoft.EntityFrameworkCore.DbFunction( "LEFT", "" )]
+#endif
         public static string Left( this string str, int length )
         {
             if ( str == null )

@@ -51,6 +51,7 @@ You can view an online version of this email here:
         /// </value>
         public override CommunicationType CommunicationType { get { return CommunicationType.Email; } }
 
+#if !IS_NET_CORE
         /// <summary>
         /// Gets the control.
         /// </summary>
@@ -60,6 +61,7 @@ You can view an online version of this email here:
         {
             return new Rock.Web.UI.Controls.Communication.Email( useSimpleMode );
         }
+#endif
 
         #region Obsolete 
 

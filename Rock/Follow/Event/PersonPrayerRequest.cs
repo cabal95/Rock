@@ -18,6 +18,10 @@ using System;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
+
 using Rock;
 using Rock.Data;
 using Rock.Attribute;

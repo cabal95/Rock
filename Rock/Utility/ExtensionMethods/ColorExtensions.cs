@@ -60,7 +60,13 @@ namespace Rock
         /// <returns></returns>
         public static string ToHtml( this Color color )
         {
+#if IS_NET_CORE
+            return "#" + color.R.ToString( "X2" ) +
+                         color.G.ToString( "X2" ) +
+                         color.B.ToString( "X2" );
+#else
             return ColorTranslator.ToHtml( color );
+#endif
         }
 
     }

@@ -22,6 +22,10 @@ using System.Data.Entity;
 using System.Linq;
 using System.Text.RegularExpressions;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
+
 using Rock.Attribute;
 using Rock.Data;
 using Rock.Model;
@@ -66,6 +70,7 @@ namespace Rock.Communication.Medium
         /// </value>
         public override CommunicationType CommunicationType { get { return CommunicationType.SMS; } }
 
+#if !IS_NET_CORE
         /// <summary>
         /// Gets the control.
         /// </summary>
@@ -77,6 +82,7 @@ namespace Rock.Communication.Medium
             smsControl.CharacterLimit = this.GetAttributeValue( "CharacterLimit" ).AsIntegerOrNull() ?? 160;
             return smsControl;
         }
+#endif
 
         /// <summary>
         /// Process inbound messages that are sent to a SMS number.
@@ -313,12 +319,19 @@ namespace Rock.Communication.Medium
             // This is the last communication
             using ( var rockContext = new RockContext() )
             {
+#if IS_NET_CORE
+                var dateTimeToSearch = RockDateTime.Now.AddDays( -daysPastToSearch );
+#endif
                 var recipientService = new CommunicationRecipientService( rockContext );
                 var latestRecipientCommunication = recipientService
                     .Queryable()
                     .AsNoTracking()
                     .Where( r => r.PersonAliasId == fromPersonAliasId )
+#if IS_NET_CORE
+                    .Where( r => r.CreatedDateTime >= dateTimeToSearch )
+#else
                     .Where( r => r.CreatedDateTime >= DbFunctions.AddDays( RockDateTime.Now, -daysPastToSearch ) )
+#endif
                     .OrderByDescending( c => c.CreatedDateTime )
                     .FirstOrDefault();
 
@@ -384,7 +397,11 @@ namespace Rock.Communication.Medium
             //
             var activeCodes = new CommunicationRecipientService( rockContext ).Queryable()
                                     .Where( c => c.MediumEntityTypeId == smsEntityTypeId )
+#if IS_NET_CORE
+                                    .Where( c => c.ResponseCode.Left( 1 ) == "@" && c.CreatedDateTime > tokenStartDate )
+#else
                                     .Where( c => System.Data.Entity.DbFunctions.Left( c.ResponseCode, 1 ) == "@" && c.CreatedDateTime > tokenStartDate )
+#endif
                                     .Select( c => c.ResponseCode )
                                     .ToList();
 
