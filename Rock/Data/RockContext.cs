@@ -17,16 +17,15 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-#if !IS_NET_CORE
 using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration.Conventions;
-#endif
 using System.Linq;
 using System.Reflection;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
+
 using Rock.Model;
 
 namespace Rock.Data

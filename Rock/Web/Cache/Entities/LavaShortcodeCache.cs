@@ -16,15 +16,13 @@
 //
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 using System.Runtime.Serialization;
+
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
-#if !IS_NET_CORE
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Text;
-#endif
+
 using Rock.Data;
 using Rock.Model;
 

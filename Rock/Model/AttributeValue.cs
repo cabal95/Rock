@@ -27,7 +27,9 @@ using System.Runtime.Serialization;
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
+
 using Newtonsoft.Json;
+
 using Rock.Data;
 using Rock.Web.Cache;
 

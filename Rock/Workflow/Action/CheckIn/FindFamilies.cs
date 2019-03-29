@@ -25,7 +25,6 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 #endif
 
-using Rock.Attribute;
 using Rock.CheckIn;
 using Rock.Data;
 using Rock.Model;

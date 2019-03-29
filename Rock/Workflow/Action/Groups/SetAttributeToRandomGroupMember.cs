@@ -18,15 +18,14 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
-using System.Linq;
 using System.Data.Entity;
+using System.Linq;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
 
 using Rock;
-using Rock.Workflow;
 using Rock.Attribute;
 using Rock.Data;
 using Rock.Model;

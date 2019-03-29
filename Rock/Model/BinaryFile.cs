@@ -19,25 +19,27 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
+using System.Drawing;
 using System.IO;
 using System.Runtime.Serialization;
+
+using ImageResizer;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 #endif
+
 using Rock.Data;
 using Rock.Storage;
 using Rock.Web.Cache;
+
 #if IS_NET_CORE
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.MetaData;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.Primitives;
-#else
-using System.Drawing;
-using ImageResizer;
 #endif
 
 namespace Rock.Model

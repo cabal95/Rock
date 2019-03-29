@@ -20,23 +20,20 @@ using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-#if !IS_NET_CORE
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
-#endif
 
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
+
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
-#if !IS_NET_CORE
 using Rock.Web.UI;
 using Rock.Web.UI.Controls;
-#endif
 
 namespace Rock.Attribute
 {

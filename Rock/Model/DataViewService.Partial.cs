@@ -24,6 +24,7 @@ using System.Reflection;
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
+
 using Rock.Data;
 using Rock.Reporting.DataFilter;
 using Rock.Web.Cache;

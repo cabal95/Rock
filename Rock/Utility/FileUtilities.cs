@@ -15,19 +15,18 @@
 // </copyright>
 //
 using System;
-#if !IS_NET_CORE
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-#endif
 using System.IO;
 using System.Web;
+
 #if IS_NET_CORE
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.MetaData;
 using SixLabors.ImageSharp.Processing;
-using SixLabors.Primitives;
+using Size = SixLabors.Primitives.Size;
 #else
 using Goheer.EXIF;
 #endif

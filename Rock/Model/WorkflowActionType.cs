@@ -22,10 +22,10 @@ using System.Runtime.Serialization;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 #endif
-using Rock.Web.Cache;
+
 using Rock.Data;
+using Rock.Web.Cache;
 using Rock.Workflow;
 
 namespace Rock.Model

@@ -22,6 +22,7 @@ using System.Linq;
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
+
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;

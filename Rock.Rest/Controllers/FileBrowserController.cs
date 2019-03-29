@@ -23,11 +23,10 @@ using System.Net;
 using System.Net.Http;
 using System.Web;
 using System.Web.Http;
+
 #if !IS_NET_CORE
-using System.Web.Routing;
 using ImageResizer;
 #endif
-using Rock.Rest.Filters;
 
 namespace Rock.Rest.Controllers
 {

@@ -17,16 +17,15 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
-#if !IS_NET_CORE
-using System.Data.Entity.SqlServer;
-#endif
 using System.Linq;
 using System.Runtime.Serialization;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
+
 using Newtonsoft.Json;
+
 using Rock.Data;
 using Rock.Model;
 

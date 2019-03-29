@@ -29,7 +29,6 @@ using Microsoft.EntityFrameworkCore;
 using Rock.Data;
 using Rock.Model;
 using Rock.Security;
-using Rock.Web.Cache;
 
 namespace Rock.Web.Cache
 {

@@ -21,7 +21,7 @@ using System.Web;
 #if IS_NET_CORE
 using Microsoft.AspNetCore.Http.Extensions;
 #endif
-using Rock;
+
 using Rock.Extension;
 using Rock.Model;
 using Rock.Web.Cache;

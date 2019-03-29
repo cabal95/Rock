@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 //
-using System;
-using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 
@@ -23,7 +21,6 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 #endif
 using Rock;
-using Rock.Data;
 
 namespace Rock.Model
 {

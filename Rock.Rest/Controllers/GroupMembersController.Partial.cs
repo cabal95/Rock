@@ -14,23 +14,23 @@
 // limitations under the License.
 // </copyright>
 //
-using System.Net.Http;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Web.Http;
-#if !IS_NET_CORE
 using System.Web.Http.OData;
 
-#else
+#if IS_NET_CORE
 using Microsoft.AspNet.OData;
 #endif
+
 using Rock.Data;
 using Rock.Model;
 using Rock.Rest.Filters;
 
 namespace Rock.Rest.Controllers
 {
-   public partial class GroupMembersController 
+    public partial class GroupMembersController 
     {
         /// <summary>
         /// Overrides base Get controller method to include deceased GroupMembers

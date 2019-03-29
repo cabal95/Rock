@@ -19,13 +19,14 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-#if !IS_NET_CORE
 using System.Web.Cors;
 using System.Web.Http.Cors;
-#else
+
+#if IS_NET_CORE
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Http;
 #endif
+
 using Rock.Web.Cache;
 
 namespace Rock.Rest

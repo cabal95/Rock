@@ -20,7 +20,6 @@ using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Data.Entity;
 using System.Linq;
-using System.Runtime.Caching;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;

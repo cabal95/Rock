@@ -28,11 +28,12 @@ using System.Runtime.Serialization;
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
-using Rock.Web.Cache;
+
 using Rock.Data;
 using Rock.UniversalSearch;
 using Rock.UniversalSearch.Crawler;
 using Rock.UniversalSearch.IndexModels;
+using Rock.Web.Cache;
 
 namespace Rock.Model
 {

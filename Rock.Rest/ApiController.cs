@@ -16,22 +16,18 @@
 //
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Reflection;
-#if !IS_NET_CORE
-using System.ServiceModel.Channels;
 using System.Web.Http;
 using System.Web.Http.OData;
 
-#else
+#if IS_NET_CORE
 using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Mvc;
 #endif
-using Rock;
+
 using Rock.Attribute;
 using Rock.Data;
 using Rock.Model;

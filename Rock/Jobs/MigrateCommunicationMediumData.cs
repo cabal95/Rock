@@ -22,7 +22,9 @@ using System.Linq;
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
+
 using Quartz;
+
 using Rock.Attribute;
 using Rock.Communication;
 using Rock.Data;

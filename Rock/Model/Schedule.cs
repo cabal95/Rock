@@ -22,6 +22,7 @@ using System.Data.Entity.ModelConfiguration;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+
 #if !IS_NET_CORE
 using DDay.iCal;
 #else
@@ -29,8 +30,10 @@ using DDay.iCal;
 using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
+
 using Microsoft.EntityFrameworkCore;
 #endif
+
 using Rock.Data;
 using Rock.Web.Cache;
 

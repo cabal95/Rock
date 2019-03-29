@@ -22,6 +22,7 @@ using System.Linq;
 #if IS_NET_CORE
 using NetTopologySuite.Geometries;
 #endif
+
 using Rock.Data;
 using Rock.Web.Cache;
 

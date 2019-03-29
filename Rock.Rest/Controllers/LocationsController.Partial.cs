@@ -14,19 +14,16 @@
 // limitations under the License.
 // </copyright>
 //
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Web.Http;
-#if !IS_NET_CORE
 using System.Web.Http.OData;
 
-#else
+#if IS_NET_CORE
 using Microsoft.AspNet.OData;
 #endif
-using Rock.Data;
+
 using Rock.Model;
 using Rock.Rest.Filters;
 using Rock.Web.Cache;

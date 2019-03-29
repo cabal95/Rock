@@ -17,20 +17,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
+#if IS_NET_CORE
 using System.Security.Claims;
+#endif
 using System.Security.Principal;
-#if !IS_NET_CORE
 using System.ServiceModel.Channels;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
-#else
+#if IS_NET_CORE
 using System.Threading.Tasks;
 
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Filters;
 #endif
 
 using Rock.Model;

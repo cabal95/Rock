@@ -18,14 +18,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Web.Http;
-#if !IS_NET_CORE
-using System.Web.Routing;
-#endif
+
 using Rock.Model;
 using Rock.Rest.Filters;
-using Rock.Web.Cache;
 using Rock.Security;
+using Rock.Web.Cache;
 using Rock.Web.UI.Controls;
 
 namespace Rock.Rest.Controllers

@@ -27,7 +27,6 @@ using Microsoft.EntityFrameworkCore;
 
 using Rock.Attribute;
 using Rock.Data;
-using Rock.Financial;
 using Rock.Model;
 
 namespace Rock.Workflow.Action

@@ -25,10 +25,10 @@ using System.Web.Http;
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
+
 using Rock.Data;
 using Rock.Model;
 using Rock.Rest.Filters;
-using Rock.Web.Cache;
 
 namespace Rock.Rest.Controllers
 {

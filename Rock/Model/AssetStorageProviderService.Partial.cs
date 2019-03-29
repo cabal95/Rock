@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 //
-using System;
-using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;

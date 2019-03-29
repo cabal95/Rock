@@ -14,10 +14,8 @@
 // limitations under the License.
 // </copyright>
 //
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
@@ -27,11 +25,9 @@ using System.Runtime.Serialization;
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
-using Newtonsoft.Json;
 
 using Rock.Data;
 using Rock.Web.Cache;
-using Rock.Security;
 
 namespace Rock.Model
 {

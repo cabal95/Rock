@@ -15,16 +15,13 @@
 // </copyright>
 //
 using System;
-using System.Collections.Generic;
 using System.Data.Entity.Spatial;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text.RegularExpressions;
 
 #if IS_NET_CORE
 using NetTopologySuite.Geometries;
 #endif
-using Rock.Data;
 
 namespace Rock.Model
 {

@@ -24,6 +24,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 #endif
+
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;

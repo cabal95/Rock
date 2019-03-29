@@ -23,18 +23,16 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data.Entity;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
-#if !IS_NET_CORE
-using System.Web.Http.OData;
 
-#else
+#if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
+
 using Rock;
 using Rock.Data;
 using Rock.Financial;

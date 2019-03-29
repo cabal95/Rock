@@ -17,13 +17,13 @@
 using System.Linq;
 using System.Net;
 using System.Web.Http;
-#if !IS_NET_CORE
 using System.Web.Http.OData;
-#else
 
+#if IS_NET_CORE
 using Microsoft.AspNet.OData;
 using Rock.Rest;
 #endif
+
 using Rock.Rest.Filters;
 
 namespace Rock.Controllers

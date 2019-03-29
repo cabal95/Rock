@@ -24,6 +24,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using DotLiquid;
+
 using Rock.Attribute;
 using Rock.Data;
 using Rock.Model;
@@ -690,6 +691,11 @@ namespace Rock
                 }
 
                 return result;
+            }
+            catch ( System.Threading.ThreadAbortException )
+            {
+                // Do nothing...it's just a Lava PageRedirect that just happened.
+                return string.Empty;
             }
             catch ( Exception ex )
             {

@@ -14,25 +14,17 @@
 // limitations under the License.
 // </copyright>
 //
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-#if !IS_NET_CORE
 using System.ServiceModel.Channels;
 using System.Web.Http;
 using System.Web.Http.OData;
-#endif
 
 #if IS_NET_CORE
 using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Mvc;
 #endif
+
 using Rock.Data;
 using Rock.Model;
-using Rock.Rest.Filters;
-using Rock.Security;
 
 namespace Rock.Rest
 {

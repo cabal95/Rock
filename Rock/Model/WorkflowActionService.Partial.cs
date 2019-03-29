@@ -14,11 +14,9 @@
 // limitations under the License.
 // </copyright>
 //
-using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
-using System.Web.Compilation;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;

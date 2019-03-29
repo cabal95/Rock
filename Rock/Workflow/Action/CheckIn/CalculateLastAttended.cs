@@ -25,9 +25,9 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 #endif
 
-using Rock.Web.Cache;
 using Rock.Data;
 using Rock.Model;
+using Rock.Web.Cache;
 
 namespace Rock.Workflow.Action.CheckIn
 {

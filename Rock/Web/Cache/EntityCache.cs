@@ -24,6 +24,7 @@ using System.Runtime.Serialization;
 using Microsoft.EntityFrameworkCore;
 #endif
 using Rock.Data;
+
 using DbContext = Rock.Data.DbContext;
 
 namespace Rock.Web.Cache

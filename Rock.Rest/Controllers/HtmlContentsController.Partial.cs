@@ -14,28 +14,11 @@
 // limitations under the License.
 // </copyright>
 //
-
-using System;
-using System.Collections.Generic;
-using System.Data.Entity;
-#if !IS_NET_CORE
-using System.Data.Entity.Spatial;
-#endif
-using System.Dynamic;
-using System.Linq;
-using System.Net;
-using System.Web;
 using System.Web.Http;
-#if !IS_NET_CORE
-using System.Web.Http.OData;
-#endif
 
 using Rock.Data;
 using Rock.Model;
 using Rock.Rest.Filters;
-using Rock.Web;
-using Rock.Web.Cache;
-using Rock.Web.UI.Controls;
 
 namespace Rock.Rest.Controllers
 {
