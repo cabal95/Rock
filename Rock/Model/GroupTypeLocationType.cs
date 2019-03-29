@@ -84,7 +84,7 @@ namespace Rock.Model
     }
 
 #if IS_NET_CORE
-    public class GroupTypeLocationTypeConfiguration : EntityTypeConfiguration<GroupTypeLocationType>
+    public class GroupTypeLocationTypeConfiguration : System.Data.Entity.ModelConfiguration.EntityTypeConfiguration<GroupTypeLocationType>
     {
         public GroupTypeLocationTypeConfiguration()
         {

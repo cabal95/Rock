@@ -20,7 +20,7 @@ using System.Data.Entity.Spatial;
 using System.Linq;
 
 #if IS_NET_CORE
-using NetTopologySuite.Geometries;
+using DbGeography = NetTopologySuite.Geometries.Geometry;
 #endif
 
 using Rock.Data;
@@ -184,11 +184,7 @@ namespace Rock.Model
         /// <param name="point">A <see cref="System.Data.Entity.Spatial.DbGeography"/> object
         ///     representing the Geopoint for the location.</param>
         /// <returns>The first <see cref="Rock.Model.Location"/> that matches the specified GeoPoint.</returns>
-#if IS_NET_CORE
-        public Location GetByGeoPoint( Geometry point )
-#else
         public Location GetByGeoPoint( DbGeography point )
-#endif
         {
             // get the first address that has a GeoPoint the value
             // use the 'Where Max(ID)' trick instead of TOP 1 to optimize SQL performance
@@ -232,11 +228,7 @@ namespace Rock.Model
         /// <param name="fence">A <see cref="System.Data.Entity.Spatial.DbGeography"/> object that
         ///  represents the GeoFence of the location to retrieve.</param>
         /// <returns>The <see cref="Rock.Model.Location"/> for the specified GeoFence. </returns>
-#if IS_NET_CORE
-        public Location GetByGeoFence( Geometry fence )
-#else
         public Location GetByGeoFence( DbGeography fence )
-#endif
         {
             // get the first address that has the GeoFence value
             // use the 'Where Max(ID)' trick instead of TOP 1 to optimize SQL performance
@@ -309,11 +301,7 @@ namespace Rock.Model
             string country = location.Country;
             string postalCode = location.PostalCode;
             string barcode = location.Barcode;
-#if IS_NET_CORE
-            var geoPoint = location.GeoPoint;
-#else
             DbGeography geoPoint = location.GeoPoint;
-#endif
 
             // Try each of the verification services that were found through MEF
             foreach ( var service in Rock.Address.VerificationContainer.Instance.Components )

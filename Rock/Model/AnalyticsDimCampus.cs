@@ -20,7 +20,7 @@ using System.Data.Entity.Spatial;
 using System.Runtime.Serialization;
 
 #if IS_NET_CORE
-using NetTopologySuite.Geometries;
+using DbGeography = NetTopologySuite.Geometries.Geometry;
 #endif
 using Rock.Data;
 
@@ -142,11 +142,7 @@ namespace Rock.Model
         /// </value>
         [DataMember]
         [Newtonsoft.Json.JsonConverter( typeof( DbGeographyConverter ) )]
-#if IS_NET_CORE
-        public Geometry AddressGeoPoint { get; set; }
-#else
         public DbGeography AddressGeoPoint { get; set; }
-#endif
 
         /// <summary>
         /// Gets or sets the geographic parameter around the a Location's Geopoint. This can also be used to define a large area
@@ -161,11 +157,7 @@ namespace Rock.Model
         /// </value>
         [DataMember]
         [Newtonsoft.Json.JsonConverter( typeof( DbGeographyConverter ) )]
-#if IS_NET_CORE
-        public Geometry AddressGeoFence { get; set; }
-#else
         public DbGeography AddressGeoFence { get; set; }
-#endif
 
         /// <summary> 
         /// Gets or sets the latitude. (From AddressGeoPoint)

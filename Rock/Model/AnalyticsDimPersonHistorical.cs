@@ -20,7 +20,7 @@ using System.Data.Entity.Spatial;
 using System.Runtime.Serialization;
 
 #if IS_NET_CORE
-using NetTopologySuite.Geometries;
+using DbGeography = NetTopologySuite.Geometries.Geometry;
 #endif
 
 using Rock.Data;
@@ -292,11 +292,7 @@ namespace Rock.Model
         /// </value>
         [DataMember]
         [Newtonsoft.Json.JsonConverter( typeof( DbGeographyConverter ) )]
-#if IS_NET_CORE
-        public Geometry MailingAddressGeoPoint { get; set; }
-#else
         public DbGeography MailingAddressGeoPoint { get; set; }
-#endif
 
         /// <summary>
         /// Gets or sets the geographic parameter around the a Location's Geopoint. This can also be used to define a large area
@@ -311,11 +307,7 @@ namespace Rock.Model
         /// </value>
         [DataMember]
         [Newtonsoft.Json.JsonConverter( typeof( DbGeographyConverter ) )]
-#if IS_NET_CORE
-        public Geometry MailingAddressGeoFence { get; set; }
-#else
         public DbGeography MailingAddressGeoFence { get; set; }
-#endif
 
         /// <summary> 
         /// Gets or sets the latitude. (From MailingAddressGeoPoint)
@@ -432,11 +424,7 @@ namespace Rock.Model
         /// </value>
         [DataMember]
         [Newtonsoft.Json.JsonConverter( typeof( DbGeographyConverter ) )]
-#if IS_NET_CORE
-        public Geometry MappedAddressGeoPoint { get; set; }
-#else
         public DbGeography MappedAddressGeoPoint { get; set; }
-#endif
 
         /// <summary>
         /// Gets or sets the geographic parameter around the a Location's Geopoint. This can also be used to define a large area
@@ -451,11 +439,7 @@ namespace Rock.Model
         /// </value>
         [DataMember]
         [Newtonsoft.Json.JsonConverter( typeof( DbGeographyConverter ) )]
-#if IS_NET_CORE
-        public Geometry MappedAddressGeoFence { get; set; }
-#else
         public DbGeography MappedAddressGeoFence { get; set; }
-#endif
 
         /// <summary>
         /// Gets or sets the latitude. (From MappedAddressGeoPoint)

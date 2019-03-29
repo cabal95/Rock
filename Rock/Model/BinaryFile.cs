@@ -39,7 +39,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.MetaData;
 using SixLabors.ImageSharp.Processing;
-using SixLabors.Primitives;
+using Size = SixLabors.Primitives.Size;
 #endif
 
 namespace Rock.Model

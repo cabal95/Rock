@@ -24,8 +24,10 @@ using System.Web.UI.WebControls;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
+
+using DbGeography = NetTopologySuite.Geometries.Geometry;
 #endif
+
 using Rock;
 using Rock.BulkExport;
 using Rock.Data;
@@ -2675,11 +2677,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="personId">The person identifier.</param>
         /// <returns></returns>
-#if IS_NET_CORE
-        public IQueryable<Geometry> GetGeopoints( int personId )
-#else
         public IQueryable<DbGeography> GetGeopoints( int personId )
-#endif
         {
             var rockContext = ( RockContext ) this.Context;
             var groupMemberService = new GroupMemberService( rockContext );
