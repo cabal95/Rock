@@ -518,6 +518,7 @@ namespace RockWeb.Blocks.Groups
             Group group;
             bool wasSecurityRole = false;
             bool triggersUpdated = false;
+            bool checkinDataUpdated = false;
 
             RockContext rockContext = new RockContext();
 
@@ -559,6 +560,7 @@ namespace RockWeb.Blocks.Groups
                 {
                     group.GroupLocations.Remove( groupLocation );
                     groupLocationService.Delete( groupLocation );
+                    checkinDataUpdated = true;
                 }
 
                 // remove any group requirements that removed in the UI
@@ -633,6 +635,8 @@ namespace RockWeb.Blocks.Groups
                         groupLocation.Schedules.Add( schedule );
                     }
                 }
+
+                checkinDataUpdated = true;
             }
 
             // Add/update GroupSyncs
@@ -894,6 +898,12 @@ namespace RockWeb.Blocks.Groups
             if ( triggersUpdated )
             {
                 GroupMemberWorkflowTriggerService.RemoveCachedTriggers();
+            }
+
+            // Flush the kiosk devices cache if this group updated check-in data and its group type takes attendance
+            if ( checkinDataUpdated && group.GroupType.TakesAttendance )
+            {
+                Rock.CheckIn.KioskDevice.Clear();
             }
 
             var qryParams = new Dictionary<string, string>();

@@ -927,17 +927,9 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
-#if IS_NET_CORE
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityState state )
-#else
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.EntityState state )
-#endif
         {
-#if IS_NET_CORE
             if (state == EntityState.Deleted)
-#else
-            if (state == System.Data.Entity.EntityState.Deleted)
-#endif
             {
                 ChildGroupTypes.Clear();
 
@@ -951,19 +943,11 @@ namespace Rock.Model
             }
 
             // clean up the index
-#if IS_NET_CORE
             if ( state == EntityState.Deleted && IsIndexEnabled )
-#else
-            if ( state == System.Data.Entity.EntityState.Deleted && IsIndexEnabled )
-#endif
             {
                 this.DeleteIndexedDocumentsByGroupType( this.Id );
             }
-#if IS_NET_CORE
             else if ( state == EntityState.Modified )
-#else
-            else if ( state == System.Data.Entity.EntityState.Modified )
-#endif
             {
                 // check if indexing is enabled
                 var changeEntry = dbContext.ChangeTracker.Entries<GroupType>().Where( a => a.Entity == this ).FirstOrDefault();
@@ -1157,11 +1141,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
-#if IS_NET_CORE
         public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
-#else
-        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
-#endif
         {
             var parentGroupTypeIds = new GroupTypeService( dbContext as RockContext ).GetParentGroupTypes( this.Id ).Select( a => a.Id ).ToList();
             if ( parentGroupTypeIds?.Any() == true )

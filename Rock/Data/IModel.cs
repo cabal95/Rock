@@ -15,6 +15,13 @@
 // </copyright>
 //
 using System;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
+#endif
 
 using Rock.Model;
 
@@ -95,11 +102,7 @@ namespace Rock.Data
         /// <summary>
         /// Method that will be called on an entity immediately before the item is saved
         /// </summary>
-#if IS_NET_CORE
-        void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry );
-#else
-        void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry );
-#endif
+        void PreSaveChanges( Rock.Data.DbContext dbContext, DbEntityEntry entry );
 
         /// <summary>
         /// Method that will be called on an entity immediately after the item is saved
@@ -113,11 +116,7 @@ namespace Rock.Data
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
         /// <param name="state">The state.</param>
-#if IS_NET_CORE
-        void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry, Microsoft.EntityFrameworkCore.EntityState state );
-#else
-        void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry, System.Data.Entity.EntityState state );
-#endif
+        void PreSaveChanges( Rock.Data.DbContext dbContext, DbEntityEntry entry, EntityState state );
 
         /// <summary>
         /// Gets the Created By audit HTML details.

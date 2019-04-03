@@ -21,6 +21,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration;
 using System.Data.Entity.SqlServer;
 using System.IO;
@@ -32,8 +33,9 @@ using System.Web;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
 #endif
+
 using Rock.Data;
 using Rock.UniversalSearch;
 using Rock.UniversalSearch.IndexModels;
@@ -1834,11 +1836,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityEntry entry )
-#else
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
-#endif
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, DbEntityEntry entry )
         {
             var rockContext = ( RockContext ) dbContext;
 
@@ -1945,11 +1943,7 @@ namespace Rock.Model
 
             switch ( entry.State )
             {
-#if IS_NET_CORE
                 case EntityState.Added:
-#else
-                case System.Data.Entity.EntityState.Added:
-#endif
                     {
                         HistoryChanges.AddChange( History.HistoryVerb.Add, History.HistoryChangeType.Record, "Person" ).SetNewValue( this.FullName );
 
@@ -1999,11 +1993,7 @@ namespace Rock.Model
                         break;
                     }
 
-#if IS_NET_CORE
                 case EntityState.Modified:
-#else
-                case System.Data.Entity.EntityState.Modified:
-#endif
                     {
                         History.EvaluateChange( HistoryChanges, "Record Type", entry.OriginalValues["RecordTypeValueId"].ToStringSafe().AsIntegerOrNull(), RecordTypeValue, RecordTypeValueId );
                         History.EvaluateChange( HistoryChanges, "Record Status", entry.OriginalValues["RecordStatusValueId"].ToStringSafe().AsIntegerOrNull(), RecordStatusValue, RecordStatusValueId );
@@ -2081,11 +2071,7 @@ namespace Rock.Model
                         break;
                     }
 
-#if IS_NET_CORE
                 case EntityState.Deleted:
-#else
-                case System.Data.Entity.EntityState.Deleted:
-#endif
                     {
                         HistoryChanges.AddChange( History.HistoryVerb.Delete, History.HistoryChangeType.Record, null );
 

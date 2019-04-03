@@ -19,6 +19,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -26,6 +28,7 @@ using System.Web.Routing;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
 #endif
 
 using Newtonsoft.Json;
@@ -500,17 +503,9 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityState state )
-#else
-        public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.EntityState state )
-#endif
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityState state )
         {
-#if IS_NET_CORE
             if (state == EntityState.Deleted)
-#else
-            if (state == System.Data.Entity.EntityState.Deleted)
-#endif
             {
                 Dictionary<string, object> parameters = new Dictionary<string, object>();
                 parameters.Add( "PageId", this.Id );
@@ -565,17 +560,9 @@ namespace Rock.Model
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
         /// <param name="state">The state.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry, EntityState state )
-#else
-        public override void PreSaveChanges( Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry, System.Data.Entity.EntityState state )
-#endif
+        public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry, EntityState state )
         {
-#if IS_NET_CORE
             if ( state == EntityState.Modified || state == EntityState.Deleted )
-#else
-            if ( state == System.Data.Entity.EntityState.Modified || state == System.Data.Entity.EntityState.Deleted )
-#endif
             {
                 _originalParentPageId = entry.OriginalValues["ParentPageId"]?.ToString().AsIntegerOrNull();
             }
@@ -597,11 +584,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
-#if IS_NET_CORE
         public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
-#else
-        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
-#endif
         {
             var oldPageCache = PageCache.Get( this.Id, (RockContext)dbContext );
             if ( oldPageCache != null )
@@ -613,20 +596,12 @@ namespace Rock.Model
 
             if ( this.ParentPageId.HasValue )
             {
-#if IS_NET_CORE
                 PageCache.UpdateCachedEntity( this.ParentPageId.Value, EntityState.Detached );
-#else
-                PageCache.UpdateCachedEntity( this.ParentPageId.Value, System.Data.Entity.EntityState.Detached );
-#endif
             }
 
             if ( _originalParentPageId.HasValue && _originalParentPageId != this.ParentPageId )
             {
-#if IS_NET_CORE
                 PageCache.UpdateCachedEntity( _originalParentPageId.Value, EntityState.Detached );
-#else
-                PageCache.UpdateCachedEntity( _originalParentPageId.Value, System.Data.Entity.EntityState.Detached );
-#endif
             }
         }
 

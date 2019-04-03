@@ -28,7 +28,7 @@ using System.Text;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
 #endif
 
 using Rock.Data;
@@ -736,11 +736,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Data.DbContext dbContext, EntityEntry entry )
-#else
         public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry )
-#endif
         {
             var rockContext = (RockContext)dbContext;
 
@@ -748,11 +744,7 @@ namespace Rock.Model
 
             switch ( entry.State )
             {
-#if IS_NET_CORE
                 case EntityState.Added:
-#else
-                case System.Data.Entity.EntityState.Added:
-#endif
                     {
                         HistoryChangeList.AddChange( History.HistoryVerb.Add, History.HistoryChangeType.Record, "Group").SetNewValue( Name );
 
@@ -775,11 +767,7 @@ namespace Rock.Model
                         break;
                     }
 
-#if IS_NET_CORE
                 case EntityState.Modified:
-#else
-                case System.Data.Entity.EntityState.Modified:
-#endif
                     {
                         var originalIsActive = entry.OriginalValues["IsActive"].ToStringSafe().AsBoolean();
                         History.EvaluateChange( HistoryChangeList, "Name", entry.OriginalValues["Name"].ToStringSafe(), Name );
@@ -810,11 +798,7 @@ namespace Rock.Model
                         break;
                     }
 
-#if IS_NET_CORE
                 case EntityState.Deleted:
-#else
-                case System.Data.Entity.EntityState.Deleted:
-#endif
                     {
                         HistoryChangeList.AddChange( History.HistoryVerb.Delete, History.HistoryChangeType.Record, null );
 
@@ -1051,17 +1035,9 @@ namespace Rock.Model
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
         /// <param name="state">The state.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Data.DbContext dbContext, EntityEntry entry, EntityState state )
-#else
         public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry, EntityState state )
-#endif
         {
-#if IS_NET_CORE
             if ( state == EntityState.Modified || state == EntityState.Deleted )
-#else
-            if ( state == System.Data.Entity.EntityState.Modified || state == System.Data.Entity.EntityState.Deleted )
-#endif
             {
                 _originalGroupTypeId = entry.OriginalValues["GroupTypeId"]?.ToString().AsIntegerOrNull();
                 _originalIsSecurityRole = entry.OriginalValues["IsSecurityRole"]?.ToString().AsBooleanOrNull();
@@ -1085,11 +1061,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
-#if IS_NET_CORE
         public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
-#else
-        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
-#endif
         {
             // If the group changed, and it was a security group, flush the security for the group
             Guid? originalGroupTypeGuid = null;

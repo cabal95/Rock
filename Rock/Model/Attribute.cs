@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
@@ -26,7 +27,7 @@ using System.Runtime.Serialization;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
 #endif
 
 using Rock.Data;
@@ -368,17 +369,9 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityState state )
-#else
-        public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.EntityState state )
-#endif
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityState state )
         {
-#if IS_NET_CORE
             if ( state != EntityState.Deleted )
-#else
-            if ( state != System.Data.Entity.EntityState.Deleted )
-#endif
             {
                 // ensure that the BinaryFile.IsTemporary flag is set to false for any BinaryFiles that are associated with this record
                 var fieldTypeCache = FieldTypeCache.Get( this.FieldTypeId );
@@ -425,17 +418,9 @@ namespace Rock.Model
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
         /// <param name="state">The state.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Data.DbContext dbContext, EntityEntry entry, EntityState state )
-#else
-        public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry, System.Data.Entity.EntityState state )
-#endif
+        public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry, EntityState state )
         {
-#if IS_NET_CORE
             if ( state == EntityState.Modified || state == EntityState.Deleted )
-#else
-            if ( state == System.Data.Entity.EntityState.Modified || state == System.Data.Entity.EntityState.Deleted )
-#endif
             {
                 originalEntityTypeId = entry.OriginalValues["EntityTypeId"]?.ToString().AsIntegerOrNull();
                 originalEntityTypeQualifierColumn = entry.OriginalValues["EntityTypeQualifierColumn"]?.ToString();
@@ -459,11 +444,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
-#if IS_NET_CORE
         public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
-#else
-        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
-#endif
         {
             AttributeCache.UpdateCachedEntity( this.Id, entityState );
             AttributeCache.UpdateCacheEntityAttributes( this, entityState );
@@ -472,11 +453,7 @@ namespace Rock.Model
             string entityTypeQualifierColumn;
             string entityTypeQualifierValue;
 
-#if IS_NET_CORE
             if ( entityState == EntityState.Deleted )
-#else
-            if ( entityState == System.Data.Entity.EntityState.Deleted )
-#endif
             {
                 entityTypeId = originalEntityTypeId;
                 entityTypeQualifierColumn = originalEntityTypeQualifierColumn;
@@ -496,11 +473,7 @@ namespace Rock.Model
 
             if ( ( !entityTypeId.HasValue || entityTypeId.Value == 0 ) && entityTypeQualifierColumn== Attribute.SYSTEM_SETTING_QUALIFIER && string.IsNullOrEmpty( entityTypeQualifierValue ) )
             {
-#if IS_NET_CORE
                 if ( entityState != EntityState.Modified )
-#else
-                if ( entityState != System.Data.Entity.EntityState.Modified )
-#endif
                 {
                     // if a SystemSettings was Added or Removed, flush the SystemSettings cache (if it was only modified, it'll will point to the updated AttributeCache value)
                     Rock.Web.SystemSettings.Remove();

@@ -17,10 +17,17 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Data.Services;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
+#endif
 
 using Rock.Attribute;
 using Rock.Model;
@@ -214,11 +221,7 @@ namespace Rock.Data
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="state"></param>
-#if IS_NET_CORE
-        public virtual void PreSaveChanges(  Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.EntityState state )
-#else
-        public virtual void PreSaveChanges(  Rock.Data.DbContext dbContext, System.Data.Entity.EntityState state )
-#endif
+        public virtual void PreSaveChanges(  Rock.Data.DbContext dbContext, EntityState state )
         {
         }
 
@@ -227,11 +230,7 @@ namespace Rock.Data
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
-#if IS_NET_CORE
-        public virtual void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
-#else
-        public virtual void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
-#endif
+        public virtual void PreSaveChanges( Rock.Data.DbContext dbContext, DbEntityEntry entry )
         {
             PreSaveChanges( dbContext, entry.State );
         }
@@ -242,11 +241,7 @@ namespace Rock.Data
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
         /// <param name="state">The state.</param>
-#if IS_NET_CORE
-        public virtual void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry, Microsoft.EntityFrameworkCore.EntityState state )
-#else
-        public virtual void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry, System.Data.Entity.EntityState state )
-#endif
+        public virtual void PreSaveChanges( Rock.Data.DbContext dbContext, DbEntityEntry entry, EntityState state )
         {
             PreSaveChanges( dbContext, entry );
         }

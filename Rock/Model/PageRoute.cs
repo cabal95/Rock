@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
@@ -25,7 +26,7 @@ using System.Web.Routing;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
 #endif
 
 using Newtonsoft.Json;
@@ -104,17 +105,9 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityEntry entry )
-#else
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, DbEntityEntry entry )
-#endif
         {
-#if IS_NET_CORE
             if ( entry.State == EntityState.Deleted )
-#else
-            if ( entry.State == System.Data.Entity.EntityState.Deleted )
-#endif
             {
 #if false
                 // EFTODO: Dependency on WebForms, probably need custom router implementation.

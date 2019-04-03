@@ -17,6 +17,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -24,6 +25,10 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using DotLiquid;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 
 using Rock.Attribute;
 using Rock.Data;
@@ -245,11 +250,7 @@ namespace Rock
                                 if ( entityDbContext != null )
                                 {
                                     var entryCollection = entityDbContext.Entry( myObject )?.Collection( key );
-#if IS_NET_CORE
-                                    if ( entryCollection.EntityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Detached )
-#else
-                                    if ( entryCollection.EntityEntry.State == System.Data.Entity.EntityState.Detached )
-#endif
+                                    if ( entryCollection.EntityEntry.State == EntityState.Detached )
                                     {
                                         // create a sample since we can't fetch real data
                                         Type listOfType = propType.GenericTypeArguments[0];
@@ -526,7 +527,7 @@ namespace Rock
         /// </summary>
         /// <param name="entity">The entity.</param>
         /// <returns></returns>
-        private static DbContext GetDbContextFromEntity( object entity )
+        private static Data.DbContext GetDbContextFromEntity( object entity )
         {
 #if IS_NET_CORE
             if ( !( entity is Microsoft.EntityFrameworkCore.Proxies.Internal.IProxyLazyLoader proxy ) )
@@ -535,7 +536,7 @@ namespace Rock
             }
 
             var contextProperty = proxy.LazyLoader.GetType().GetProperty( "Context", BindingFlags.NonPublic | BindingFlags.Instance );
-            return contextProperty.GetValue( proxy ) as DbContext;
+            return contextProperty.GetValue( proxy ) as Data.DbContext;
 #else
             FieldInfo entityWrapperField = entity.GetType().GetField( "_entityWrapper" );
 
@@ -546,7 +547,7 @@ namespace Rock
             PropertyInfo entityWrapperContextProperty = entityWrapper.GetType().GetProperty( "Context" );
             var context = ( System.Data.Entity.Core.Objects.ObjectContext ) entityWrapperContextProperty.GetValue( entityWrapper, null );
 
-            return context?.TransactionHandler?.DbContext as DbContext;
+            return context?.TransactionHandler?.DbContext as Data.DbContext;
 #endif
         }
 

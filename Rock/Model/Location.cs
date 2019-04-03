@@ -674,11 +674,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
-#if IS_NET_CORE
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityState state )
-#else
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.EntityState state )
-#endif
         {
             if ( ImageId.HasValue )
             {
@@ -848,11 +844,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
-#if IS_NET_CORE
         public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
-#else
-        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
-#endif
         {
             // Make sure CampusCache.All is cached using the dbContext (to avoid deadlock if snapshot isolation is disabled)
             var campusId = this.GetCampusId( dbContext as RockContext );

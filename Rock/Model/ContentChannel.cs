@@ -18,9 +18,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 
 using Rock.Data;
 using Rock.Transactions;
@@ -348,35 +353,19 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( DbContext dbContext, Microsoft.EntityFrameworkCore.EntityState state )
-#else
-        public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.EntityState state )
-#endif
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityState state )
         {
-#if IS_NET_CORE
-            if ( state == Microsoft.EntityFrameworkCore.EntityState.Deleted )
-#else
-            if ( state == System.Data.Entity.EntityState.Deleted )
-#endif
+            if ( state == EntityState.Deleted )
             {
                 ChildContentChannels.Clear();
             }
 
             // clean up the index
-#if IS_NET_CORE
-            if ( state == Microsoft.EntityFrameworkCore.EntityState.Deleted && IsIndexEnabled )
-#else
-            if ( state == System.Data.Entity.EntityState.Deleted && IsIndexEnabled )
-#endif
+            if ( state == EntityState.Deleted && IsIndexEnabled )
             {
                 this.DeleteIndexedDocumentsByContentChannel( Id );
             }
-#if IS_NET_CORE
-            else if ( state == Microsoft.EntityFrameworkCore.EntityState.Modified )
-#else
-            else if ( state == System.Data.Entity.EntityState.Modified )
-#endif
+            else if ( state == EntityState.Modified )
             {
                 // check if indexing is enabled
                 var changeEntry = dbContext.ChangeTracker.Entries<ContentChannel>().Where( a => a.Entity == this ).FirstOrDefault();
@@ -428,11 +417,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
-#if IS_NET_CORE
-        public void UpdateCache( Microsoft.EntityFrameworkCore.EntityState entityState, Rock.Data.DbContext dbContext )
-#else
-        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
-#endif
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
         {
             ContentChannelCache.UpdateCachedEntity( this.Id, entityState );
         }

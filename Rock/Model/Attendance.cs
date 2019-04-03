@@ -16,10 +16,17 @@
 //
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
+#endif
 
 using Rock.Data;
 using Rock.Web.Cache;
@@ -562,11 +569,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
-#else
-        public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
-#endif
+        public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry )
         {
             var transaction = new Rock.Transactions.GroupAttendedTransaction( entry );
             Rock.Transactions.RockQueue.TransactionQueue.Enqueue( transaction );
@@ -584,17 +587,9 @@ namespace Rock.Model
         /// <param name="entry">The entry.</param>
         [RockObsolete( "1.8" )]
         [Obsolete]
-#if IS_NET_CORE
-        private void ProcessObsoleteOccurrenceFields( Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
-#else
-        private void ProcessObsoleteOccurrenceFields( System.Data.Entity.Infrastructure.DbEntityEntry entry )
-#endif
+        private void ProcessObsoleteOccurrenceFields( DbEntityEntry entry )
         {
-#if IS_NET_CORE
-            if ( entry.State == Microsoft.EntityFrameworkCore.EntityState.Modified || entry.State == Microsoft.EntityFrameworkCore.EntityState.Added )
-#else
-            if ( entry.State == System.Data.Entity.EntityState.Modified || entry.State == System.Data.Entity.EntityState.Added )
-#endif
+            if ( entry.State == EntityState.Modified || entry.State == EntityState.Added )
             {
                 // NOTE: If they only changed StartDateTime, don't change the Occurrence record. We want to support letting StartDateTime be a different Date than the OccurenceDate in that situation
                 if ( _updatedObsoleteGroupId || _updatedObsoleteLocationId || _updatedObsoleteScheduleId || _updatedObsoleteDidNotOccur )

@@ -17,8 +17,15 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration;
 using System.Runtime.Serialization;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
+#endif
 
 using Rock.Data;
 
@@ -133,17 +140,9 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
-#else
-        public override void PreSaveChanges( DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
-#endif
+        public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry )
         {
-#if IS_NET_CORE
-            if ( entry.State == Microsoft.EntityFrameworkCore.EntityState.Added )
-#else
-            if ( entry.State == System.Data.Entity.EntityState.Added )
-#endif
+            if ( entry.State == EntityState.Added )
             {
                 var transaction = new Rock.Transactions.ConnectionRequestActivityChangeTransaction( entry );
                 Rock.Transactions.RockQueue.TransactionQueue.Enqueue( transaction );

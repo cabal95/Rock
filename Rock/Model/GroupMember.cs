@@ -20,6 +20,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -28,6 +29,7 @@ using Humanizer;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
 #endif
 
 using Rock.Data;
@@ -273,11 +275,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
-#else
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
-#endif
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, DbEntityEntry entry )
         {
             var changeTransaction = new Rock.Transactions.GroupMemberChangeTransaction( entry );
             Rock.Transactions.RockQueue.TransactionQueue.Enqueue( changeTransaction );
@@ -290,11 +288,7 @@ namespace Rock.Model
 
             switch ( entry.State )
             {
-#if IS_NET_CORE
                 case EntityState.Added:
-#else
-                case System.Data.Entity.EntityState.Added:
-#endif
                     {
                         oldPersonId = null;
                         newPersonId = PersonId;
@@ -310,11 +304,7 @@ namespace Rock.Model
                         break;
                     }
 
-#if IS_NET_CORE
                 case EntityState.Modified:
-#else
-                case System.Data.Entity.EntityState.Modified:
-#endif
                     {
                         oldPersonId = entry.OriginalValues["PersonId"].ToStringSafe().AsIntegerOrNull();
                         newPersonId = PersonId;
@@ -325,11 +315,7 @@ namespace Rock.Model
                         break;
                     }
 
-#if IS_NET_CORE
                 case EntityState.Deleted:
-#else
-                case System.Data.Entity.EntityState.Deleted:
-#endif
                     {
                         oldPersonId = entry.OriginalValues["PersonId"].ToStringSafe().AsIntegerOrNull();
                         newPersonId = null;
@@ -939,11 +925,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
-#if IS_NET_CORE
-        public void UpdateCache( Microsoft.EntityFrameworkCore.EntityState entityState, Rock.Data.DbContext dbContext )
-#else
-        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
-#endif
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
         {
             var group = this.Group ?? new GroupService( new RockContext() ).GetNoTracking( this.GroupId );
             if ( group != null )

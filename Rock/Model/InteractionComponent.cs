@@ -16,12 +16,14 @@
 //
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration;
 using System.Runtime.Serialization;
 
 #if IS_NET_CORE
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
 #endif
 
 using Rock.Data;
@@ -107,11 +109,7 @@ namespace Rock.Model
         public virtual InteractionChannel Channel { get; set; }
 
         [NotMapped]
-#if IS_NET_CORE
-        private Microsoft.EntityFrameworkCore.EntityState SaveState { get; set; }
-#else
-        private System.Data.Entity.EntityState SaveState { get; set; }
-#endif
+        private EntityState SaveState { get; set; }
 
         #endregion
 
@@ -122,11 +120,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( DbContext dbContext, EntityEntry entry )
-#else
-        public override void PreSaveChanges( DbContext dbContext, DbEntityEntry entry )
-#endif
+        public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry )
         {
             this.SaveState = entry.State;
             base.PreSaveChanges( dbContext, entry );
@@ -138,22 +132,12 @@ namespace Rock.Model
         /// <param name="dbContext">The database context.</param>
         public override void PostSaveChanges( Data.DbContext dbContext )
         {
-#if IS_NET_CORE
-            if ( this.SaveState == Microsoft.EntityFrameworkCore.EntityState.Added ||
-                this.SaveState == Microsoft.EntityFrameworkCore.EntityState.Deleted )
-#else
-            if ( this.SaveState == System.Data.Entity.EntityState.Added ||
-                this.SaveState == System.Data.Entity.EntityState.Deleted )
-#endif
+            if ( this.SaveState == EntityState.Added || this.SaveState == EntityState.Deleted )
             {
                 var channel = InteractionChannelCache.Get( this.ChannelId );
                 if ( channel != null )
                 {
-#if IS_NET_CORE
-                    if ( this.SaveState == Microsoft.EntityFrameworkCore.EntityState.Added )
-#else
-                    if ( this.SaveState == System.Data.Entity.EntityState.Added )
-#endif
+                    if ( this.SaveState == EntityState.Added )
                     {
                         channel.AddComponentId( this.Id );
                     }
@@ -185,11 +169,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
-#if IS_NET_CORE
-        public void UpdateCache( Microsoft.EntityFrameworkCore.EntityState entityState, Rock.Data.DbContext dbContext )
-#else
-        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
-#endif
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
         {
             InteractionComponentCache.UpdateCachedEntity( this.Id, this.SaveState );
         }

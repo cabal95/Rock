@@ -23,6 +23,7 @@ using System.Runtime.Serialization;
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
+
 using Rock.Data;
 
 using DbContext = Rock.Data.DbContext;
@@ -247,11 +248,7 @@ namespace Rock.Web.Cache
         /// </summary>
         /// <param name="entityId">The entity identifier.</param>
         /// <param name="entityState">State of the entity. If unknown, use <see cref="EntityState.Detached" /></param>
-#if IS_NET_CORE
         public static void UpdateCachedEntity( int entityId, EntityState entityState )
-#else
-        public static void UpdateCachedEntity( int entityId, System.Data.Entity.EntityState entityState )
-#endif
         {
             // NOTE: Don't read the Item into the Cache here since it could be part of a transaction that could be rolled back.
             // Reading it from the database here could also cause a deadlock depending on the database isolation level.

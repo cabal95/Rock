@@ -418,19 +418,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="state">The state.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Data.DbContext dbContext, Microsoft.EntityFrameworkCore.EntityState state )
-#else
-        public override void PreSaveChanges( Data.DbContext dbContext, System.Data.Entity.EntityState state )
-#endif
+        public override void PreSaveChanges( Data.DbContext dbContext, EntityState state )
         {
             var channel = this.ContentChannel;
 
-#if IS_NET_CORE
-            if ( state == Microsoft.EntityFrameworkCore.EntityState.Deleted )
-#else
-            if ( state == System.Data.Entity.EntityState.Deleted )
-#endif
+            if ( state == EntityState.Deleted )
             {
                 ChildItems.Clear();
                 ParentItems.Clear();

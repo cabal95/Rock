@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
@@ -25,8 +26,9 @@ using System.Runtime.Serialization;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
 #endif
+
 using Rock.Data;
 using Rock.Web.Cache;
 
@@ -197,11 +199,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="entry"></param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, EntityEntry entry )
-#else
-        public override void PreSaveChanges( DbContext dbContext, DbEntityEntry entry )
-#endif
+        public override void PreSaveChanges( Data.DbContext dbContext, DbEntityEntry entry )
         {
             var rockContext = (RockContext)dbContext;
 
@@ -209,11 +207,7 @@ namespace Rock.Model
 
             switch ( entry.State )
             {
-#if IS_NET_CORE
                 case EntityState.Added:
-#else
-                case System.Data.Entity.EntityState.Added:
-#endif
                     {
                         string locationType = History.GetDefinedValueValue( null, GroupLocationTypeValueId );
                         locationType = locationType.IsNotNullOrWhiteSpace() ? locationType : "Unknown";
@@ -224,11 +218,7 @@ namespace Rock.Model
                         break;
                     }
 
-#if IS_NET_CORE
                 case EntityState.Modified:
-#else
-                case System.Data.Entity.EntityState.Modified:
-#endif
                     {
                         string locationTypeName = DefinedValueCache.GetName( GroupLocationTypeValueId ) ?? "Unknown";
                         int? oldLocationTypeId = entry.OriginalValues["GroupLocationTypeValueId"].ToStringSafe().AsIntegerOrNull();
@@ -249,11 +239,7 @@ namespace Rock.Model
                         break;
                     }
 
-#if IS_NET_CORE
                 case EntityState.Deleted:
-#else
-                case System.Data.Entity.EntityState.Deleted:
-#endif
                     {
                         string locationType = History.GetDefinedValueValue( null, entry.OriginalValues["GroupLocationTypeValueId"].ToStringSafe().AsIntegerOrNull() );
                         locationType = locationType.IsNotNullOrWhiteSpace() ? locationType : "Unknown";

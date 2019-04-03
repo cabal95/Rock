@@ -17,6 +17,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
 using System.Runtime.Serialization;
 
@@ -251,27 +252,15 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
-#if IS_NET_CORE
         public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
-#else
-        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
-#endif
         {
             var workflowTypeId = WorkflowActivityTypeCache.Get( this.ActivityTypeId, dbContext as RockContext )?.WorkflowTypeId;
             if ( workflowTypeId.HasValue )
             {
-#if IS_NET_CORE
                 WorkflowTypeCache.UpdateCachedEntity( workflowTypeId.Value, EntityState.Modified );
-#else
-                WorkflowTypeCache.UpdateCachedEntity( workflowTypeId.Value, System.Data.Entity.EntityState.Modified );
-#endif
             }
 
-#if IS_NET_CORE
-            WorkflowActivityTypeCache.UpdateCachedEntity( this.ActivityTypeId, EntityState.Modified );
-#else
-            WorkflowActivityTypeCache.UpdateCachedEntity( this.ActivityTypeId, System.Data.Entity.EntityState.Modified ); 
-#endif
+            WorkflowActivityTypeCache.UpdateCachedEntity( this.ActivityTypeId, EntityState.Modified ); 
             WorkflowActionTypeCache.UpdateCachedEntity( this.Id, entityState );
         }
 

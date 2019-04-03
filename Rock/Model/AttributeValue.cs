@@ -20,12 +20,14 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
 #endif
 
 using Newtonsoft.Json;
@@ -376,11 +378,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
-#if IS_NET_CORE
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
-#else
-        public override void PreSaveChanges( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
-#endif
+        public override void PreSaveChanges( Rock.Data.DbContext dbContext, DbEntityEntry entry )
         {
             var attributeCache = AttributeCache.Get( this.AttributeId );
             if ( attributeCache != null )
@@ -484,11 +482,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
-#if IS_NET_CORE
-        protected void PreSaveBinaryFile( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry )
-#else
-        protected void PreSaveBinaryFile( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry )
-#endif
+        protected void PreSaveBinaryFile( Rock.Data.DbContext dbContext, DbEntityEntry entry )
         {
             Guid? newBinaryFileGuid = null;
             Guid? oldBinaryFileGuid = null;
@@ -530,11 +524,7 @@ namespace Rock.Model
         /// <param name="entry">The entry.</param>
         /// <param name="attributeCache">The attribute cache.</param>
         /// <param name="saveToHistoryTable">if set to <c>true</c> [save to history table].</param>
-#if IS_NET_CORE
-        protected void SaveToHistoryTable( Rock.Data.DbContext dbContext, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry, AttributeCache attributeCache, bool saveToHistoryTable )
-#else
-        protected void SaveToHistoryTable( Rock.Data.DbContext dbContext, System.Data.Entity.Infrastructure.DbEntityEntry entry, AttributeCache attributeCache, bool saveToHistoryTable )
-#endif
+        protected void SaveToHistoryTable( Rock.Data.DbContext dbContext, DbEntityEntry entry, AttributeCache attributeCache, bool saveToHistoryTable )
         {
             string oldValue = string.Empty;
             string newValue = string.Empty;
@@ -633,11 +623,7 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
-#if IS_NET_CORE
-        public void UpdateCache( Microsoft.EntityFrameworkCore.EntityState entityState, Rock.Data.DbContext dbContext )
-#else
-        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
-#endif
+        public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
         {
             AttributeCache cacheAttribute = AttributeCache.Get( this.AttributeId, dbContext as RockContext );
 

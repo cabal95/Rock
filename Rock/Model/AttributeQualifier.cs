@@ -16,12 +16,15 @@
 //
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
 using System.Runtime.Serialization;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
 #endif
+
 using Rock.Data;
 using Rock.Web.Cache;
 
@@ -114,18 +117,10 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityState">State of the entity.</param>
         /// <param name="dbContext">The database context.</param>
-#if IS_NET_CORE
         public void UpdateCache( EntityState entityState, Rock.Data.DbContext dbContext )
-#else
-        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
-#endif
         {
             // AttributeCache has QualifierValues that could get stale if AttributeQualifier is modified
-#if IS_NET_CORE
             AttributeCache.UpdateCachedEntity( this.AttributeId, EntityState.Modified );
-#else
-            AttributeCache.UpdateCachedEntity( this.AttributeId, System.Data.Entity.EntityState.Modified );
-#endif
         }
 
         #endregion
