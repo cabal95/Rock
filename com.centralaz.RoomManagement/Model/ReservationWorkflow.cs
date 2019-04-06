@@ -49,7 +49,6 @@ namespace com.centralaz.RoomManagement.Model
         /// <value>
         /// The reservation workflow trigger identifier.
         /// </value>
-        [Required]
         [DataMember]
         public int? ReservationWorkflowTriggerId { get; set; }
 
