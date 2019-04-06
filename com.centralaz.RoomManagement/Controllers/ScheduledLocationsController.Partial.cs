@@ -90,7 +90,7 @@ namespace Rock.Rest.Controllers
             var newReservation = new Reservation() { Id = reservationId ?? 0, Schedule = new Schedule() { iCalendarContent = iCalendarContent }, SetupTime = setupTime, CleanupTime = cleanupTime };
 
             var reservationService = new ReservationService( rockContext );
-            List<int> reservedLocationIds = reservationService.GetReservedLocationIds( newReservation );
+            List<int> reservedLocationIds = reservationService.GetReservedLocationIds( newReservation, false );
 
             foreach ( var location in qry.OrderBy( l => l.Name ) )
             {

@@ -1758,6 +1758,8 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                     }
                 }
 
+                LoadPickers();
+
                 hfApprovalState.Value = reservation.ApprovalState.ConvertToString();
             }
         }

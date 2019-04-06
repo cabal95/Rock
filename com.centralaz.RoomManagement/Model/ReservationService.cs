@@ -173,7 +173,7 @@ namespace com.centralaz.RoomManagement.Model
             bool hasConflict = false;
             StringBuilder sb = new StringBuilder();
             sb.Append( "<b>The following items are already reserved for the scheduled times:<br><ul>" );
-            var reservedLocationIds = GetReservedLocationIds( reservation );
+            var reservedLocationIds = GetReservedLocationIds( reservation, true );
 
             // Check self
             string message = string.Empty;
@@ -469,7 +469,7 @@ namespace com.centralaz.RoomManagement.Model
         /// </summary>
         /// <param name="newReservation">The new reservation.</param>
         /// <returns></returns>
-        public List<int> GetReservedLocationIds( Reservation newReservation )
+        public List<int> GetReservedLocationIds( Reservation newReservation, bool filterByLocations = true )
         {
             var locationService = new LocationService( new RockContext() );
 
@@ -481,8 +481,12 @@ namespace com.centralaz.RoomManagement.Model
             relevantLocationIds.AddRange( newReservationLocationIds.SelectMany( l => locationService.GetAllDescendentIds( l ) ) );
 
             // Get any Reservations containing related Locations
-            var existingReservationQry = Queryable().Where( r => r.ReservationLocations.Any( rl => relevantLocationIds.Contains( rl.LocationId ) ) );
-
+            var existingReservationQry = Queryable();
+            if ( filterByLocations )
+            {
+                existingReservationQry = existingReservationQry.Where( r => r.ReservationLocations.Any( rl => relevantLocationIds.Contains( rl.LocationId ) ) );
+            }
+                
             // Check existing Reservations for conflicts
             IEnumerable<ReservationSummary> conflictingReservationSummaries = GetConflictingReservationSummaries( newReservation, existingReservationQry );
 
