@@ -206,8 +206,11 @@ namespace Rock.Storage.AssetStorage
                 FileInfo fileInfo = new FileInfo( physicalFile );
 
                 var objAsset = CreateAssetFromFileInfo( assetStorageProvider, fileInfo, createThumbnail );
-                FileStream fs = new FileStream( physicalFile, FileMode.Open );
-                objAsset.AssetStream = fs;
+                using ( FileStream fs = new FileStream( physicalFile, FileMode.Open ) )
+                {
+                    objAsset.AssetStream = new MemoryStream();
+                    fs.CopyTo( objAsset.AssetStream );
+                }
 
                 return objAsset;
             }
@@ -456,6 +459,9 @@ namespace Rock.Storage.AssetStorage
 
             string virtualThumbPath = Path.Combine( thumbDir, name );
             string physicalThumbPath = FileSystemCompontHttpContext.Server.MapPath( virtualThumbPath );
+
+            // Encode the name thumb path since it can contain special characters
+            virtualThumbPath = virtualThumbPath.EncodeHtml();
 
             if ( File.Exists( physicalThumbPath ) )
             {
