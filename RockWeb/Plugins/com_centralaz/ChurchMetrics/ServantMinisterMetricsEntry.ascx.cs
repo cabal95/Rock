@@ -700,12 +700,19 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                         {
                             var holidayCategoryIds = new List<int>();
                             holidayCategoryIds.Add( holidayScheduleCategory.Id );
-                            if ( holidayScheduleCategory.Categories.Any() )
+
+                            // check all descendents since holiday categories can be deeply nested.
+                            var descendentHolidaySchedules = new CategoryService( rockContext )
+                                .GetAllDescendents( holidayScheduleCategory.Guid )
+                                .Select( c => c.Id )
+                                .ToList();
+
+                            if ( descendentHolidaySchedules.Any() )
                             {
-                                holidayCategoryIds.AddRange( holidayScheduleCategory.Categories.Select( c => c.Id ).ToList() );
+                                holidayCategoryIds.AddRange( descendentHolidaySchedules );
                             }
 
-                            foreach ( var schedule in GetSchedulesInCategoriesOccurringToday( scheduleService, holidayCategoryIds ) )
+                            foreach ( var schedule in GetSchedulesInCategoriesOccurringToday( scheduleService, holidayCategoryIds, true ) )
                             {
                                 services.Add( schedule );
                             }
@@ -743,7 +750,7 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                             }
 
                             // Grab any schedules occurring today that are in the provided categories
-                            foreach ( var schedule in GetSchedulesInCategoriesOccurringToday( scheduleService, categoryIds ) )
+                            foreach ( var schedule in GetSchedulesInCategoriesOccurringToday( scheduleService, categoryIds, false ) )
                             {
                                 services.Add( schedule );
                             }
@@ -764,7 +771,7 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
         /// <param name="scheduleService">The schedule service.</param>
         /// <param name="categoryIds">The category ids.</param>
         /// <returns></returns>
-        private static List<Schedule> GetSchedulesInCategoriesOccurringToday( ScheduleService scheduleService, List<int> categoryIds )
+        private static List<Schedule> GetSchedulesInCategoriesOccurringToday( ScheduleService scheduleService, List<int> categoryIds, bool isHoliday )
         {
             var schedules = new List<Schedule>();
 
@@ -779,13 +786,16 @@ namespace RockWeb.Plugins.com_centralaz.ChurchMetrics
                 if (
                     /* 
                         * Here we grab schedules if
-                        *  1) Their EffectiveStartDate (First time they occur) is the same as today's date. This
-                        *      is used for non-reccurring schedules such as holiday schedules or one-off events.
-                        *  2) Their NextStartDateTime DayOfWeek matches today's day of week. This is used for reccurring
+                        *  1) Their EffectiveStartDate (First time they occur) is the same as today's date and it's a holiday schedule. This
+                        *      is used for non-reccurring schedules such as holiday schedules.
+                        *  2) Their EffectiveStartDate (First time they occur) is the same as today's date and it's NOT a holiday schedule. This
+                        *      is used for non-reccurring schedules such as one-off events.
+                        *  3) Their NextStartDateTime DayOfWeek matches today's day of week. This is used for reccurring
                         *      schedules such as weekend schedules or Trek
                         */
-                    ( schedule.EffectiveStartDate.HasValue && schedule.EffectiveStartDate.Value.Date == RockDateTime.Now.Date ) ||
-                    ( nextStartDate.HasValue && nextStartDate.Value.DayOfWeek == RockDateTime.Now.DayOfWeek ) )
+                    ( isHoliday && schedule.EffectiveStartDate.HasValue && schedule.EffectiveStartDate.Value.Date == RockDateTime.Now.Date ) ||
+                    ( !isHoliday && schedule.EffectiveStartDate.HasValue && schedule.EffectiveStartDate.Value.Date == RockDateTime.Now.Date ) ||
+                    ( !isHoliday && nextStartDate.HasValue && nextStartDate.Value.DayOfWeek == RockDateTime.Now.DayOfWeek ) )
                 {
                     schedules.Add( schedule );
                 }
