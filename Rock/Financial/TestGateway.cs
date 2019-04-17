@@ -15,27 +15,155 @@
 // </copyright>
 //
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Web.UI;
 
 using Rock.Attribute;
 using Rock.Model;
 using Rock.Web.Cache;
+using Rock.Web.UI.Controls;
 
 namespace Rock.Financial
 {
     /// <summary>
     /// Test Payment Gateway
     /// </summary>
-    [Description( "Test Payment Gateway" )]
+    [DisplayName( "Test Payment Gateway" )]
+    [Description( "Provides a way to test CC transactions without actually charging any money." )]
     [Export( typeof( GatewayComponent ) )]
     [ExportMetadata( "ComponentName", "TestGateway" )]
 
     [TextField( "Declined Card Numbers", "Enter partial card numbers that you wish to be declined separated by commas. Any card number that ends with a number matching a value entered here will be declined.", false, "", "", 0 )]
-    public class TestGateway : GatewayComponent, IAutomatedGatewayComponent
+    public class TestGateway : GatewayComponent, IAutomatedGatewayComponent, IHostedGatewayComponent
     {
+        #region IHostedGatewayComponent Implementation
+
+        /// <summary>
+        /// Gets the URL that the Gateway Information UI will navigate to when they click the 'Configure' link
+        /// </summary>
+        /// <value>
+        /// The configure URL.
+        /// </value>
+        public string ConfigureURL => "https://www.rockrms.com/";
+
+        /// <summary>
+        /// Gets the URL that the Gateway Information UI will navigate to when they click the 'Learn More' link
+        /// </summary>
+        /// <value>
+        /// The learn more URL.
+        /// </value>
+        public string LearnMoreURL => "https://www.rockrms.com/pricing/";
+
+        /// <summary>
+        /// Gets the hosted payment information control which will be used to collect CreditCard, ACH fields
+        /// Note: A HostedPaymentInfoControl can optionally implement <seealso cref="IHostedGatewayPaymentControl" />
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="enableACH">if set to <c>true</c> [enable ach]. (Credit Card is always enabled)</param>
+        /// <param name="controlId">The control identifier.</param>
+        /// <returns></returns>
+        public Control GetHostedPaymentInfoControl( FinancialGateway financialGateway, bool enableACH, string controlId )
+        {
+            return new CreditCard
+            {
+                ID = controlId,
+                PromptForNameOnCard = false
+            };
+        }
+
+        /// <summary>
+        /// Gets the JavaScript needed to tell the hostedPaymentInfoControl to get send the paymentInfo and get a token.
+        /// Have your 'Next' or 'Submit' call this so that the hostedPaymentInfoControl will fetch the token/response
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="hostedPaymentInfoControl">The hosted payment information control.</param>
+        /// <returns></returns>
+        public string GetHostPaymentInfoSubmitScript( FinancialGateway financialGateway, Control hostedPaymentInfoControl )
+        {
+            return $"window.location = $('#{hostedPaymentInfoControl.ClientID}').data('postback-script');";
+        }
+
+        /// <summary>
+        /// Gets the paymentInfoToken that the hostedPaymentInfoControl returned (see also <seealso cref="M:Rock.Financial.IHostedGatewayComponent.GetHostedPaymentInfoControl(Rock.Model.FinancialGateway,System.String)" />)
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="hostedPaymentInfoControl">The hosted payment information control.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns></returns>
+        public string GetHostedPaymentInfoToken( FinancialGateway financialGateway, Control hostedPaymentInfoControl, out string errorMessage )
+        {
+            errorMessage = null;
+
+            if ( hostedPaymentInfoControl is CreditCard creditCardControl )
+            {
+                if ( creditCardControl.NameOnCard.IsNullOrWhiteSpace() || creditCardControl.CardNumber.IsNullOrWhiteSpace() || creditCardControl.CVV.IsNullOrWhiteSpace() || !creditCardControl.Expiration.HasValue )
+                {
+                    errorMessage = "Invalid or incomplete payment information";
+                    return null;
+                }
+
+                string token = $"TTK{RockDateTime.Now.ToString( "yyyyMMddHHmmssFFF" )}";
+                var paymentInfo = new CreditCardPaymentInfo
+                {
+                    NameOnCard = creditCardControl.NameOnCard,
+                    Number = creditCardControl.CardNumber,
+                    ExpirationDate = creditCardControl.Expiration.Value,
+                    Code = creditCardControl.CVV
+                };
+
+                if ( !GetCachedTokens().TryAdd( token, paymentInfo ) )
+                {
+                    errorMessage = "Could not create token";
+                    return null;
+                }
+
+                return token;
+            }
+            else
+            {
+                errorMessage = "Invalid control";
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Creates the customer account using a token received from the HostedPaymentInfoControl <seealso cref="GetHostedPaymentInfoControl(FinancialGateway, bool, string)" />
+        /// and returns a customer account token that can be used for future transactions.
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="paymentToken">The payment token.</param>
+        /// <param name="paymentInfo">The payment information.</param>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
+        public string CreateCustomerAccount( FinancialGateway financialGateway, string paymentToken, PaymentInfo paymentInfo, out string errorMessage )
+        {
+            if ( !paymentToken.StartsWith( "TTK" ) )
+            {
+                errorMessage = "Invalid payment token";
+                return null;
+            }
+
+            errorMessage = null;
+
+            return paymentToken;
+        }
+
+        /// <summary>
+        /// Gets the earliest scheduled start date that the gateway will accept for the start date, based on the current local time.
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <returns></returns>
+        public DateTime GetEarliestScheduledStartDate( FinancialGateway financialGateway )
+        {
+            return DateTime.SpecifyKind( RockDateTime.Now, DateTimeKind.Local ).AddDays( 1 ).ToUniversalTime().Date;
+        }
+
+        #endregion
+
         #region Automated Gateway Component
 
         /// <summary>
@@ -141,6 +269,25 @@ namespace Rock.Financial
             {
                 var transaction = new FinancialTransaction();
                 transaction.TransactionCode = "T" + RockDateTime.Now.ToString( "yyyyMMddHHmmssFFF" );
+                transaction.FinancialPaymentDetail = new FinancialPaymentDetail
+                {
+                    CurrencyTypeValueId = DefinedValueCache.GetId( Rock.SystemGuid.DefinedValue.CURRENCY_TYPE_CREDIT_CARD.AsGuid() )
+                };
+
+                if ( paymentInfo is CreditCardPaymentInfo ccInfo )
+                {
+                    transaction.FinancialPaymentDetail.CreditCardTypeValueId = CreditCardPaymentInfo.GetCreditCardType( ccInfo.Number )?.Id;
+                }
+
+                if ( paymentInfo is ReferencePaymentInfo refInfo )
+                {
+                    if ( GetCachedTokens().TryGetValue( refInfo.GatewayPersonIdentifier, out var pi ) )
+                    {
+                        transaction.FinancialPaymentDetail.CreditCardTypeValueId = CreditCardPaymentInfo.GetCreditCardType( pi.Number )?.Id;
+                    }
+
+                }
+
                 return transaction;
             }
 
@@ -319,26 +466,44 @@ namespace Rock.Financial
 
         #region Private Methods
 
+        /// <summary>
+        /// Validates the card.
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="paymentInfo">The payment information.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns></returns>
         private bool ValidateCard( FinancialGateway financialGateway, PaymentInfo paymentInfo, out string errorMessage )
         {
             string cardNumber = string.Empty;
+            string code = string.Empty;
 
             CreditCardPaymentInfo ccPayment = paymentInfo as CreditCardPaymentInfo;
             if ( ccPayment != null )
             {
-                if ( ccPayment.Code == "911" )
-                {
-                    errorMessage = "Error processing Credit Card!";
-                    return false;
-                }
-
                 cardNumber = ccPayment.Number;
+                code = ccPayment.Code;
             }
 
             SwipePaymentInfo swipePayment = paymentInfo as SwipePaymentInfo;
             if ( swipePayment != null )
             {
                 cardNumber = swipePayment.Number;
+            }
+
+            if ( paymentInfo is ReferencePaymentInfo referencePaymentInfo )
+            {
+                if ( GetCachedTokens().TryGetValue( referencePaymentInfo.GatewayPersonIdentifier, out var pi ) )
+                {
+                    cardNumber = pi.Number;
+                    code = pi.Code;
+                }
+            }
+
+            if ( code == "911" )
+            {
+                errorMessage = "Error processing Credit Card!";
+                return false;
             }
 
             if ( !string.IsNullOrWhiteSpace( cardNumber ) )
@@ -358,7 +523,15 @@ namespace Rock.Financial
             return true;
         }
 
-        #endregion
+        /// <summary>
+        /// Gets the cached tokens for use with hosted gateway testing.
+        /// </summary>
+        /// <returns></returns>
+        private ConcurrentDictionary<string, CreditCardPaymentInfo> GetCachedTokens()
+        {
+            return ( ConcurrentDictionary<string, CreditCardPaymentInfo> ) RockCache.GetOrAddExisting( "core.testgateway.cachedtokens", null, () => new ConcurrentDictionary<string, CreditCardPaymentInfo>(), TimeSpan.FromHours( 1 ) );
+        }
 
+        #endregion
     }
 }

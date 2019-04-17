@@ -20,6 +20,7 @@ using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Data;
 using System.Linq;
+using System.Web.UI;
 using PayPal.Payments.Common.Utility;
 using PayPal.Payments.DataObjects;
 using PayPal.Payments.Transactions;
@@ -28,12 +29,14 @@ using Rock.Data;
 using Rock.Financial;
 using Rock.Model;
 using Rock.Web.Cache;
+using Rock.Web.UI.Controls;
 
 namespace Rock.PayFlowPro
 {
     /// <summary>
     /// PayFlowPro Payment Gateway
     /// </summary>
+    [DisplayName( "PayFlowPro Payment Gateway" )]
     [Description( "PayFlowPro Payment Gateway" )]
     [Export( typeof( GatewayComponent ) )]
     [ExportMetadata( "ComponentName", "PayFlowPro" )]
@@ -44,8 +47,75 @@ namespace Rock.PayFlowPro
     [TextField( "PayPal Password", "", true, "", "", 3, "Password", true )]
     [CustomRadioListField( "Mode", "Mode to use for transactions", "Live,Test", true, "Live", "", 4 )]
 
-    public class Gateway : GatewayComponent
+    public class Gateway : GatewayComponent, IHostedGatewayComponent
     {
+        #region IHostedGatewayComponent Implementation
+
+        public string ConfigureURL => string.Empty;
+
+        public string LearnMoreURL => string.Empty;
+
+        public Control GetHostedPaymentInfoControl( FinancialGateway financialGateway, bool enableACH, string controlId )
+        {
+            return new Web.UI.Controls.CreditCard
+            {
+                ID = controlId
+            };
+        }
+
+        public string GetHostPaymentInfoSubmitScript( FinancialGateway financialGateway, Control hostedPaymentInfoControl )
+        {
+            return $"window.location = $('#{hostedPaymentInfoControl.ClientID}').data('postback-script');";
+        }
+
+        public string GetHostedPaymentInfoToken( FinancialGateway financialGateway, Control hostedPaymentInfoControl, out string errorMessage )
+        {
+            if ( hostedPaymentInfoControl is Web.UI.Controls.CreditCard cardControl )
+            {
+                if ( cardControl.NameOnCard.IsNullOrWhiteSpace() || cardControl.CardNumber.IsNullOrWhiteSpace() || cardControl.CVV.IsNullOrWhiteSpace() || !cardControl.Expiration.HasValue )
+                {
+                    errorMessage = "Invalid or incomplete payment information";
+                    return null;
+                }
+
+                var paymentInfo = new CreditCardPaymentInfo
+                {
+                    NameOnCard = cardControl.NameOnCard,
+                    Number = cardControl.CardNumber,
+                    ExpirationDate = cardControl.Expiration.Value,
+                    Code = cardControl.CVV,
+                    Amount = 0
+                };
+
+                var refTransaction = Authorize( financialGateway, paymentInfo, out errorMessage );
+                if ( refTransaction == null )
+                {
+                    return null;
+                }
+
+                return refTransaction.TransactionCode;
+            }
+            else
+            {
+                errorMessage = "Invalid control";
+                return null;
+            }
+        }
+
+        public string CreateCustomerAccount( FinancialGateway financialGateway, string paymentToken, PaymentInfo paymentInfo, out string errorMessage )
+        {
+            errorMessage = null;
+
+            return paymentToken;
+        }
+
+        public DateTime GetEarliestScheduledStartDate( FinancialGateway financialGateway )
+        {
+            return DateTime.SpecifyKind( RockDateTime.Now, DateTimeKind.Local ).AddDays( 1 ).ToUniversalTime().Date;
+        }
+
+        #endregion
+
         #region Gateway Component Implementation
 
         /// <summary>
@@ -101,10 +171,10 @@ namespace Rock.PayFlowPro
 
             if ( tender != null )
             {
-                if ( paymentInfo is ReferencePaymentInfo )
+                if ( paymentInfo is ReferencePaymentInfo reference )
                 {
-                    var reference = paymentInfo as ReferencePaymentInfo;
-                    var ppTransaction = new ReferenceTransaction( "Authorization", reference.TransactionCode, GetUserInfo( financialGateway ), GetConnection( financialGateway ), invoice, tender, PayflowUtility.RequestId );
+                    var txCode = !reference.TransactionCode.IsNullOrWhiteSpace() ? reference.TransactionCode : reference.GatewayPersonIdentifier;
+                    var ppTransaction = new ReferenceTransaction( "Authorization", txCode, GetUserInfo( financialGateway ), GetConnection( financialGateway ), invoice, tender, PayflowUtility.RequestId );
                     ppResponse = ppTransaction.SubmitTransaction();
                 }
                 else
@@ -170,10 +240,10 @@ namespace Rock.PayFlowPro
 
             if ( tender != null )
             {
-                if ( paymentInfo is ReferencePaymentInfo )
+                if ( paymentInfo is ReferencePaymentInfo reference )
                 {
-                    var reference = paymentInfo as ReferencePaymentInfo;
-                    var ppTransaction = new ReferenceTransaction( "Sale", reference.TransactionCode, GetUserInfo( financialGateway ), GetConnection( financialGateway ), invoice, tender, PayflowUtility.RequestId );
+                    var txCode = !reference.TransactionCode.IsNullOrWhiteSpace() ? reference.TransactionCode : reference.GatewayPersonIdentifier;
+                    var ppTransaction = new ReferenceTransaction( "Sale", txCode, GetUserInfo( financialGateway ), GetConnection( financialGateway ), invoice, tender, PayflowUtility.RequestId );
                     ppResponse = ppTransaction.SubmitTransaction();
                 }
                 else
@@ -320,10 +390,9 @@ namespace Rock.PayFlowPro
             var ppTransaction = new RecurringAddTransaction( GetUserInfo( financialGateway ), GetConnection( financialGateway ), GetInvoice( paymentInfo ), GetTender( paymentInfo ),
                 recurring, PayflowUtility.RequestId );
 
-            if ( paymentInfo is ReferencePaymentInfo )
+            if ( paymentInfo is ReferencePaymentInfo reference )
             {
-                var reference = paymentInfo as ReferencePaymentInfo;
-                ppTransaction.OrigId = reference.TransactionCode;
+                ppTransaction.OrigId = !reference.TransactionCode.IsNullOrWhiteSpace() ? reference.TransactionCode : reference.GatewayPersonIdentifier;
             }
             var ppResponse = ppTransaction.SubmitTransaction();
 
@@ -859,7 +928,7 @@ namespace Rock.PayFlowPro
             if ( paymentInfo is CreditCardPaymentInfo )
             {
                 var cc = paymentInfo as CreditCardPaymentInfo;
-                var ppCreditCard = new CreditCard( cc.Number, cc.ExpirationDate.ToString( "MMyy" ) );
+                var ppCreditCard = new PayPal.Payments.DataObjects.CreditCard( cc.Number, cc.ExpirationDate.ToString( "MMyy" ) );
                 ppCreditCard.Cvv2 = cc.Code;
                 return new CardTender( ppCreditCard );
             }
@@ -882,13 +951,13 @@ namespace Rock.PayFlowPro
             if ( paymentInfo is ReferencePaymentInfo )
             {
                 var reference = paymentInfo as ReferencePaymentInfo;
-                if ( reference.CurrencyTypeValue.Guid.Equals( new Guid( Rock.SystemGuid.DefinedValue.CURRENCY_TYPE_ACH ) ) )
+                if ( reference.CurrencyTypeValue != null && reference.CurrencyTypeValue.Guid.Equals( new Guid( Rock.SystemGuid.DefinedValue.CURRENCY_TYPE_ACH ) ) )
                 {
                     return new ACHTender( (BankAcct)null );
                 }
                 else
                 {
-                    return new CardTender( (CreditCard)null );
+                    return new CardTender( ( PayPal.Payments.DataObjects.CreditCard)null );
                 }
             }
             return null;
