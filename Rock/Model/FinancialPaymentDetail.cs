@@ -129,11 +129,16 @@ namespace Rock.Model
         /// The name on card.
         /// </value>
         [DataMember]
+        [NotMapped]
         public string NameOnCard
         {
             get
             {
-                return Rock.Security.Encryption.DecryptString( this.NameOnCardEncrypted );
+                return Encryption.DecryptString( NameOnCardEncrypted );
+            }
+            set
+            {
+                NameOnCardEncrypted = Encryption.EncryptString( value );
             }
         }
 
@@ -144,11 +149,16 @@ namespace Rock.Model
         /// The expiration month.
         /// </value>
         [DataMember]
+        [NotMapped]
         public int? ExpirationMonth
         {
             get
             {
-                return Rock.Security.Encryption.DecryptString( this.ExpirationMonthEncrypted ).AsIntegerOrNull();
+                return Encryption.DecryptString( ExpirationMonthEncrypted ).AsIntegerOrNull();
+            }
+            set
+            {
+                ExpirationMonthEncrypted = Encryption.EncryptString( value.ToStringSafe() );
             }
         }
 
@@ -159,11 +169,16 @@ namespace Rock.Model
         /// The expiration year.
         /// </value>
         [DataMember]
+        [NotMapped]
         public int? ExpirationYear
         {
             get
             {
-                return Rock.Security.Encryption.DecryptString( this.ExpirationYearEncrypted ).AsIntegerOrNull();
+                return Encryption.DecryptString( ExpirationYearEncrypted ).AsIntegerOrNull();
+            }
+            set
+            {
+                ExpirationYearEncrypted = Encryption.EncryptString( value.ToStringSafe() );
             }
         }
 
