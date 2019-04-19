@@ -27,6 +27,9 @@ namespace Rock.Rest.Controllers
     /// </summary>
     public partial class FinancialBatchesController
     {
+#if !IS_NET_CORE
+        // EFTODO: OData is not well supported.
+
         /// <summary>
         /// Gets the control totals.
         /// </summary>
@@ -56,5 +59,6 @@ namespace Rock.Rest.Controllers
 
             return controlTotalsList;
         }
+#endif
     }
 }
