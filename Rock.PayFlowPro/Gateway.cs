@@ -51,11 +51,31 @@ namespace Rock.PayFlowPro
     {
         #region IHostedGatewayComponent Implementation
 
+        /// <summary>
+        /// Gets the URL that the Gateway Information UI will navigate to when they click the 'Configure' link
+        /// </summary>
+        /// <value>
+        /// The configure URL.
+        /// </value>
         public string ConfigureURL => string.Empty;
 
+        /// <summary>
+        /// Gets the URL that the Gateway Information UI will navigate to when they click the 'Learn More' link
+        /// </summary>
+        /// <value>
+        /// The learn more URL.
+        /// </value>
         public string LearnMoreURL => string.Empty;
 
-        public Control GetHostedPaymentInfoControl( FinancialGateway financialGateway, bool enableACH, string controlId )
+        /// <summary>
+        /// Gets the hosted payment information control which will be used to collect CreditCard, ACH fields
+        /// Note: A HostedPaymentInfoControl can optionally implement <seealso cref="!:IHostedGatewayPaymentControl" />
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="controlId">The control identifier.</param>
+        /// <param name="options">The options.</param>
+        /// <returns></returns>
+        public Control GetHostedPaymentInfoControl( FinancialGateway financialGateway, string controlId, HostedPaymentInfoControlOptions options )
         {
             return new Web.UI.Controls.CreditCard
             {
@@ -63,27 +83,54 @@ namespace Rock.PayFlowPro
             };
         }
 
+        /// <summary>
+        /// Gets the JavaScript needed to tell the hostedPaymentInfoControl to get send the paymentInfo and get a token.
+        /// Have your 'Next' or 'Submit' call this so that the hostedPaymentInfoControl will fetch the token/response
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="hostedPaymentInfoControl">The hosted payment information control.</param>
+        /// <returns></returns>
         public string GetHostPaymentInfoSubmitScript( FinancialGateway financialGateway, Control hostedPaymentInfoControl )
         {
             return $"window.location = $('#{hostedPaymentInfoControl.ClientID}').data('postback-script');";
         }
 
+        /// <summary>
+        /// Gets the paymentInfoToken that the hostedPaymentInfoControl returned (see also <seealso cref="M:Rock.Financial.IHostedGatewayComponent.GetHostedPaymentInfoControl(Rock.Model.FinancialGateway,System.String)" />)
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="hostedPaymentInfoControl">The hosted payment information control.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns></returns>
         public string GetHostedPaymentInfoToken( FinancialGateway financialGateway, Control hostedPaymentInfoControl, out string errorMessage )
         {
             if ( hostedPaymentInfoControl is Web.UI.Controls.CreditCard cardControl )
             {
-                if ( cardControl.NameOnCard.IsNullOrWhiteSpace() || cardControl.CardNumber.IsNullOrWhiteSpace() || cardControl.CVV.IsNullOrWhiteSpace() || !cardControl.Expiration.HasValue )
+                //
+                // If they have not entered any information but we have a token, re-use the token.
+                //
+                if ( cardControl.IsEmpty && cardControl.Token.IsNotNullOrWhiteSpace() )
+                {
+                    errorMessage = null;
+                    return cardControl.Token;
+                }
+
+                if ( !cardControl.IsValid )
                 {
                     errorMessage = "Invalid or incomplete payment information";
                     return null;
                 }
 
+                //
+                // Request a "Zero Amount Authorization". This validates the card and returns
+                // a token we can use later to issue an actual charge on the card.
+                //
                 var paymentInfo = new CreditCardPaymentInfo
                 {
                     NameOnCard = cardControl.NameOnCard,
                     Number = cardControl.CardNumber,
                     ExpirationDate = cardControl.Expiration.Value,
-                    Code = cardControl.CVV,
+                    Code = cardControl.SecurityCode,
                     Amount = 0
                 };
 
@@ -92,6 +139,9 @@ namespace Rock.PayFlowPro
                 {
                     return null;
                 }
+
+                cardControl.Clear();
+                cardControl.Token = refTransaction.TransactionCode;
 
                 return refTransaction.TransactionCode;
             }
@@ -102,6 +152,15 @@ namespace Rock.PayFlowPro
             }
         }
 
+        /// <summary>
+        /// Creates the customer account using a token received from the HostedPaymentInfoControl <seealso cref="!:GetHostedPaymentInfoControl(FinancialGateway, bool, string)" />
+        /// and returns a customer account token that can be used for future transactions.
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="paymentToken">The payment token.</param>
+        /// <param name="paymentInfo">The payment information.</param>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
         public string CreateCustomerAccount( FinancialGateway financialGateway, string paymentToken, PaymentInfo paymentInfo, out string errorMessage )
         {
             errorMessage = null;
@@ -109,6 +168,11 @@ namespace Rock.PayFlowPro
             return paymentToken;
         }
 
+        /// <summary>
+        /// Gets the earliest scheduled start date that the gateway will accept for the start date, based on the current local time.
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <returns></returns>
         public DateTime GetEarliestScheduledStartDate( FinancialGateway financialGateway )
         {
             return DateTime.SpecifyKind( RockDateTime.Now, DateTimeKind.Local ).AddDays( 1 ).ToUniversalTime().Date;
@@ -277,14 +341,20 @@ namespace Rock.PayFlowPro
                             var rockContext = new RockContext();
                             var savedAccount = new FinancialPersonSavedAccountService( rockContext )
                                 .Queryable()
-                                .Where( s => 
-                                    s.TransactionCode == reference.TransactionCode &&
-                                    s.FinancialGatewayId.HasValue &&
-                                    s.FinancialGatewayId.Value == financialGateway.Id )
+                                .Where( s => s.TransactionCode == reference.TransactionCode || s.GatewayPersonIdentifier == reference.TransactionCode )
+                                .Where( s => s.FinancialGatewayId.HasValue && s.FinancialGatewayId.Value == financialGateway.Id )
                                 .FirstOrDefault();
                             if ( savedAccount != null )
                             {
-                                savedAccount.TransactionCode = txnResponse.Pnref;
+                                if ( savedAccount.TransactionCode == reference.TransactionCode )
+                                {
+                                    savedAccount.TransactionCode = txnResponse.Pnref;
+                                }
+                                if ( savedAccount.GatewayPersonIdentifier == reference.TransactionCode )
+                                {
+                                    savedAccount.GatewayPersonIdentifier = txnResponse.Pnref;
+                                }
+
                                 rockContext.SaveChanges();
                             }
                         }

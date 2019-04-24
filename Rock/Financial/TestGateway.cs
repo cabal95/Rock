@@ -63,10 +63,10 @@ namespace Rock.Financial
         /// Note: A HostedPaymentInfoControl can optionally implement <seealso cref="IHostedGatewayPaymentControl" />
         /// </summary>
         /// <param name="financialGateway">The financial gateway.</param>
-        /// <param name="enableACH">if set to <c>true</c> [enable ach]. (Credit Card is always enabled)</param>
         /// <param name="controlId">The control identifier.</param>
+        /// <param name="options">The options.</param>
         /// <returns></returns>
-        public Control GetHostedPaymentInfoControl( FinancialGateway financialGateway, bool enableACH, string controlId )
+        public Control GetHostedPaymentInfoControl( FinancialGateway financialGateway, string controlId, HostedPaymentInfoControlOptions options )
         {
             return new CreditCard
             {
@@ -100,26 +100,37 @@ namespace Rock.Financial
 
             if ( hostedPaymentInfoControl is CreditCard creditCardControl )
             {
-                if ( creditCardControl.NameOnCard.IsNullOrWhiteSpace() || creditCardControl.CardNumber.IsNullOrWhiteSpace() || creditCardControl.CVV.IsNullOrWhiteSpace() || !creditCardControl.Expiration.HasValue )
+                //
+                // If they have not entered any information but we have a token, re-use the token.
+                //
+                if ( creditCardControl.IsEmpty && creditCardControl.Token.IsNotNullOrWhiteSpace() )
+                {
+                    return creditCardControl.Token;
+                }
+
+                if ( !creditCardControl.IsValid )
                 {
                     errorMessage = "Invalid or incomplete payment information";
                     return null;
                 }
 
-                string token = $"TTK{RockDateTime.Now.ToString( "yyyyMMddHHmmssFFF" )}";
                 var paymentInfo = new CreditCardPaymentInfo
                 {
-                    NameOnCard = creditCardControl.NameOnCard,
                     Number = creditCardControl.CardNumber,
                     ExpirationDate = creditCardControl.Expiration.Value,
-                    Code = creditCardControl.CVV
+                    Code = creditCardControl.SecurityCode
                 };
 
-                if ( !GetCachedTokens().TryAdd( token, paymentInfo ) )
+                if ( !ValidateCard( financialGateway, paymentInfo, out errorMessage ) )
                 {
-                    errorMessage = "Could not create token";
                     return null;
                 }
+
+                string token = $"TTK{RockDateTime.Now.ToString( "yyyyMMddHHmmssFFF" )}";
+                creditCardControl.Clear();
+                creditCardControl.Token = token;
+
+                AddCachedToken( token, ( CreditCardPaymentInfo.GetCreditCardType( paymentInfo.Number )?.Id ?? 0 ).ToString() );
 
                 return token;
             }
@@ -281,9 +292,10 @@ namespace Rock.Financial
 
                 if ( paymentInfo is ReferencePaymentInfo refInfo )
                 {
-                    if ( GetCachedTokens().TryGetValue( refInfo.GatewayPersonIdentifier, out var pi ) )
+                    var cardTypeId = GetCachedToken( refInfo.GatewayPersonIdentifier ).AsIntegerOrNull();
+                    if ( cardTypeId.HasValue && cardTypeId.Value != 0 )
                     {
-                        transaction.FinancialPaymentDetail.CreditCardTypeValueId = CreditCardPaymentInfo.GetCreditCardType( pi.Number )?.Id;
+                        transaction.FinancialPaymentDetail.CreditCardTypeValueId = cardTypeId;
                     }
 
                 }
@@ -493,11 +505,8 @@ namespace Rock.Financial
 
             if ( paymentInfo is ReferencePaymentInfo referencePaymentInfo )
             {
-                if ( GetCachedTokens().TryGetValue( referencePaymentInfo.GatewayPersonIdentifier, out var pi ) )
-                {
-                    cardNumber = pi.Number;
-                    code = pi.Code;
-                }
+                errorMessage = string.Empty;
+                return GetCachedToken( referencePaymentInfo.GatewayPersonIdentifier ) != null;
             }
 
             if ( code == "911" )
@@ -524,12 +533,21 @@ namespace Rock.Financial
         }
 
         /// <summary>
-        /// Gets the cached tokens for use with hosted gateway testing.
+        /// Adds a cached token for later processing.
         /// </summary>
-        /// <returns></returns>
-        private ConcurrentDictionary<string, CreditCardPaymentInfo> GetCachedTokens()
+        private void AddCachedToken( string token, string value )
         {
-            return ( ConcurrentDictionary<string, CreditCardPaymentInfo> ) RockCache.GetOrAddExisting( "core.testgateway.cachedtokens", null, () => new ConcurrentDictionary<string, CreditCardPaymentInfo>(), TimeSpan.FromHours( 1 ) );
+            RockCache.AddOrUpdate( $"core.testgateway.cachedtoken.{token}", null, value, TimeSpan.FromHours( 1 ) );
+        }
+
+        /// <summary>
+        /// Gets the cached token.
+        /// </summary>
+        /// <param name="token">The token.</param>
+        /// <returns>The cached token value or null.</returns>
+        private string GetCachedToken( string token )
+        {
+            return ( string ) RockCache.Get( $"core.testgateway.cachedtoken.{token}", null );
         }
 
         #endregion

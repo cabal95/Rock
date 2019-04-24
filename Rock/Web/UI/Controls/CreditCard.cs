@@ -31,7 +31,7 @@ namespace Rock.Web.UI.Controls
         /// <value>
         ///   <c>true</c> if required; otherwise, <c>false</c>.
         /// </value>
-        public bool Required
+        public virtual bool Required
         {
             get
             {
@@ -45,7 +45,7 @@ namespace Rock.Web.UI.Controls
                 tbNameOnCard.Required = value;
                 tbCardNumber.Required = value;
                 mypExpiration.Required = value;
-                tbCVV.Required = value;
+                tbSecurityCode.Required = value;
             }
         }
 
@@ -110,22 +110,22 @@ namespace Rock.Web.UI.Controls
         }
 
         /// <summary>
-        /// Gets or sets the CVV.
+        /// Gets or sets the security code.
         /// </summary>
         /// <value>
-        /// The CVV.
+        /// The security code.
         /// </value>
-        public string CVV
+        public string SecurityCode
         {
             get
             {
                 EnsureChildControls();
-                return tbCVV.Text;
+                return tbSecurityCode.Text;
             }
             set
             {
                 EnsureChildControls();
-                tbCVV.Text = value;
+                tbSecurityCode.Text = value;
             }
         }
 
@@ -135,7 +135,7 @@ namespace Rock.Web.UI.Controls
         /// <value>
         ///   <c>true</c> if the name on card should be prompted for; otherwise, <c>false</c>.
         /// </value>
-        public bool PromptForNameOnCard
+        public virtual bool PromptForNameOnCard
         {
             get
             {
@@ -149,6 +149,66 @@ namespace Rock.Web.UI.Controls
             }
         }
 
+        /// <summary>
+        /// Returns true if the credit card information is valid.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance is valid; otherwise, <c>false</c>.
+        /// </value>
+        public virtual bool IsValid
+        {
+            get
+            {
+                if ( CardNumber.IsNullOrWhiteSpace() || SecurityCode.IsNullOrWhiteSpace() || !Expiration.HasValue )
+                {
+                    return false;
+                }
+
+                if ( PromptForNameOnCard && NameOnCard.IsNullOrWhiteSpace() )
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is empty.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance is empty; otherwise, <c>false</c>.
+        /// </value>
+        public virtual bool IsEmpty
+        {
+            get
+            {
+                EnsureChildControls();
+
+                return NameOnCard.IsNullOrWhiteSpace() && CardNumber.IsNullOrWhiteSpace() && !Expiration.HasValue && SecurityCode.IsNullOrWhiteSpace();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the token, this is often used to store the authorization token.
+        /// </summary>
+        /// <value>
+        /// The token.
+        /// </value>
+        public string Token
+        {
+            get
+            {
+                EnsureChildControls();
+                return hfToken.Value;
+            }
+            set
+            {
+                EnsureChildControls();
+                hfToken.Value = value;
+            }
+        }
+
         #endregion
 
         #region Child Controls
@@ -159,7 +219,9 @@ namespace Rock.Web.UI.Controls
 
         protected MonthYearPicker mypExpiration;
 
-        protected RockTextBox tbCVV;
+        protected RockTextBox tbSecurityCode;
+
+        protected HiddenField hfToken;
 
         #endregion
 
@@ -218,16 +280,26 @@ namespace Rock.Web.UI.Controls
             };
             this.Controls.Add( mypExpiration );
 
-            tbCVV = new RockTextBox
+            tbSecurityCode = new RockTextBox
             {
-                ID = "tbCVV",
+                ID = "tbSecurityCode",
                 Label = "Card Security Code",
                 MaxLength = 4,
                 CssClass = "input-width-xs"
             };
-            this.Controls.Add( tbCVV );
+            this.Controls.Add( tbSecurityCode );
+
+            hfToken = new HiddenField
+            {
+                ID = "hfToken"
+            };
+            this.Controls.Add( hfToken );
         }
 
+        /// <summary>
+        /// Raises the <see cref="E:System.Web.UI.Control.PreRender" /> event.
+        /// </summary>
+        /// <param name="e">An <see cref="T:System.EventArgs" /> object that contains the event data.</param>
         protected override void OnPreRender( EventArgs e )
         {
             base.OnPreRender( e );
@@ -238,7 +310,7 @@ namespace Rock.Web.UI.Controls
     var amex_regex = new RegExp('^3$|^3[47][0-9]{{0,13}}$');
     var discover_regex = new RegExp('^6$|^6[05]$|^601[1]?$|^65[0-9][0-9]?$|^6(?:011|5[0-9]{{2}})[0-9]{{0,12}}$');
 
-    $('#{tbCardNumber.ClientID}').on('keyup', function() {{
+    function updateCardIcon() {{
         var $icon = $(this).closest('.input-group').find('.fa');
         var value = $(this).val();
         var css = 'fa ';
@@ -256,7 +328,10 @@ namespace Rock.Web.UI.Controls
         }}
         
         $icon.attr('class', css);
-    }});
+    }}
+
+    $('#{tbCardNumber.ClientID}').on('keyup', updateCardIcon);
+    updateCardIcon.call($('#{tbCardNumber.ClientID}'));
 }})();
 ";
 
@@ -299,28 +374,43 @@ namespace Rock.Web.UI.Controls
             writer.AddAttribute( HtmlTextWriterAttribute.Class, "row" );
             writer.RenderBeginTag( HtmlTextWriterTag.Div );
             {
-                writer.AddAttribute( HtmlTextWriterAttribute.Class, "col-lg-6 col-md-12" );
+                writer.AddAttribute( HtmlTextWriterAttribute.Class, "col-lg-5 col-md-12" );
                 writer.RenderBeginTag( HtmlTextWriterTag.Div );
                 {
                     tbCardNumber.RenderControl( writer );
                 }
                 writer.RenderEndTag();
 
-                writer.AddAttribute( HtmlTextWriterAttribute.Class, "col-lg-3 col-md-6" );
+                writer.AddAttribute( HtmlTextWriterAttribute.Class, "col-lg-4 col-md-6 col-sm-7" );
                 writer.RenderBeginTag( HtmlTextWriterTag.Div );
                 {
                     mypExpiration.RenderControl( writer );
                 }
                 writer.RenderEndTag();
 
-                writer.AddAttribute( HtmlTextWriterAttribute.Class, "col-lg-3 col-md-6" );
+                writer.AddAttribute( HtmlTextWriterAttribute.Class, "col-lg-3 col-md-6 col-sm-5" );
                 writer.RenderBeginTag( HtmlTextWriterTag.Div );
                 {
-                    tbCVV.RenderControl( writer );
+                    tbSecurityCode.RenderControl( writer );
                 }
                 writer.RenderEndTag();
             }
             writer.RenderEndTag();
+        }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Clears this instance.
+        /// </summary>
+        public virtual void Clear()
+        {
+            NameOnCard = string.Empty;
+            CardNumber = string.Empty;
+            Expiration = null;
+            SecurityCode = string.Empty;
         }
 
         #endregion
