@@ -19,7 +19,12 @@ namespace Rock.Web.UI.Controls
         /// <summary>
         /// Occurs when a payment token is received from the hosted gateway
         /// </summary>
-        public event EventHandler TokenReceived;
+        public event EventHandler<HostedGatewayPaymentControlTokenEventArgs> TokenReceived;
+
+        /// <summary>
+        /// Occurs when the Credit Card control needs the token generated.
+        /// </summary>
+        public event EventHandler<HostedGatewayPaymentControlTokenEventArgs> GeneratePaymentToken;
 
         #endregion
 
@@ -209,6 +214,8 @@ namespace Rock.Web.UI.Controls
             }
         }
 
+        public object UserInfo { get; set; }
+
         #endregion
 
         #region Child Controls
@@ -243,7 +250,23 @@ namespace Rock.Web.UI.Controls
                 {
                     if ( eventArgs[0] == this.ID )
                     {
-                        TokenReceived?.Invoke( this, new EventArgs() );
+                        var tokenEventArgs = new HostedGatewayPaymentControlTokenEventArgs();
+
+                        if ( GeneratePaymentToken != null )
+                        {
+                            GeneratePaymentToken( this, tokenEventArgs );
+                            if ( tokenEventArgs.IsValid )
+                            {
+                                Token = tokenEventArgs.Token;
+                            }
+                        }
+                        else
+                        {
+                            tokenEventArgs.ErrorMessage = "Invalid control configuration";
+                            tokenEventArgs.IsValid = false;
+                        }
+
+                        TokenReceived?.Invoke( this, tokenEventArgs );
                     }
                 }
             }

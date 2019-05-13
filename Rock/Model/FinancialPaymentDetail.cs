@@ -388,6 +388,25 @@ namespace Rock.Model
         }
 
         /// <summary>
+        /// Updates the reference payment information with details from this payment detail.
+        /// </summary>
+        /// <param name="referencePaymentInfo">The reference payment information.</param>
+        public void UpdateReferencePaymentInfo( ReferencePaymentInfo referencePaymentInfo )
+        {
+            referencePaymentInfo.MaskedAccountNumber = AccountNumberMasked;
+
+            if ( CurrencyTypeValueId.HasValue )
+            {
+                referencePaymentInfo.InitialCurrencyTypeValue = DefinedValueCache.Get( CurrencyTypeValueId.Value );
+            }
+
+            if ( CreditCardTypeValueId.HasValue )
+            {
+                referencePaymentInfo.InitialCreditCardTypeValue = DefinedValueCache.Get( CreditCardTypeValueId.Value );
+            }
+        }
+
+        /// <summary>
         /// Method that will be called on an entity immediately before the item is saved by context
         /// </summary>
         /// <param name="dbContext"></param>

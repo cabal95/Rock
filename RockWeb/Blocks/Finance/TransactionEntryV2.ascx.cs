@@ -2249,6 +2249,10 @@ mission. We are so grateful for your commitment.</p>
                 if ( financialPersonSavedAccount != null && financialPersonSavedAccount.ReferenceNumber.IsNotNullOrWhiteSpace() )
                 {
                     paymentInfo.GatewayPersonIdentifier = financialPersonSavedAccount.ReferenceNumber;
+                    if ( financialPersonSavedAccount.FinancialPaymentDetail != null )
+                    {
+                        financialPersonSavedAccount.FinancialPaymentDetail.UpdateReferencePaymentInfo( paymentInfo );
+                    }
                 }
             }
 

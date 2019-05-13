@@ -68,11 +68,16 @@ namespace Rock.Financial
         /// <returns></returns>
         public Control GetHostedPaymentInfoControl( FinancialGateway financialGateway, string controlId, HostedPaymentInfoControlOptions options )
         {
-            return new CreditCard
+            var cc = new CreditCard
             {
                 ID = controlId,
-                PromptForNameOnCard = false
+                PromptForNameOnCard = false,
+                UserInfo = financialGateway.Id
             };
+
+            cc.GeneratePaymentToken += ( sender, e ) => GeneratePaymentToken( ( CreditCard ) sender, financialGateway, e );
+
+            return cc;
         }
 
         /// <summary>
@@ -94,50 +99,22 @@ namespace Rock.Financial
         /// <param name="hostedPaymentInfoControl">The hosted payment information control.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns></returns>
-        public string GetHostedPaymentInfoToken( FinancialGateway financialGateway, Control hostedPaymentInfoControl, out string errorMessage )
+        public void UpdatePaymentInfoFromPaymentControl( FinancialGateway financialGateway, Control hostedPaymentInfoControl, ReferencePaymentInfo referencePaymentInfo, out string errorMessage )
         {
             errorMessage = null;
 
             if ( hostedPaymentInfoControl is CreditCard creditCardControl )
             {
-                //
-                // If they have not entered any information but we have a token, re-use the token.
-                //
-                if ( creditCardControl.IsEmpty && creditCardControl.Token.IsNotNullOrWhiteSpace() )
-                {
-                    return creditCardControl.Token;
-                }
+                referencePaymentInfo.ReferenceNumber = creditCardControl.Token;
+                referencePaymentInfo.InitialCurrencyTypeValue = DefinedValueCache.Get( SystemGuid.DefinedValue.CURRENCY_TYPE_CREDIT_CARD );
+                referencePaymentInfo.InitialCreditCardTypeValue = CreditCardPaymentInfo.GetCreditCardType( creditCardControl.CardNumber );
+                referencePaymentInfo.MaskedAccountNumber = new string( '*', 12 ) + creditCardControl.CardNumber.Right( 4 );
 
-                if ( !creditCardControl.IsValid )
-                {
-                    errorMessage = "Invalid or incomplete payment information";
-                    return null;
-                }
-
-                var paymentInfo = new CreditCardPaymentInfo
-                {
-                    Number = creditCardControl.CardNumber,
-                    ExpirationDate = creditCardControl.Expiration.Value,
-                    Code = creditCardControl.SecurityCode
-                };
-
-                if ( !ValidateCard( financialGateway, paymentInfo, out errorMessage ) )
-                {
-                    return null;
-                }
-
-                string token = $"TTK{RockDateTime.Now.ToString( "yyyyMMddHHmmssFFF" )}";
-                creditCardControl.Clear();
-                creditCardControl.Token = token;
-
-                AddCachedToken( token, ( CreditCardPaymentInfo.GetCreditCardType( paymentInfo.Number )?.Id ?? 0 ).ToString() );
-
-                return token;
+                //creditCardControl.Clear();
             }
             else
             {
                 errorMessage = "Invalid control";
-                return null;
             }
         }
 
@@ -150,9 +127,9 @@ namespace Rock.Financial
         /// <param name="paymentInfo">The payment information.</param>
         /// <param name="errorMessage"></param>
         /// <returns></returns>
-        public string CreateCustomerAccount( FinancialGateway financialGateway, string paymentToken, PaymentInfo paymentInfo, out string errorMessage )
+        public string CreateCustomerAccount( FinancialGateway financialGateway, ReferencePaymentInfo paymentInfo, out string errorMessage )
         {
-            if ( !paymentToken.StartsWith( "TTK" ) )
+            if ( !paymentInfo.ReferenceNumber.StartsWith( "TTK" ) )
             {
                 errorMessage = "Invalid payment token";
                 return null;
@@ -160,7 +137,7 @@ namespace Rock.Financial
 
             errorMessage = null;
 
-            return paymentToken;
+            return paymentInfo.ReferenceNumber;
         }
 
         /// <summary>
@@ -287,17 +264,16 @@ namespace Rock.Financial
 
                 if ( paymentInfo is CreditCardPaymentInfo ccInfo )
                 {
+                    transaction.FinancialPaymentDetail.CurrencyTypeValueId = DefinedValueCache.Get( SystemGuid.DefinedValue.CURRENCY_TYPE_CREDIT_CARD.AsGuid() )?.Id;
                     transaction.FinancialPaymentDetail.CreditCardTypeValueId = CreditCardPaymentInfo.GetCreditCardType( ccInfo.Number )?.Id;
+                    transaction.FinancialPaymentDetail.AccountNumberMasked = ccInfo.MaskedNumber;
                 }
 
                 if ( paymentInfo is ReferencePaymentInfo refInfo )
                 {
-                    var cardTypeId = GetCachedToken( refInfo.GatewayPersonIdentifier ).AsIntegerOrNull();
-                    if ( cardTypeId.HasValue && cardTypeId.Value != 0 )
-                    {
-                        transaction.FinancialPaymentDetail.CreditCardTypeValueId = cardTypeId;
-                    }
-
+                    transaction.FinancialPaymentDetail.CurrencyTypeValueId = refInfo.CurrencyTypeValue?.Id;
+                    transaction.FinancialPaymentDetail.CreditCardTypeValueId = refInfo.CreditCardTypeValue?.Id;
+                    transaction.FinancialPaymentDetail.AccountNumberMasked = refInfo.MaskedNumber;
                 }
 
                 return transaction;
@@ -505,8 +481,16 @@ namespace Rock.Financial
 
             if ( paymentInfo is ReferencePaymentInfo referencePaymentInfo )
             {
-                errorMessage = string.Empty;
-                return GetCachedToken( referencePaymentInfo.GatewayPersonIdentifier ) != null;
+                if ( ( referencePaymentInfo.ReferenceNumber?.StartsWith( "TTK" ) ?? false ) || ( referencePaymentInfo.GatewayPersonIdentifier?.StartsWith( "TTK" ) ?? false ) )
+                {
+                    errorMessage = null;
+                    return true;
+                }
+                else
+                {
+                    errorMessage = "Invalid reference transaction number.";
+                    return false;
+                }
             }
 
             if ( code == "911" )
@@ -533,21 +517,36 @@ namespace Rock.Financial
         }
 
         /// <summary>
-        /// Adds a cached token for later processing.
+        /// Generates the payment token.
         /// </summary>
-        private void AddCachedToken( string token, string value )
+        /// <param name="creditCardControl">The credit card control.</param>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="e">The <see cref="HostedGatewayPaymentControlTokenEventArgs"/> instance containing the event data.</param>
+        private void GeneratePaymentToken( CreditCard creditCardControl, FinancialGateway financialGateway, HostedGatewayPaymentControlTokenEventArgs e )
         {
-            RockCache.AddOrUpdate( $"core.testgateway.cachedtoken.{token}", null, value, TimeSpan.FromHours( 1 ) );
-        }
+            if ( !creditCardControl.IsValid )
+            {
+                e.ErrorMessage = "Invalid or incomplete payment information";
+                e.IsValid = false;
 
-        /// <summary>
-        /// Gets the cached token.
-        /// </summary>
-        /// <param name="token">The token.</param>
-        /// <returns>The cached token value or null.</returns>
-        private string GetCachedToken( string token )
-        {
-            return ( string ) RockCache.Get( $"core.testgateway.cachedtoken.{token}", null );
+                return;
+            }
+
+            var paymentInfo = new CreditCardPaymentInfo
+            {
+                Number = creditCardControl.CardNumber,
+                ExpirationDate = creditCardControl.Expiration.Value,
+                Code = creditCardControl.SecurityCode
+            };
+
+            if ( !ValidateCard( financialGateway, paymentInfo, out string errorMessage ) )
+            {
+                return;
+            }
+
+            e.ErrorMessage = null;
+            e.IsValid = true;
+            e.Token = $"TTK{RockDateTime.Now.ToString( "yyyyMMddHHmmssFFF" )}";
         }
 
         #endregion
