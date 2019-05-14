@@ -71,8 +71,7 @@ namespace Rock.Financial
             var cc = new CreditCard
             {
                 ID = controlId,
-                PromptForNameOnCard = false,
-                UserInfo = financialGateway.Id
+                PromptForNameOnCard = false
             };
 
             cc.GeneratePaymentToken += ( sender, e ) => GeneratePaymentToken( ( CreditCard ) sender, financialGateway, e );
@@ -97,6 +96,7 @@ namespace Rock.Financial
         /// </summary>
         /// <param name="financialGateway">The financial gateway.</param>
         /// <param name="hostedPaymentInfoControl">The hosted payment information control.</param>
+        /// <param name="referencePaymentInfo">The payment info to be updated.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns></returns>
         public void UpdatePaymentInfoFromPaymentControl( FinancialGateway financialGateway, Control hostedPaymentInfoControl, ReferencePaymentInfo referencePaymentInfo, out string errorMessage )
@@ -541,6 +541,9 @@ namespace Rock.Financial
 
             if ( !ValidateCard( financialGateway, paymentInfo, out string errorMessage ) )
             {
+                e.ErrorMessage = errorMessage;
+                e.IsValid = false;
+
                 return;
             }
 

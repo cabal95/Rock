@@ -214,8 +214,6 @@ namespace Rock.Web.UI.Controls
             }
         }
 
-        public object UserInfo { get; set; }
-
         #endregion
 
         #region Child Controls

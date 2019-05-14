@@ -77,10 +77,15 @@ namespace Rock.PayFlowPro
         /// <returns></returns>
         public Control GetHostedPaymentInfoControl( FinancialGateway financialGateway, string controlId, HostedPaymentInfoControlOptions options )
         {
-            return new Web.UI.Controls.CreditCard
+            var cc = new Web.UI.Controls.CreditCard
             {
-                ID = controlId
+                ID = controlId,
+                PromptForNameOnCard = false
             };
+
+            cc.GeneratePaymentToken += ( sender, e ) => GeneratePaymentToken( ( Web.UI.Controls.CreditCard ) sender, financialGateway, e );
+
+            return cc;
         }
 
         /// <summary>
@@ -100,55 +105,25 @@ namespace Rock.PayFlowPro
         /// </summary>
         /// <param name="financialGateway">The financial gateway.</param>
         /// <param name="hostedPaymentInfoControl">The hosted payment information control.</param>
+        /// <param name="referencePaymentInfo">The payment info to be updated.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns></returns>
-        public string GetHostedPaymentInfoToken( FinancialGateway financialGateway, Control hostedPaymentInfoControl, out string errorMessage )
+        public void UpdatePaymentInfoFromPaymentControl( FinancialGateway financialGateway, Control hostedPaymentInfoControl, ReferencePaymentInfo referencePaymentInfo, out string errorMessage )
         {
-            if ( hostedPaymentInfoControl is Web.UI.Controls.CreditCard cardControl )
+            errorMessage = null;
+
+            if ( hostedPaymentInfoControl is Web.UI.Controls.CreditCard creditCardControl )
             {
-                //
-                // If they have not entered any information but we have a token, re-use the token.
-                //
-                if ( cardControl.IsEmpty && cardControl.Token.IsNotNullOrWhiteSpace() )
-                {
-                    errorMessage = null;
-                    return cardControl.Token;
-                }
+                referencePaymentInfo.ReferenceNumber = creditCardControl.Token;
+                referencePaymentInfo.InitialCurrencyTypeValue = DefinedValueCache.Get( SystemGuid.DefinedValue.CURRENCY_TYPE_CREDIT_CARD );
+                referencePaymentInfo.InitialCreditCardTypeValue = CreditCardPaymentInfo.GetCreditCardType( creditCardControl.CardNumber );
+                referencePaymentInfo.MaskedAccountNumber = new string( '*', 12 ) + creditCardControl.CardNumber.Right( 4 );
 
-                if ( !cardControl.IsValid )
-                {
-                    errorMessage = "Invalid or incomplete payment information";
-                    return null;
-                }
-
-                //
-                // Request a "Zero Amount Authorization". This validates the card and returns
-                // a token we can use later to issue an actual charge on the card.
-                //
-                var paymentInfo = new CreditCardPaymentInfo
-                {
-                    NameOnCard = cardControl.NameOnCard,
-                    Number = cardControl.CardNumber,
-                    ExpirationDate = cardControl.Expiration.Value,
-                    Code = cardControl.SecurityCode,
-                    Amount = 0
-                };
-
-                var refTransaction = Authorize( financialGateway, paymentInfo, out errorMessage );
-                if ( refTransaction == null )
-                {
-                    return null;
-                }
-
-                cardControl.Clear();
-                cardControl.Token = refTransaction.TransactionCode;
-
-                return refTransaction.TransactionCode;
+                //creditCardControl.Clear();
             }
             else
             {
                 errorMessage = "Invalid control";
-                return null;
             }
         }
 
@@ -157,15 +132,14 @@ namespace Rock.PayFlowPro
         /// and returns a customer account token that can be used for future transactions.
         /// </summary>
         /// <param name="financialGateway">The financial gateway.</param>
-        /// <param name="paymentToken">The payment token.</param>
         /// <param name="paymentInfo">The payment information.</param>
         /// <param name="errorMessage"></param>
         /// <returns></returns>
-        public string CreateCustomerAccount( FinancialGateway financialGateway, string paymentToken, PaymentInfo paymentInfo, out string errorMessage )
+        public string CreateCustomerAccount( FinancialGateway financialGateway, ReferencePaymentInfo paymentInfo, out string errorMessage )
         {
             errorMessage = null;
 
-            return paymentToken;
+            return paymentInfo.ReferenceNumber;
         }
 
         /// <summary>
@@ -341,7 +315,7 @@ namespace Rock.PayFlowPro
                             var rockContext = new RockContext();
                             var savedAccount = new FinancialPersonSavedAccountService( rockContext )
                                 .Queryable()
-                                .Where( s => s.TransactionCode == reference.TransactionCode || s.GatewayPersonIdentifier == reference.TransactionCode )
+                                .Where( s => s.TransactionCode == reference.TransactionCode || s.ReferenceNumber == reference.GatewayPersonIdentifier )
                                 .Where( s => s.FinancialGatewayId.HasValue && s.FinancialGatewayId.Value == financialGateway.Id )
                                 .FirstOrDefault();
                             if ( savedAccount != null )
@@ -350,9 +324,9 @@ namespace Rock.PayFlowPro
                                 {
                                     savedAccount.TransactionCode = txnResponse.Pnref;
                                 }
-                                if ( savedAccount.GatewayPersonIdentifier == reference.TransactionCode )
+                                if ( savedAccount.ReferenceNumber == reference.GatewayPersonIdentifier )
                                 {
-                                    savedAccount.GatewayPersonIdentifier = txnResponse.Pnref;
+                                    savedAccount.ReferenceNumber = txnResponse.Pnref;
                                 }
 
                                 rockContext.SaveChanges();
@@ -919,6 +893,49 @@ namespace Rock.PayFlowPro
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Generates the payment token.
+        /// </summary>
+        /// <param name="creditCardControl">The credit card control.</param>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="e">The <see cref="HostedGatewayPaymentControlTokenEventArgs"/> instance containing the event data.</param>
+        private void GeneratePaymentToken( Web.UI.Controls.CreditCard creditCardControl, FinancialGateway financialGateway, HostedGatewayPaymentControlTokenEventArgs e )
+        {
+            if ( !creditCardControl.IsValid )
+            {
+                e.ErrorMessage = "Invalid or incomplete payment information";
+                e.IsValid = false;
+
+                return;
+            }
+
+            //
+            // Request a "Zero Amount Authorization". This validates the card and returns
+            // a token we can use later to issue an actual charge on the card.
+            //
+            var paymentInfo = new CreditCardPaymentInfo
+            {
+                NameOnCard = creditCardControl.NameOnCard,
+                Number = creditCardControl.CardNumber,
+                ExpirationDate = creditCardControl.Expiration.Value,
+                Code = creditCardControl.SecurityCode,
+                Amount = 0
+            };
+
+            var refTransaction = Authorize( financialGateway, paymentInfo, out string errorMessage );
+            if ( refTransaction == null )
+            {
+                e.ErrorMessage = errorMessage;
+                e.IsValid = false;
+
+                return;
+            }
+
+            e.ErrorMessage = null;
+            e.IsValid = true;
+            e.Token = refTransaction.TransactionCode;
         }
 
         #endregion
