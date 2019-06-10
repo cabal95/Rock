@@ -159,6 +159,16 @@ namespace Rock.Model
         [DataMember]
         public int Order { get; set; }
 
+        /// <summary>
+        /// Gets or sets the item global key.
+        /// </summary>
+        /// <value>
+        /// The item global key.
+        /// </value>
+        [MaxLength( 100 )]
+        [DataMember]
+        public string ItemGlobalKey { get; set; }
+
         #endregion
 
         #region Virtual Properties
@@ -413,6 +423,21 @@ namespace Rock.Model
         #endregion
 
         #region Methods
+
+        /// <summary>
+        /// Assigns the item global key to the current instance if one does not exist.
+        /// </summary>
+        /// <param name="dbContext">The database context.</param>
+        private void AssignItemGlobalKey( Data.DbContext dbContext )
+        {
+            if ( this.ItemGlobalKey.IsNullOrWhiteSpace() )
+            {
+                var rockContext = ( RockContext ) dbContext;
+                var contentChannelItemSlugService = new ContentChannelItemSlugService( rockContext );
+                this.ItemGlobalKey = contentChannelItemSlugService.GetUniqueContentSlug( this.Title, null );
+            }
+        }
+
         /// <summary>
         /// Pres the save.
         /// </summary>
@@ -426,6 +451,10 @@ namespace Rock.Model
             {
                 ChildItems.Clear();
                 ParentItems.Clear();
+            }
+            else
+            {
+                AssignItemGlobalKey( dbContext );
             }
 
             base.PreSaveChanges( dbContext, state );

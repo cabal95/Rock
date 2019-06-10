@@ -230,7 +230,7 @@ namespace Rock.Communication.Transport
                             string body = ResolveText( emailMessage.Message, emailMessage.CurrentPerson, emailMessage.EnabledLavaCommands, recipientData.MergeFields, emailMessage.AppRoot, emailMessage.ThemeRoot );
                             body = Regex.Replace( body, @"\[\[\s*UnsubscribeOption\s*\]\]", string.Empty );
 
-                            message.Subject = subject;
+                            message.Subject = subject.Left(998);
                             message.Body = body;
 
                             var metaData = new Dictionary<string, string>( emailMessage.MessageMetaData );
@@ -556,6 +556,12 @@ namespace Rock.Communication.Transport
                     {
                         recipient.Status = CommunicationRecipientStatus.Failed;
                         recipient.StatusNote = "No Email Address";
+                        valid = false;
+                    }
+                    else if ( !person.IsEmailActive )
+                    {
+                        recipient.Status = CommunicationRecipientStatus.Failed;
+                        recipient.StatusNote = "Recipient Email Address is not active";
                         valid = false;
                     }
                     else if ( person.EmailPreference == Model.EmailPreference.DoNotEmail )

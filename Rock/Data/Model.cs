@@ -236,7 +236,7 @@ namespace Rock.Data
         }
 
         /// <summary>
-        /// Method that will be called on an entity immediately after the item is saved by context
+        /// Method that will be called on an entity immediately before the item is saved by context
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         /// <param name="entry">The entry.</param>
@@ -247,7 +247,7 @@ namespace Rock.Data
         }
 
         /// <summary>
-        /// Posts the save changes.
+        /// Method that will be called on an entity immediately after the item is saved by context
         /// </summary>
         /// <param name="dbContext">The database context.</param>
         public virtual void PostSaveChanges( Rock.Data.DbContext dbContext )
@@ -375,7 +375,9 @@ namespace Rock.Data
         /// <returns></returns>
         public virtual bool IsAllowedByDefault( string action )
         {
-            return action == Authorization.VIEW;
+            // Model is the ultimate base Parent Authority of child classes of Models, so if Authorization wasn't specifically Denied until now, this is what all actions default to.
+            // In the case of VIEW or TAG, we want to default to Allowed.
+            return action == Authorization.VIEW || action == Authorization.TAG;
         }
 
         /// <summary>

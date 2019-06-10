@@ -469,7 +469,7 @@ namespace Rock.Apps.CheckScannerUtility
 
             if ( rockConfig.CaptureAmountOnScan && rockConfig.RequireControlItemCount )
             {
-                if ( this.SelectedFinancialBatch != null && this.SelectedFinancialBatch.ControlItemCount > 0 )
+                if ( this.SelectedFinancialBatch?.Transactions != null && this.SelectedFinancialBatch.ControlItemCount > 0 )
                 {
                     if ( this.SelectedFinancialBatch.Transactions.Count() == this.SelectedFinancialBatch.ControlItemCount )
                     {
@@ -529,6 +529,12 @@ namespace Rock.Apps.CheckScannerUtility
 
             if ( config.CampusIdFilter.HasValue )
             {
+                if ((this.SelectedFinancialBatch?.CampusId.HasValue == true) && (this.SelectedFinancialBatch.CampusId.Value != config.CampusIdFilter.Value) )
+                {
+                    this.SelectedFinancialBatch = null;
+                    origSelectedBatchId = null;
+                }
+
                 pendingBatches = pendingBatches.Where( a => !a.CampusId.HasValue || a.CampusId.Value == config.CampusIdFilter.Value ).ToList();
             }
 

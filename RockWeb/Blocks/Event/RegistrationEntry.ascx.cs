@@ -30,6 +30,7 @@ using Rock;
 using Rock.Attribute;
 using Rock.Communication;
 using Rock.Data;
+using Rock.Field;
 using Rock.Financial;
 using Rock.Model;
 using Rock.Security;
@@ -37,6 +38,7 @@ using Rock.Web;
 using Rock.Web.Cache;
 using Rock.Web.UI;
 using Rock.Web.UI.Controls;
+using Helper = Rock.Attribute.Helper;
 
 namespace RockWeb.Blocks.Event
 {
@@ -400,12 +402,12 @@ namespace RockWeb.Blocks.Event
                 // Otherwise if template allows multiple, set the max amount
                 if ( RegistrationTemplate != null && RegistrationTemplate.AllowMultipleRegistrants )
                 {
-                    if ( RegistrationTemplate.MaxRegistrants <= 0 )
+                    if ( !RegistrationTemplate.MaxRegistrants.HasValue )
                     {
                         return int.MaxValue;
                     }
 
-                    return RegistrationTemplate.MaxRegistrants;
+                    return RegistrationTemplate.MaxRegistrants.Value;
                 }
 
                 // Default is a maximum of one
@@ -1783,7 +1785,7 @@ namespace RockWeb.Blocks.Event
             if ( RegistrationState != null )
             {
                 // Calculate the available slots. If maxAttendees is 0 that means unlimited since this is not a nullable.
-                if ( !RegistrationState.RegistrationId.HasValue && RegistrationInstanceState != null && RegistrationInstanceState.MaxAttendees != 0 )
+                if ( !RegistrationState.RegistrationId.HasValue && RegistrationInstanceState != null && RegistrationInstanceState.MaxAttendees.HasValue )
                 {
                     var existingRegistrantIds = RegistrationState.Registrants.Select( r => r.Id ).ToList();
                     var otherRegistrantsCount = new RegistrationRegistrantService( new RockContext() ).Queryable()
@@ -1937,7 +1939,7 @@ namespace RockWeb.Blocks.Event
                 // Reset the order after removing any registrants
                 RegistrationState.Registrants.Reverse();
             }
-            
+
         }
 
         #endregion
@@ -4380,6 +4382,8 @@ namespace RockWeb.Blocks.Event
                     if ( CurrentFormIndex < FormCount )
                     {
                         ParseRegistrantControls();
+                        decimal currentStep = ( FormCount * CurrentRegistrantIndex ) + CurrentFormIndex + 1;
+                        PercentComplete = ( currentStep / ProgressBarSteps ) * 100.0m;
                     }
 
                     break;
@@ -4475,13 +4479,15 @@ namespace RockWeb.Blocks.Event
                         value = firstRegistrant.FieldValues[field.Id].FieldValue;
                     }
 
+                    bool hasDependantVisibilityRule = form.Fields.Any( a => a.FieldVisibilityRules.RuleList.Any( r => r.ComparedToRegistrationTemplateFormFieldGuid == field.Guid ) );
+
                     if ( field.FieldSource == RegistrationFieldSource.PersonField )
                     {
-                        CreatePersonField( field, setValues, value, familyMemberSelected, BlockValidationGroup, phRegistrantControls );
+                        CreatePersonField( hasDependantVisibilityRule, field, setValues, value, familyMemberSelected, BlockValidationGroup, phRegistrantControls );
                     }
                     else
                     {
-                        CreateAttributeField( form, field, setValues, value, GetAttributeValue( "ShowFieldDescriptions" ).AsBoolean(), BlockValidationGroup, phRegistrantControls );
+                        CreateAttributeField( hasDependantVisibilityRule, field, setValues, value, GetAttributeValue( "ShowFieldDescriptions" ).AsBoolean(), BlockValidationGroup, phRegistrantControls );
                     }
                 }
 
@@ -4514,22 +4520,50 @@ namespace RockWeb.Blocks.Event
         /// <param name="field">The field.</param>
         /// <param name="setValue">if set to <c>true</c> [set value].</param>
         /// <param name="fieldValue">The field value.</param>
-        private static void CreatePersonField( RegistrationTemplateFormField field, bool setValue, object fieldValue, bool familyMemberSelected, string validationGroup, Control parentControl )
+        private static void CreatePersonField( bool hasDependantVisibilityRule, RegistrationTemplateFormField field, bool setValue, object fieldValue, bool familyMemberSelected, string validationGroup, Control parentControl )
         {
             Control personFieldControl = field.GetPersonControl( setValue, fieldValue, familyMemberSelected, validationGroup );
 
             if ( personFieldControl != null )
             {
+                var fieldVisibilityWrapper = new FieldVisibilityWrapper
+                {
+                    ID = "_fieldVisibilityWrapper_field_" + field.Guid.ToString( "N" ),
+                    RegistrationTemplateFormFieldId = field.Id,
+                    FieldVisibilityRules = field.FieldVisibilityRules
+                };
+
+                fieldVisibilityWrapper.EditValueUpdated += ( object sender, FieldVisibilityWrapper.FieldEventArgs args ) =>
+                {
+                    FieldVisibilityWrapper.ApplyFieldVisibilityRules( parentControl );
+                };
+
+                parentControl.Controls.Add( fieldVisibilityWrapper );
+
                 if ( !string.IsNullOrWhiteSpace( field.PreText ) )
                 {
-                    parentControl.Controls.Add( new LiteralControl( field.PreText ) );
+                    fieldVisibilityWrapper.Controls.Add( new LiteralControl( field.PreText ) );
                 }
 
-                parentControl.Controls.Add( personFieldControl );
+                fieldVisibilityWrapper.Controls.Add( personFieldControl );
+                fieldVisibilityWrapper.EditControl = personFieldControl;
 
                 if ( !string.IsNullOrWhiteSpace( field.PostText ) )
                 {
-                    parentControl.Controls.Add( new LiteralControl( field.PostText ) );
+                    fieldVisibilityWrapper.Controls.Add( new LiteralControl( field.PostText ) );
+                }
+
+                if ( hasDependantVisibilityRule && FieldVisibilityRules.IsFieldSupported( field.PersonFieldType ) )
+                {
+                    var fieldType = FieldVisibilityRules.GetSupportedFieldTypeCache( field.PersonFieldType ).Field;
+
+                    if ( fieldType.HasChangeHandler( personFieldControl ) )
+                    {
+                        fieldType.AddChangeHandler( personFieldControl, () =>
+                        {
+                            fieldVisibilityWrapper.TriggerEditValueUpdated( personFieldControl, new FieldVisibilityWrapper.FieldEventArgs( null, personFieldControl ) );
+                        } );
+                    }
                 }
             }
         }
@@ -4541,7 +4575,7 @@ namespace RockWeb.Blocks.Event
         /// <param name="field">The field.</param>
         /// <param name="setValue">if set to <c>true</c> [set value].</param>
         /// <param name="fieldValue">The field value.</param>
-        private static void CreateAttributeField( RegistrationTemplateForm form, RegistrationTemplateFormField field, bool setValue, object fieldValue, bool showFieldDescriptions, string validationGroup, Control parentControl )
+        private static void CreateAttributeField( bool hasDependantVisibilityRule, RegistrationTemplateFormField field, bool setValue, object fieldValue, bool showFieldDescriptions, string validationGroup, Control parentControl )
         {
             if ( field.AttributeId.HasValue )
             {
@@ -4559,7 +4593,7 @@ namespace RockWeb.Blocks.Event
                 FieldVisibilityWrapper fieldVisibilityWrapper = new FieldVisibilityWrapper
                 {
                     ID = "_fieldVisibilityWrapper_attribute_" + attribute.Id.ToString(),
-                    AttributeId = attribute.Id,
+                    RegistrationTemplateFormFieldId = field.Id,
                     FieldVisibilityRules = field.FieldVisibilityRules
                 };
 
@@ -4582,8 +4616,6 @@ namespace RockWeb.Blocks.Event
                 {
                     fieldVisibilityWrapper.Controls.Add( new LiteralControl( field.PostText ) );
                 }
-
-                bool hasDependantVisibilityRule = form.Fields.Any( a => a.FieldVisibilityRules.RuleList.Any( r => r.ComparedToAttributeGuid == attribute.Guid ) );
 
                 if ( hasDependantVisibilityRule && attribute.FieldType.Field.HasChangeHandler( editControl ) )
                 {
@@ -5427,8 +5459,6 @@ namespace RockWeb.Blocks.Event
         {
             if ( RegistrationState != null )
             {
-                RegistrationState.Registrants.ForEach( r => r.DiscountApplies = true );
-
                 var discounts = RegistrationTemplate.Discounts
                         .Where( d => d.AutoApplyDiscount )
                         .OrderBy( d => d.Order )
@@ -5436,6 +5466,7 @@ namespace RockWeb.Blocks.Event
 
                 foreach ( var discount in discounts )
                 {
+                    RegistrationState.Registrants.ForEach( r => r.DiscountApplies = true );
                     bool validDiscount = true;
 
                     if ( validDiscount && discount.MinRegistrants.HasValue && RegistrationState.RegistrantCount < discount.MinRegistrants.Value )

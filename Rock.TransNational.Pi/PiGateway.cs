@@ -53,7 +53,7 @@ namespace Rock.TransNational.Pi
         DefaultValue = "Live" )]
 
     #endregion Component Attributes
-    public class PiGateway : GatewayComponent, IHostedGatewayComponent
+    public class PiGateway : GatewayComponent, IHostedGatewayComponent, IAutomatedGatewayComponent
     {
         #region Attribute Keys
 
@@ -85,7 +85,7 @@ namespace Rock.TransNational.Pi
             }
             else
             {
-                return "https://app.gotnpgateway.co ";
+                return "https://app.gotnpgateway.com";
             }
         }
 
@@ -113,6 +113,79 @@ namespace Rock.TransNational.Pi
             return this.GetAttributeValue( financialGateway, AttributeKey.PrivateApiKey );
         }
 
+        #region IAutomatedGatewayComponent
+
+        /// <summary>
+        /// The most recent exception thrown by the gateway's remote API
+        /// </summary>
+        public Exception MostRecentException { get; private set; }
+
+        /// <summary>
+        /// Charges the specified payment info.
+        /// </summary>
+        /// <param name="financialGateway">The financial gateway.</param>
+        /// <param name="paymentInfo">The payment info.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns></returns>
+        /// <exception cref="ReferencePaymentInfoRequired"></exception>
+        public Payment AutomatedCharge( FinancialGateway financialGateway, ReferencePaymentInfo paymentInfo, out string errorMessage, Dictionary<string, string> metadata = null )
+        {
+            // TODO - Fees? If Pi provides fee info, we won't be able to use the Charge method as the transaction it returns
+            // doesn't have the capacity to relay fee info (also the reason this method returns a Payment rather than a
+            // transaction.
+
+            // payment.FeeAmount and payment.NetAmount
+
+            MostRecentException = null;
+
+            try
+            {
+                var transaction = Charge( financialGateway, paymentInfo, out errorMessage );
+
+                if ( !string.IsNullOrEmpty( errorMessage ) )
+                {
+                    MostRecentException = new Exception( errorMessage );
+                    return null;
+                }
+
+                var paymentDetail = transaction.FinancialPaymentDetail;
+
+                var payment = new Payment
+                {
+                    AccountNumberMasked = paymentDetail.AccountNumberMasked,
+                    Amount = paymentInfo.Amount,
+                    ExpirationMonthEncrypted = paymentDetail.ExpirationMonthEncrypted,
+                    ExpirationYearEncrypted = paymentDetail.ExpirationYearEncrypted,
+                    IsSettled = transaction.IsSettled,
+                    SettledDate = transaction.SettledDate,
+                    NameOnCardEncrypted = paymentDetail.NameOnCardEncrypted,
+                    Status = transaction.Status,
+                    StatusMessage = transaction.StatusMessage,
+                    TransactionCode = transaction.TransactionCode,
+                    TransactionDateTime = transaction.TransactionDateTime ?? RockDateTime.Now
+                };
+
+                if ( paymentDetail.CreditCardTypeValueId.HasValue )
+                {
+                    payment.CreditCardTypeValue = DefinedValueCache.Get( paymentDetail.CreditCardTypeValueId.Value );
+                }
+
+                if ( paymentDetail.CurrencyTypeValueId.HasValue )
+                {
+                    payment.CurrencyTypeValue = DefinedValueCache.Get( paymentDetail.CurrencyTypeValueId.Value );
+                }
+
+                return payment;
+            }
+            catch ( Exception e )
+            {
+                MostRecentException = e;
+                throw;
+            }
+        }
+
+        #endregion IAutomatedGatewayComponent
+
         #region IHostedGatewayComponent
 
         /// <summary>
@@ -128,7 +201,7 @@ namespace Rock.TransNational.Pi
             piHostedPaymentControl.PiGateway = this;
             piHostedPaymentControl.GatewayBaseUrl = this.GetGatewayUrl( financialGateway );
             List<PiPaymentType> enabledPaymentTypes = new List<PiPaymentType>();
-            if (options?.EnableACH ?? true)
+            if ( options?.EnableACH ?? true )
             {
                 enabledPaymentTypes.Add( PiPaymentType.ach );
             }
@@ -151,7 +224,7 @@ namespace Rock.TransNational.Pi
         /// <param name="financialGateway">The financial gateway.</param>
         /// <param name="hostedPaymentInfoControl">The hosted payment information control.</param>
         /// <returns></returns>
-        public string GetHostedPaymentInfoToken( FinancialGateway financialGateway, Control hostedPaymentInfoControl, out string errorMessage )
+        public void UpdatePaymentInfoFromPaymentControl( FinancialGateway financialGateway, Control hostedPaymentInfoControl, ReferencePaymentInfo referencePaymentInfo, out string errorMessage )
         {
             errorMessage = null;
             var tokenResponse = ( hostedPaymentInfoControl as PiHostedPaymentControl ).PaymentInfoTokenRaw.FromJsonOrNull<Pi.TokenizerResponse>();
@@ -162,16 +235,15 @@ namespace Rock.TransNational.Pi
                     if ( tokenResponse.Invalid.Any() )
                     {
                         errorMessage = $"Invalid {tokenResponse.Invalid.ToList().AsDelimited( "," ) }";
-                        return null;
                     }
                 }
 
                 errorMessage = $"Failure: {tokenResponse?.Message ?? "null response from GetHostedPaymentInfoToken"}";
-                return null;
+                referencePaymentInfo.ReferenceNumber = ( hostedPaymentInfoControl as PiHostedPaymentControl ).PaymentInfoToken;
             }
             else
             {
-                return ( hostedPaymentInfoControl as PiHostedPaymentControl ).PaymentInfoToken;
+                referencePaymentInfo.ReferenceNumber = ( hostedPaymentInfoControl as PiHostedPaymentControl ).PaymentInfoToken;
             }
         }
 
@@ -212,9 +284,9 @@ namespace Rock.TransNational.Pi
         /// <param name="paymentInfo">The payment information.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns></returns>
-        public string CreateCustomerAccount( FinancialGateway financialGateway, string paymentToken, PaymentInfo paymentInfo, out string errorMessage )
+        public string CreateCustomerAccount( FinancialGateway financialGateway, ReferencePaymentInfo paymentInfo, out string errorMessage )
         {
-            var createCustomerResponse = this.CreateCustomer( GetGatewayUrl( financialGateway ), GetPrivateApiKey( financialGateway ), paymentToken, paymentInfo );
+            var createCustomerResponse = this.CreateCustomer( GetGatewayUrl( financialGateway ), GetPrivateApiKey( financialGateway ), paymentInfo );
 
             if ( createCustomerResponse?.IsSuccessStatus() != true )
             {
@@ -288,7 +360,7 @@ namespace Rock.TransNational.Pi
         /// <param name="tokenizerToken">The tokenizer token.</param>
         /// <param name="paymentInfo">The payment information.</param>
         /// <returns></returns>
-        private CustomerResponse CreateCustomer( string gatewayUrl, string apiKey, string tokenizerToken, PaymentInfo paymentInfo )
+        private CustomerResponse CreateCustomer( string gatewayUrl, string apiKey, ReferencePaymentInfo paymentInfo )
         {
             var restClient = new RestClient( gatewayUrl );
             RestRequest restRequest = new RestRequest( "api/customer", Method.POST );
@@ -297,7 +369,7 @@ namespace Rock.TransNational.Pi
             var createCustomer = new CreateCustomerRequest
             {
                 Description = paymentInfo.FullName,
-                PaymentMethod = new PaymentMethodRequest( tokenizerToken ),
+                PaymentMethod = new PaymentMethodRequest( paymentInfo.ReferenceNumber ),
                 BillingAddress = CreateBillingAddress<BillingAddress>( paymentInfo )
             };
 
@@ -755,13 +827,18 @@ namespace Rock.TransNational.Pi
         /// <param name="apiKey">The API key.</param>
         /// <param name="querySubscriptionsRequest">The query subscriptions request.</param>
         /// <returns></returns>
-        private SubscriptionsSearchResult SearchSubscriptions( string gatewayUrl, string apiKey, QuerySubscriptionsRequest querySubscriptionsRequest )
+        public SubscriptionsSearchResult SearchCustomerSubscriptions( FinancialGateway financialGateway, string customerId )
         {
+            string gatewayUrl = this.GetGatewayUrl( financialGateway );
+            string apiKey = this.GetPrivateApiKey( financialGateway );
+
+            var queryCustomerSubscriptionsRequest = new QueryCustomerSubscriptionsRequest( customerId );
+
             var restClient = new RestClient( gatewayUrl );
             RestRequest restRequest = new RestRequest( $"api/recurring/subscription/search", Method.POST );
             restRequest.AddHeader( "Authorization", apiKey );
 
-            restRequest.AddJsonBody( querySubscriptionsRequest );
+            restRequest.AddJsonBody( queryCustomerSubscriptionsRequest );
 
             var response = restClient.Execute( restRequest );
 
@@ -972,7 +1049,7 @@ namespace Rock.TransNational.Pi
             }
 
             var customerId = referencedPaymentInfo.GatewayPersonIdentifier;
-            string subscriptionDescription = $"Subscription Ref: {descriptionGuid}";
+            string subscriptionDescription = $"{referencedPaymentInfo.Description}|Subscription Ref: {descriptionGuid}";
 
             try
             {
@@ -1032,10 +1109,7 @@ namespace Rock.TransNational.Pi
             catch ( Exception )
             {
                 // if there is an exception, Rock won't save this as a scheduled transaction, so make sure the subscription didn't get created so mystery scheduled transactions don't happen
-                var subscriptionRequest = new QuerySubscriptionsRequest();
-                subscriptionRequest.CustomerIdSearch = new QuerySearchString { SearchValue = customerId, ComparisonOperator = "=" };
-
-                var subscriptionSearchResult = this.SearchSubscriptions( this.GetGatewayUrl( financialGateway ), this.GetPrivateApiKey( financialGateway ), subscriptionRequest );
+                var subscriptionSearchResult = this.SearchCustomerSubscriptions( financialGateway, customerId );
                 var orphanedSubscription = subscriptionSearchResult?.Data?.FirstOrDefault( a => a.Description == subscriptionDescription );
 
                 if ( orphanedSubscription?.Id != null )
@@ -1237,7 +1311,7 @@ namespace Rock.TransNational.Pi
                     GatewayScheduleId = gatewayScheduleId,
                 };
 
-                if (transaction.PaymentType == "ach" )
+                if ( transaction.PaymentType == "ach" )
                 {
                     payment.AccountNumberMasked = transaction?.PaymentMethodResponse?.ACH?.MaskedAccountNumber;
                 }

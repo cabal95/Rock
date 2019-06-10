@@ -91,9 +91,7 @@ namespace Rock.Rest.Controllers
             var rockContext = Service.Context as RockContext;
             var automatedPaymentProcessor = new AutomatedPaymentProcessor( GetPersonAliasId( rockContext ), automatedPaymentArgs, rockContext, enableDuplicateChecking, enableScheduleAdherenceProtection );
 
-            if ( !automatedPaymentProcessor.AreArgsValid( out errorMessage ) ||
-                automatedPaymentProcessor.IsRepeatCharge( out errorMessage ) ||
-                !automatedPaymentProcessor.IsAccordingToSchedule( out errorMessage ) )
+            if ( !automatedPaymentProcessor.AreArgsValid( out errorMessage ) )
             {
 #if IS_NET_CORE
                 return BadRequest( errorMessage );
@@ -101,6 +99,13 @@ namespace Rock.Rest.Controllers
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.BadRequest, errorMessage );
                 throw new HttpResponseException( errorResponse );
 #endif
+            }
+
+            if ( automatedPaymentProcessor.IsRepeatCharge( out errorMessage ) ||
+                !automatedPaymentProcessor.IsAccordingToSchedule( out errorMessage ) )
+            {
+                var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.Conflict, errorMessage );
+                throw new HttpResponseException( errorResponse );
             }
 
             var transaction = automatedPaymentProcessor.ProcessCharge( out errorMessage );

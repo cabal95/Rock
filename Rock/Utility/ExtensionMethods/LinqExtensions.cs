@@ -509,6 +509,5 @@ namespace Rock
         }
 
         #endregion IQueryable extensions
-        
     }
 }

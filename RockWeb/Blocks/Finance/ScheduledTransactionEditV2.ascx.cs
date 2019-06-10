@@ -52,12 +52,19 @@ namespace RockWeb.Blocks.Finance
         Category = AttributeCategory.None,
         Order = 1 )]
 
+    [BooleanField(
+        "Enable Credit Card",
+        Key = AttributeKey.EnableCreditCard,
+        DefaultBooleanValue = true,
+        Category = AttributeCategory.None,
+        Order = 2 )]
+
     [AccountsField(
         "Accounts",
         Key = AttributeKey.AccountsToDisplay,
         Description = "The accounts to display. By default all active accounts with a Public Name will be displayed. If the account has a child account for the selected campus, the child account for that campus will be used.",
         Category = AttributeCategory.None,
-        Order = 2 )]
+        Order = 3 )]
 
     [BooleanField(
         "Ask for Campus if Known",
@@ -65,7 +72,7 @@ namespace RockWeb.Blocks.Finance
         Description = "If the campus for the person is already known, should the campus still be prompted for?",
         DefaultBooleanValue = true,
         Category = AttributeCategory.None,
-        Order = 3 )]
+        Order = 4 )]
 
     [BooleanField(
         "Enable Multi-Account",
@@ -73,7 +80,7 @@ namespace RockWeb.Blocks.Finance
         Description = "Should the person be able specify amounts for more than one account?",
         DefaultBooleanValue = true,
         Category = AttributeCategory.None,
-        Order = 4 )]
+        Order = 5 )]
 
     #region Text Options
 
@@ -253,6 +260,8 @@ mission. We are so grateful for your commitment.</p>
         {
             public const string EnableACH = "EnableACH";
 
+            public const string EnableCreditCard = "EnableCreditCard";
+
             public const string AccountsToDisplay = "AccountsToDisplay";
 
             public const string AllowImpersonation = "AllowImpersonation";
@@ -325,8 +334,9 @@ mission. We are so grateful for your commitment.</p>
             }
 
             bool enableACH = this.GetAttributeValue( AttributeKey.EnableACH ).AsBoolean();
+            bool enableCreditCard = this.GetAttributeValue( AttributeKey.EnableCreditCard ).AsBoolean();
 
-            _hostedPaymentInfoControl = financialGatewayComponent.GetHostedPaymentInfoControl( financialGateway, enableACH, "_hostedPaymentInfoControl" );
+            _hostedPaymentInfoControl = financialGatewayComponent.GetHostedPaymentInfoControl( financialGateway, "_hostedPaymentInfoControl", new HostedPaymentInfoControlOptions { EnableACH = enableACH, EnableCreditCard = enableCreditCard } );
             phHostedPaymentControl.Controls.Add( _hostedPaymentInfoControl );
             this.HostPaymentInfoSubmitScript = financialGatewayComponent.GetHostPaymentInfoSubmitScript( financialGateway, _hostedPaymentInfoControl );
 
@@ -366,19 +376,17 @@ mission. We are so grateful for your commitment.</p>
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void _hostedPaymentInfoControl_TokenReceived( object sender, EventArgs e )
+        private void _hostedPaymentInfoControl_TokenReceived( object sender, HostedGatewayPaymentControlTokenEventArgs e )
         {
-            string errorMessage = null;
-            string token = this.FinancialGatewayComponent.GetHostedPaymentInfoToken( this.FinancialGateway, _hostedPaymentInfoControl, out errorMessage );
-            if ( errorMessage.IsNotNullOrWhiteSpace() )
+            if ( !e.IsValid )
             {
-                nbPaymentTokenError.Text = errorMessage;
+                nbPaymentTokenError.Text = e.ErrorMessage;
                 nbPaymentTokenError.Visible = true;
             }
             else
             {
                 nbPaymentTokenError.Visible = false;
-                UpdateScheduledPayment( true, token );
+                UpdateScheduledPayment( true, e.Token );
             }
         }
 
@@ -588,7 +596,7 @@ mission. We are so grateful for your commitment.</p>
 
                 referencePaymentInfo.ReferenceNumber = paymentToken;
 
-                var customerToken = financialGatewayComponent.CreateCustomerAccount( this.FinancialGateway, paymentToken, referencePaymentInfo, out errorMessage );
+                var customerToken = financialGatewayComponent.CreateCustomerAccount( this.FinancialGateway, referencePaymentInfo, out errorMessage );
 
                 if ( errorMessage.IsNotNullOrWhiteSpace() || customerToken.IsNullOrWhiteSpace() )
                 {

@@ -57,7 +57,7 @@ namespace Rock.Security
         public const string EDIT = "Edit";
 
         /// <summary>
-        /// Authorization to delete object (only used in few places where delete needs to be securred differently that EDIT, i.e. Financial Batch )
+        /// Authorization to delete object (only used in few places where delete needs to be secured differently that EDIT, i.e. Financial Batch )
         /// </summary>
         public const string DELETE = "Delete";
 
@@ -85,6 +85,11 @@ namespace Rock.Security
         /// Authorization to manage the group members
         /// </summary>
         public const string MANAGE_MEMBERS = "ManageMembers";
+
+        /// <summary>
+        /// Authorization to perform scheduling
+        /// </summary>
+        public const string SCHEDULE = "Schedule";
 
         /// <summary>
         /// Authorization action for using (tagging with) the Tag.

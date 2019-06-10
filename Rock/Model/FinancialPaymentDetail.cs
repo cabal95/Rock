@@ -129,7 +129,7 @@ namespace Rock.Model
         /// The name on card.
         /// </value>
         [DataMember]
-        [NotMapped]
+        [HideFromReporting]
         public string NameOnCard
         {
             get
@@ -149,7 +149,7 @@ namespace Rock.Model
         /// The expiration month.
         /// </value>
         [DataMember]
-        [NotMapped]
+        [HideFromReporting]
         public int? ExpirationMonth
         {
             get
@@ -169,7 +169,7 @@ namespace Rock.Model
         /// The expiration year.
         /// </value>
         [DataMember]
-        [NotMapped]
+        [HideFromReporting]
         public int? ExpirationYear
         {
             get
@@ -483,6 +483,12 @@ namespace Rock.Model
             this.HasOptional( t => t.CurrencyTypeValue ).WithMany().HasForeignKey( t => t.CurrencyTypeValueId ).WillCascadeOnDelete( false );
             this.HasOptional( t => t.CreditCardTypeValue ).WithMany().HasForeignKey( t => t.CreditCardTypeValueId ).WillCascadeOnDelete( false );
             this.HasOptional( t => t.BillingLocation ).WithMany().HasForeignKey( t => t.BillingLocationId ).WillCascadeOnDelete( false );
+
+            // This has similar functionality like [NotMapped], but allows the properties to still work with odata $expand
+            // even though they are ignored at the database level
+            Ignore( fpd => fpd.NameOnCard );
+            Ignore( fpd => fpd.ExpirationMonth );
+            Ignore( fpd => fpd.ExpirationYear );
         }
     }
 

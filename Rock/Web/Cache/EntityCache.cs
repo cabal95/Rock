@@ -117,7 +117,7 @@ namespace Rock.Web.Cache
         /// </summary>
         /// <param name="guidString">The unique identifier string.</param>
         /// <returns></returns>
-        public static T Get( string guidString )
+        public static T Get( string guidString ) 
         {
             var guid = guidString.AsGuidOrNull();
             return guid.HasValue ? Get( guid.Value ) : default( T );

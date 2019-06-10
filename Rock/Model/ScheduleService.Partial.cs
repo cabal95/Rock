@@ -24,6 +24,7 @@ using Microsoft.EntityFrameworkCore;
 #endif
 using Rock.Data;
 using Rock.Web.Cache;
+using System.Data;
 
 namespace Rock.Model
 {

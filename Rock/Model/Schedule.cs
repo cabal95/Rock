@@ -286,7 +286,7 @@ namespace Rock.Model
             if ( this.IsActive )
             {
                 var occurrences = GetScheduledStartTimes( currentDateTime, currentDateTime.AddYears( 1 ) );
-                return occurrences.Min( o => (DateTime?)o );
+                return occurrences.Min( o => ( DateTime? ) o );
             }
             else
             {
@@ -319,7 +319,7 @@ namespace Rock.Model
                 var endDate = RockDateTime.Today.SundayDate();
                 var startDate = endDate.AddDays( -7 );
                 var occurrences = GetScheduledStartTimes( startDate, endDate );
-                return occurrences.Min( o => (DateTime?)o );
+                return occurrences.Min( o => ( DateTime? ) o );
             }
         }
 
@@ -410,11 +410,11 @@ namespace Rock.Model
             if ( calEvent != null )
             {
 #if IS_NET_CORE
-                EffectiveStartDate = calEvent.DtStart != null ? calEvent.DtStart.Value.Date : (DateTime?)null;
-                EffectiveEndDate = calEvent.DtEnd != null ? calEvent.DtEnd.Value.Date : (DateTime?)null;
+                EffectiveStartDate = calEvent.DtStart != null ? calEvent.DtStart.Value.Date : ( DateTime?) null;
+                EffectiveEndDate = calEvent.DtEnd != null ? calEvent.DtEnd.Value.Date : ( DateTime? )null;
 #else
-                EffectiveStartDate = calEvent.DTStart != null ? calEvent.DTStart.Value.Date : (DateTime?)null;
-                EffectiveEndDate = calEvent.DTEnd != null ? calEvent.DTEnd.Value.Date : (DateTime?)null;
+                EffectiveStartDate = calEvent.DTStart != null ? calEvent.DTStart.Value.Date : ( DateTime? ) null;
+                EffectiveEndDate = calEvent.DTEnd != null ? calEvent.DTEnd.Value.Date : ( DateTime? ) null;
 #endif
             }
 
@@ -460,14 +460,43 @@ namespace Rock.Model
         /// <returns></returns>
         public IList<Occurrence> GetOccurrences( DateTime beginDateTime, DateTime? endDateTime = null )
         {
+            return this.GetOccurrences( beginDateTime, endDateTime, null );
+        }
+
+        /// <summary>
+        /// Gets the occurrences with option to override the ICal.Event.DTStart
+        /// </summary>
+        /// <param name="beginDateTime">The begin date time.</param>
+        /// <param name="endDateTime">The end date time.</param>
+        /// <param name="scheduleStartDateTimeOverride">The schedule start date time override.</param>
+        /// <returns></returns>
+        public IList<Occurrence> GetOccurrences( DateTime beginDateTime, DateTime? endDateTime, DateTime? scheduleStartDateTimeOverride )
+        {
             var occurrences = new List<Occurrence>();
 
 #if IS_NET_CORE
             CalendarEvent calEvent = GetCalendarEvent();
-            if ( calEvent != null && calEvent.DtStart != null )
 #else
             DDay.iCal.Event calEvent = GetCalendarEvent();
-            if ( calEvent != null && calEvent.DTStart != null )
+#endif
+            if ( calEvent == null )
+            {
+                return occurrences;
+            }
+
+            if ( scheduleStartDateTimeOverride.HasValue )
+            {
+#if IS_NET_CORE
+                calEvent.DtStart = new CalDateTime( scheduleStartDateTimeOverride.Value );
+#else
+                calEvent.DTStart = new DDay.iCal.iCalDateTime( scheduleStartDateTimeOverride.Value );
+#endif
+            }
+
+#if IS_NET_CORE
+            if ( calEvent.DtStart != null )
+#else
+            if ( calEvent.DTStart != null )
 #endif
             {
                 var exclusionDates = new List<DateRange>();
@@ -482,7 +511,7 @@ namespace Rock.Model
                     }
                 }
 
-                foreach( var occurrence in endDateTime.HasValue ?
+                foreach ( var occurrence in endDateTime.HasValue ?
                     ScheduleICalHelper.GetOccurrences( calEvent, beginDateTime, endDateTime.Value ) :
                     ScheduleICalHelper.GetOccurrences( calEvent, beginDateTime ) )
                 {
@@ -525,10 +554,11 @@ namespace Rock.Model
                         a.Period != null &&
                         a.Period.StartTime != null &&
                         a.Period.EndTime != null )
-                    .Select( a => new {
+                    .Select( a => new
+                    {
                         Start = a.Period.StartTime.Value,
-                        End = a.Period.EndTime.Value 
-                    }) )
+                        End = a.Period.EndTime.Value
+                    } ) )
                 {
                     var checkInTimes = new CheckInTimes();
                     checkInTimes.Start = DateTime.SpecifyKind( occurrence.Start, DateTimeKind.Local );
@@ -598,7 +628,7 @@ namespace Rock.Model
         public virtual DateTime? GetFirstStartDateTime()
         {
             DateTime? firstStartTime = null;
-            
+
             if ( this.EffectiveStartDate.HasValue )
             {
                 var scheduledStartTimes = this.GetScheduledStartTimes( this.EffectiveStartDate.Value, this.EffectiveStartDate.Value.AddMonths( 1 ) );
@@ -843,7 +873,7 @@ namespace Rock.Model
                             result = listHtml;
                         }
                     }
-                    else if ( dates.Count() == 1)
+                    else if ( dates.Count() == 1 )
                     {
 #if IS_NET_CORE
                         result = "Once at " + calendarEvent.DtStart.Value.ToShortDateTimeString();
@@ -1013,12 +1043,12 @@ namespace Rock.Model
         /// <summary>
         /// The "nth" names for DayName of Month (First, Second, Third, Forth, Last)
         /// </summary>
-        public static readonly Dictionary<int, string> NthNames = new Dictionary<int, string> { 
-            {1, "First"}, 
-            {2, "Second"}, 
-            {3, "Third"}, 
-            {4, "Fourth"}, 
-            {-1, "Last"} 
+        public static readonly Dictionary<int, string> NthNames = new Dictionary<int, string> {
+            {1, "First"},
+            {2, "Second"},
+            {3, "Third"},
+            {4, "Fourth"},
+            {-1, "Last"}
         };
 
         #endregion
@@ -1242,7 +1272,7 @@ namespace Rock.Model
             {
                 if ( TotalCount > 0 )
                 {
-                    return (double)( DidAttendCount ) / (double)TotalCount;
+                    return ( double ) ( DidAttendCount ) / ( double ) TotalCount;
                 }
                 else
                 {
