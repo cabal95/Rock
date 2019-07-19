@@ -708,6 +708,9 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
             {
                 ddlMinistry.Items.Add( new ListItem( ministry.Name, ministry.Id.ToString().ToUpper() ) );
             }
+
+            SetRequiredFieldsBasedOnReservationType( ReservationType );
+
         }
 
         /// <summary>
@@ -1598,26 +1601,11 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
         {
             using ( RockContext rockContext = new RockContext() )
             {
-
                 ddlReservationType.Enabled = ( reservation.Id == 0 );
 
                 SetEditMode( true );
                 hfReservationId.SetValue( reservation.Id );
-
-                nbSetupTime.Required = nbCleanupTime.Required = ReservationType.IsSetupTimeRequired;
-                nbAttending.Required = ReservationType.IsNumberAttendingRequired;
-                bool requireContactDetails = ReservationType.IsContactDetailsRequired;
-
-                if ( requireContactDetails )
-                {
-                    ppAdministrativeContact.Required = true;
-                    pnAdministrativeContactPhone.Required = true;
-                    tbAdministrativeContactEmail.Required = true;
-
-                    ppEventContact.Required = true;
-                    pnEventContactPhone.Required = true;
-                    tbEventContactEmail.Required = true;
-                }
+                SetRequiredFieldsBasedOnReservationType( ReservationType, reservation );
 
                 sbSchedule.iCalendarContent = string.Empty;
                 if ( reservation.Schedule != null )
@@ -1640,18 +1628,10 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 }
 
                 fuSetupPhoto.BinaryFileId = reservation.SetupPhotoId;
-
-                var defaultTime = ReservationType.DefaultSetupTime.ToString();
-                if ( defaultTime == "-1" )
-                {
-                    defaultTime = string.Empty;
-                }
-
+                
                 rtbName.Text = reservation.Name;
                 rtbNote.Text = reservation.Note;
                 nbAttending.Text = reservation.NumberAttending.ToString();
-                nbSetupTime.Text = reservation.SetupTime.HasValue ? reservation.SetupTime.ToString() : defaultTime;
-                nbCleanupTime.Text = reservation.CleanupTime.HasValue ? reservation.CleanupTime.ToString() : defaultTime;
                 ppEventContact.SetValue( reservation.EventContactPersonAlias != null ? reservation.EventContactPersonAlias.Person : null );
                 ppAdministrativeContact.SetValue( reservation.AdministrativeContactPersonAlias != null ? reservation.AdministrativeContactPersonAlias.Person : null );
 
@@ -1761,6 +1741,42 @@ namespace RockWeb.Plugins.com_centralaz.RoomManagement
                 LoadPickers();
 
                 hfApprovalState.Value = reservation.ApprovalState.ConvertToString();
+            }
+        }
+
+        /// <summary>
+        /// Sets the type of the required fields based on reservation.
+        /// </summary>
+        /// <param name="reservationType">Type of the reservation.</param>
+        private void SetRequiredFieldsBasedOnReservationType( ReservationType reservationType, Reservation reservation = null )
+        {
+            nbSetupTime.Required = nbCleanupTime.Required = reservationType.IsSetupTimeRequired;
+            nbAttending.Required = reservationType.IsNumberAttendingRequired;
+            bool requireContactDetails = reservationType.IsContactDetailsRequired;
+            
+            ppAdministrativeContact.Required = requireContactDetails;
+            pnAdministrativeContactPhone.Required = requireContactDetails;
+            tbAdministrativeContactEmail.Required = requireContactDetails;
+
+            ppEventContact.Required = requireContactDetails;
+            pnEventContactPhone.Required = requireContactDetails;
+            tbEventContactEmail.Required = requireContactDetails;
+            
+            var defaultTime = ReservationType.DefaultSetupTime.ToString();
+            if ( defaultTime == "-1" )
+            {
+                defaultTime = string.Empty;
+            }
+
+            if ( reservation == null )
+            {
+                nbSetupTime.Text = defaultTime;
+                nbCleanupTime.Text = defaultTime;
+            }
+            else
+            {
+                nbSetupTime.Text = reservation.SetupTime.HasValue ? reservation.SetupTime.ToString() : defaultTime;
+                nbCleanupTime.Text = reservation.CleanupTime.HasValue ? reservation.CleanupTime.ToString() : defaultTime;
             }
         }
 
