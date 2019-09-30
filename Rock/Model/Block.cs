@@ -191,6 +191,15 @@ namespace Rock.Model
         [DataMember( IsRequired = true )]
         public int OutputCacheDuration { get; set; }
 
+        /// <summary>
+        /// Gets or sets the additional settings.
+        /// </summary>
+        /// <value>
+        /// The additional settings.
+        /// </value>
+        [DataMember]
+        public string AdditionalSettings { get; set; }
+
         #endregion
 
         #region Virtual Properties

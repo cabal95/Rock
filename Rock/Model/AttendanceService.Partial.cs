@@ -108,31 +108,35 @@ namespace Rock.Model
                     int? groupId, int? locationId, int? scheduleId, int? campusId, int? deviceId,
                     int? searchTypeValueId, string searchValue, int? searchResultGroupId, int? attendanceCodeId, int? checkedInByPersonAliasId )
         {
+            return AddOrUpdate( personAliasId, checkinDateTime, groupId, locationId, scheduleId, campusId, deviceId, searchTypeValueId, searchValue,
+                searchResultGroupId, attendanceCodeId, checkedInByPersonAliasId, true );
+        }
+
+        /// <summary>
+        /// Adds or updates an attendance record and will create the occurrence if needed
+        /// </summary>
+        /// <param name="personAliasId">The person alias identifier.</param>
+        /// <param name="checkinDateTime">The check-in date time.</param>
+        /// <param name="groupId">The group identifier.</param>
+        /// <param name="locationId">The location identifier.</param>
+        /// <param name="scheduleId">The schedule identifier.</param>
+        /// <param name="campusId">The campus identifier.</param>
+        /// <param name="deviceId">The device identifier.</param>
+        /// <param name="searchTypeValueId">The search type value identifier.</param>
+        /// <param name="searchValue">The search value.</param>
+        /// <param name="searchResultGroupId">The search result group identifier.</param>
+        /// <param name="attendanceCodeId">The attendance code identifier.</param>
+        /// <param name="checkedInByPersonAliasId">The checked in by person alias identifier.</param>
+        /// <param name="syncMatchingStreaks">Should matching <see cref="StreakType"/> models be synchronized.</param>
+        /// <returns></returns>
+        public Attendance AddOrUpdate( int? personAliasId, DateTime checkinDateTime,
+                int? groupId, int? locationId, int? scheduleId, int? campusId, int? deviceId,
+                int? searchTypeValueId, string searchValue, int? searchResultGroupId, int? attendanceCodeId, int? checkedInByPersonAliasId,
+                bool syncMatchingStreaks )
+        {
             // Check to see if an occurrence exists already
-            var occurrenceService = new AttendanceOccurrenceService( ( RockContext ) Context );
-            var occurrence = occurrenceService.Get( checkinDateTime.Date, groupId, locationId, scheduleId );
-
-            if ( occurrence == null )
-            {
-                // If occurrence does not yet exists, use a new context and create it
-                using ( var newContext = new RockContext() )
-                {
-                    occurrence = new AttendanceOccurrence
-                    {
-                        OccurrenceDate = checkinDateTime.Date,
-                        GroupId = groupId,
-                        LocationId = locationId,
-                        ScheduleId = scheduleId,
-                    };
-
-                    var newOccurrenceService = new AttendanceOccurrenceService( newContext );
-                    newOccurrenceService.Add( occurrence );
-                    newContext.SaveChanges();
-
-                    // Query for the new occurrence using original context.
-                    occurrence = occurrenceService.Get( occurrence.Id );
-                }
-            }
+            var occurrenceService = new AttendanceOccurrenceService( (RockContext)Context );
+            var occurrence = occurrenceService.GetOrAdd( checkinDateTime.Date, groupId, locationId, scheduleId, "Attendees" );
 
             // If we still don't have an occurrence record (i.e. validation failed) return null 
             if ( occurrence == null )
@@ -186,6 +190,12 @@ namespace Rock.Model
                 attendance.AttendanceCodeId = attendanceCodeId;
             attendance.StartDateTime = checkinDateTime;
             attendance.DidAttend = true;
+
+            // Sync this attendance to any matching streaks
+            if ( syncMatchingStreaks )
+            {
+                StreakTypeService.HandleAttendanceRecordAsync( attendance );
+            }
 
             return attendance;
         }
@@ -692,13 +702,13 @@ namespace Rock.Model
                     try
                     {
                         var emailMessage = new RockEmailMessage( scheduleConfirmationSystemEmail );
-                        var recipient = attendancesByPerson.Person.Email;
+                        var recipient = attendancesByPerson.Person;
                         var attendances = attendancesByPerson.Attendances;
 
                         var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
                         mergeFields.Add( "Attendance", attendances.FirstOrDefault() );
                         mergeFields.Add( "Attendances", attendances );
-                        emailMessage.AddRecipient( new RecipientData( recipient, mergeFields ) );
+                        emailMessage.AddRecipient( new RockEmailMessageRecipient( recipient, mergeFields ) );
                         List<string> sendErrors;
                         bool sendSuccess = emailMessage.Send( out sendErrors );
 
@@ -768,7 +778,7 @@ namespace Rock.Model
                     {
 
                         var emailMessage = new RockEmailMessage( scheduleReminderSystemEmail );
-                        var recipient = attendancesByPerson.Person.Email;
+                        var recipient = attendancesByPerson.Person;
                         var attendances = attendancesByPerson.Attendances;
 
                         foreach ( var attendance in attendances )
@@ -779,7 +789,7 @@ namespace Rock.Model
                         var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
                         mergeFields.Add( "Attendance", attendances.FirstOrDefault() );
                         mergeFields.Add( "Attendances", attendances );
-                        emailMessage.AddRecipient( new RecipientData( recipient, mergeFields ) );
+                        emailMessage.AddRecipient( new RockEmailMessageRecipient( recipient, mergeFields ) );
                         emailMessage.Send();
                         emailsSent++;
                     }
@@ -1604,6 +1614,60 @@ namespace Rock.Model
         }
 
         #endregion GroupScheduling Related
+
+        #region RSVP Related
+
+        /// <summary>
+        /// Creates attendance records if they don't exist for a designated occurrence and list of person IDs.
+        /// </summary>
+        /// <param name="occurrenceId">The ID of the AttendanceOccurrence record.</param>
+        /// <param name="personIds">A comma-delimited list of Person IDs.</param>
+        public void RegisterRSVPRecipients( int occurrenceId, string personIds )
+        {
+            var rockContext = this.Context as RockContext;
+
+            var personIdList = personIds.Split( ',' ).Select( int.Parse ).ToList();
+
+            // Get Occurrence.
+            var occurrence = new AttendanceOccurrenceService( rockContext ).Queryable().AsNoTracking()
+                .Where( o => o.Id == occurrenceId ).FirstOrDefault();
+            DateTime startDateTime = occurrence.Schedule != null && occurrence.Schedule.HasSchedule() ? occurrence.OccurrenceDate.Date.Add( occurrence.Schedule.StartTimeOfDay ) : occurrence.OccurrenceDate;
+
+            // Get PersonAliasIDs from PersonIDs
+            var people = new PersonService( rockContext ).Queryable().AsNoTracking()
+                .Where( p => personIdList.Contains( p.Id ) )
+                .ToList();
+            var personAliasIds = people.Select( p => p.PrimaryAliasId ).ToList();
+
+            // Check for existing records.
+            var attendanceService = new AttendanceService( rockContext );
+            var existingAttendanceRecords = attendanceService.Queryable().AsNoTracking()
+                .Where( a => personAliasIds.Contains( a.PersonAliasId ) )
+                .Where( a => a.OccurrenceId == occurrenceId )
+                .ToList();
+
+            var newAttendanceRecords = new List<Attendance>();
+            foreach ( int personAliasId in personAliasIds )
+            {
+                // If record doesn't exist, create a new attendance record and set RSVP to "Unknown".
+                if ( !existingAttendanceRecords.Where( a => a.PersonAliasId == personAliasId ).Any() )
+                {
+                    newAttendanceRecords.Add(
+                        new Attendance()
+                        {
+                            OccurrenceId = occurrenceId,
+                            PersonAliasId = personAliasId,
+                            StartDateTime = startDateTime,
+                            RSVP = Rock.Model.RSVP.Unknown
+                        });
+                }
+            }
+
+            attendanceService.AddRange( newAttendanceRecords );
+            rockContext.SaveChanges();
+        }
+
+        #endregion RSVP Related
     }
 
     #region Group Scheduling related classes and types

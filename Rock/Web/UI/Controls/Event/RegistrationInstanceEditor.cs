@@ -774,7 +774,7 @@ namespace Rock.Web.UI.Controls
                 _cbDefaultPaymentAmount = new CurrencyBox();
                 _cbDefaultPaymentAmount.ID = this.ID + "_cbDefaultPaymentAmount";
                 _cbDefaultPaymentAmount.Label = "Default Payment Amount";
-                _cbDefaultPaymentAmount.Help = "The default payment amount per registrant. Leave value blank to default to the full amount. NOTE: This requires that a Minimum Initial Payment is defined.";
+                _cbDefaultPaymentAmount.Help = "The default payment amount per registrant. Leave value blank to default to the full amount. NOTE: This requires that a Minimum Initial Payment is greater than 0.";
                 Controls.Add( _cbDefaultPaymentAmount );
 
                 _apAccount = new AccountPicker();
@@ -815,7 +815,7 @@ namespace Rock.Web.UI.Controls
                 _htmlRegistrationInstructions.ID = this.ID + "_htmlRegistrationInstructions";
                 _htmlRegistrationInstructions.Toolbar = HtmlEditor.ToolbarConfig.Light;
                 _htmlRegistrationInstructions.Label = "Registration Instructions";
-                _htmlRegistrationInstructions.Help = "These instructions will appear at the beginning of the registration process when selecting how many registrants for the registration. These instructions can be provided on the registration template also. Any instructions here will override the instructions on the template.";
+                _htmlRegistrationInstructions.Help = "These instructions will appear at the beginning of the registration process. Instructions can be provided on the registration template also. Any instructions here will override the instructions on the template.";
                 _htmlRegistrationInstructions.Height = 200;
                 Controls.Add(_htmlRegistrationInstructions);
 

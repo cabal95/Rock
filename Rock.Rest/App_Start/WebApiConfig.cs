@@ -81,6 +81,22 @@ namespace Rock.Rest
                     action = "DataView"
                 } );
 
+            config.Routes.MapHttpRoute(
+               name: "FollowedItemsApi",
+               routeTemplate: "api/{controller}/FollowedItems",
+               defaults: new
+               {
+                   action = "FollowedItems"
+               } );
+
+            config.Routes.MapHttpRoute(
+                name: "InDataViewApi",
+                routeTemplate: "api/{controller}/InDataView/{dataViewId}/{entityId}",
+                defaults: new
+                {
+                    action = "InDataView"
+                } );
+
             // Add API route for Launching a Workflow
             config.Routes.MapHttpRoute(
                 name: "LaunchWorkflowApi",
@@ -165,7 +181,7 @@ namespace Rock.Rest
             {
                 try
                 {
-                    var controller = (Rock.Rest.IHasCustomRoutes)Activator.CreateInstance( type.Value );
+                    var controller = ( Rock.Rest.IHasCustomRoutes ) Activator.CreateInstance( type.Value );
                     if ( controller != null )
                     {
 #if IS_NET_CORE
@@ -186,6 +202,19 @@ namespace Rock.Rest
             //// Instead of being able to use one default route that gets action from http method, have to
             //// have a default route for each method so that other actions do not match the default (i.e. DataViews).
             //// Also, this will make controller routes case-insensitive (vs the odata routing)
+            config.Routes.MapHttpRoute(
+                name: "DefaultApiGetByAttributeValue",
+                routeTemplate: "api/{controller}/GetByAttributeValue",
+                defaults: new
+                {
+                    action = "GetByAttributeValue"
+                },
+                constraints: new
+                {
+                    httpMethod = new HttpMethodConstraint( new string[] { "GET", "OPTIONS" } ),
+                    controllerName = new Rock.Rest.Constraints.ValidControllerNameConstraint()
+                } );
+
             config.Routes.MapHttpRoute(
                 name: "DefaultApiGetById",
                 routeTemplate: "api/{controller}/{id}",

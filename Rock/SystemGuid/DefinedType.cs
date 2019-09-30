@@ -44,6 +44,16 @@ namespace Rock.SystemGuid
         public const string CACHE_TAGS = "BDF73089-9154-40C1-90E4-74518E9937DC";
 
         /// <summary>
+        /// GUID for the Campus Status
+        /// </summary>
+        public const string CAMPUS_STATUS = "840CDA6D-6E81-4EB7-B325-BE708990CCE9";
+
+        /// <summary>
+        /// GUID for the Campus Type
+        /// </summary>
+        public const string CAMPUS_TYPE = "8C2260A8-6130-414A-BD32-22743FEAB256";
+
+        /// <summary>
         /// The types of static color swatches supported
         /// </summary>
         public const string COLOR_PICKER_SWATCHES = "CC1400B3-E161-45E3-BF49-49825D3D6467";
@@ -130,6 +140,11 @@ namespace Rock.SystemGuid
         public const string FINANCIAL_FREQUENCY = "1F645CFB-5BBD-4465-B9CA-0D2104A1479B";
 
         /// <summary>
+        /// Defined Type of Non-Cash Assets (used with FinancialTransaction.NonCashAssetTypeValueId.
+        /// </summary>
+        public const string FINANCIAL_NONCASH_ASSET_TYPE = "6B19C65E-FF8F-4ADD-9DA0-48E53FC074A6";
+
+        /// <summary>
         /// Guid for Financial Source Type
         /// </summary>
         public const string FINANCIAL_SOURCE_TYPE =  "4F02B41E-AB7D-4345-8A97-3904DDD89B01";
@@ -163,6 +178,11 @@ namespace Rock.SystemGuid
         /// Guid for the types of interaction service.
         /// </summary>
         public const string INTERACTION_CHANNEL_MEDIUM = "9bf5777a-961f-49a8-a834-45e5c2077967";
+
+        /// <summary>
+        /// Guid for the JSON Web Token Configuration
+        /// </summary>
+        public const string JWT_CONFIGURATION = "7D848CE3-F039-4CE1-A59B-F0D923F0C1A7";
 
         /// <summary>
         /// Guid for Default link list
@@ -205,7 +225,7 @@ namespace Rock.SystemGuid
         public const string MOTIVATOR_TYPE = "1DFF1804-0055-491E-9559-54EA3F8F89D1";
 
         /// <summary>
-        /// Motivator Cluster Type
+        /// Motivator Theme Type
         /// </summary>
         public const string MOTIVATOR_THEME_TYPE = "354715FA-564A-420A-8324-0411988AE7AB";
 
@@ -355,5 +375,10 @@ namespace Rock.SystemGuid
         /// Used to store various liquid templates for features in Rock.
         /// </summary>
         public const string LAVA_TEMPLATES = "C3D44004-6951-44D9-8560-8567D705A48B";
+
+        /// <summary>
+        /// The group RSVP decline reason.
+        /// </summary>
+        public const string GROUP_RSVP_DECLINE_REASON = "1E339D24-3DF3-4628-91C3-DA9300D21ACE";
     }
 }

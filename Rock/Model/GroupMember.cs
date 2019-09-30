@@ -312,6 +312,17 @@ namespace Rock.Model
         /// <param name="entry">The entry.</param>
         public override void PreSaveChanges( Rock.Data.DbContext dbContext, DbEntityEntry entry )
         {
+            string errorMessage;
+            if ( entry.State != EntityState.Deleted && this.IsArchived == false )
+            {
+                if ( !ValidateGroupMembership( ( RockContext ) dbContext, out errorMessage ) )
+                {
+                    var ex = new GroupMemberValidationException( errorMessage );
+                    ExceptionLogService.LogException( ex );
+                    throw ex;
+                }
+            }
+
             var changeTransaction = new Rock.Transactions.GroupMemberChangeTransaction( entry );
             Rock.Transactions.RockQueue.TransactionQueue.Enqueue( changeTransaction );
 
@@ -529,8 +540,7 @@ namespace Rock.Model
                         historyItem.GroupId = historyItem.Group?.Id;
                     }
 
-                    HistoryService.SaveChanges(
-                        ( RockContext ) dbContext,
+                    var changes = HistoryService.GetChanges(
                         typeof( Person ),
                         Rock.SystemGuid.Category.HISTORY_PERSON_GROUP_MEMBERSHIP.AsGuid(),
                         personId,
@@ -538,12 +548,12 @@ namespace Rock.Model
                         historyItem.Caption,
                         typeof( Group ),
                         historyItem.GroupId,
-                        true,
                         this.ModifiedByPersonAliasId,
                         dbContext.SourceOfChange );
 
-                    HistoryService.SaveChanges(
-                        ( RockContext ) dbContext,
+                    new SaveHistoryTransaction( changes ).Enqueue();
+
+                    var groupMemberChanges = HistoryService.GetChanges(
                         typeof( GroupMember ),
                         Rock.SystemGuid.Category.HISTORY_GROUP_CHANGES.AsGuid(),
                         this.Id,
@@ -551,10 +561,12 @@ namespace Rock.Model
                         historyItem.Caption,
                         typeof( Group ),
                         historyItem.GroupId,
-                        true,
                         this.ModifiedByPersonAliasId,
                         dbContext.SourceOfChange );
+
+                    new SaveHistoryTransaction( groupMemberChanges ).Enqueue();
                 }
+
             }
 
             base.PostSaveChanges( dbContext );
@@ -593,7 +605,8 @@ namespace Rock.Model
 
         /// <summary>
         /// Calls IsValid with the specified context (to avoid deadlocks)
-        /// Try to call this instead of IsValid when possible
+        /// Try to call this instead of IsValid when possible.
+        /// Note that this same validation will be done by the service layer when SaveChanges() is called
         /// </summary>
         /// <param name="rockContext">The rock context.</param>
         /// <returns>
@@ -617,7 +630,8 @@ namespace Rock.Model
         }
 
         /// <summary>
-        /// Validates the group member does not already exist based on GroupId, GroupRoleId, and PersonId
+        /// Validates the group member does not already exist based on GroupId, GroupRoleId, and PersonId.
+        /// Returns false if there is a duplicate member problem.
         /// </summary>
         /// <param name="rockContext">The rock context.</param>
         /// <param name="groupType">Type of the group.</param>
@@ -625,25 +639,37 @@ namespace Rock.Model
         /// <returns></returns>
         private bool ValidateGroupMemberDuplicateMember( RockContext rockContext, GroupTypeCache groupType, out string errorMessage )
         {
+            if ( GroupService.AllowsDuplicateMembers() )
+            {
+                errorMessage = string.Empty;
+                return true;
+            }
+
+            bool isNewOrChangedGroupMember = this.IsNewOrChangedGroupMember( rockContext );
+            // if this isn't a new group member, then we can't really do anything about a duplicate record since it already existed before editing this record, so treat it as valid
+            if ( !isNewOrChangedGroupMember )
+            {
+                errorMessage = string.Empty;
+                return true;
+            }
+
             errorMessage = string.Empty;
             var groupService = new GroupService( rockContext );
 
-            if ( !GroupService.AllowsDuplicateMembers() )
+            // If the group member record is changing (new person, role, archive status, active status) check if there are any duplicates of this Person and Role for this group (besides the current record).
+            var duplicateGroupMembers = new GroupMemberService( rockContext ).GetByGroupIdAndPersonId( this.GroupId, this.PersonId ).Where( a => a.GroupRoleId == this.GroupRoleId && this.Id != a.Id );
+            if ( duplicateGroupMembers.Any() )
             {
-                var groupMember = new GroupMemberService( rockContext ).GetByGroupIdAndPersonIdAndGroupRoleId( this.GroupId, this.PersonId, this.GroupRoleId );
-                if ( groupMember != null && groupMember.Id != this.Id )
-                {
-                    var person = this.Person ?? new PersonService( rockContext ).Get( this.PersonId );
+                var person = this.Person ?? new PersonService( rockContext ).GetNoTracking( this.PersonId );
 
-                    var groupRole = groupType.Roles.Where( a => a.Id == this.GroupRoleId ).FirstOrDefault();
-                    errorMessage = string.Format(
-                        "{0} already belongs to the {1} role for this {2}, and cannot be added again with the same role",
-                        person,
-                        groupRole.Name.ToLower(),
-                        groupType.GroupTerm.ToLower() );
+                var groupRole = groupType.Roles.Where( a => a.Id == this.GroupRoleId ).FirstOrDefault();
+                errorMessage = string.Format(
+                    "{0} already belongs to the {1} role for this {2}, and cannot be added again with the same role",
+                    person,
+                    groupRole.Name.ToLower(),
+                    groupType.GroupTerm.ToLower() );
 
-                    return false;
-                }
+                return false;
             }
 
             return true;
@@ -658,7 +684,7 @@ namespace Rock.Model
         private bool ValidateGroupMembership( RockContext rockContext, out string errorMessage )
         {
             errorMessage = string.Empty;
-            var group = this.Group ?? new GroupService( rockContext ).Queryable().AsNoTracking().Where( g => g.Id == this.GroupId ).FirstOrDefault();
+            var group = this.Group ?? new GroupService( rockContext ).GetNoTracking( this.GroupId );
 
             var groupType = GroupTypeCache.Get( group.GroupTypeId );
             if ( groupType == null )
@@ -671,8 +697,11 @@ namespace Rock.Model
             var groupRole = groupType.Roles.Where( a => a.Id == this.GroupRoleId ).FirstOrDefault();
             if ( groupRole == null )
             {
+                // This is the only point in the method where we need a person object loaded.
+                this.Person = this.Person ?? new PersonService( rockContext ).GetNoTracking( this.PersonId );
+
                 // For some reason we could not get a GroupTypeRole for the GroupRoleId for this GroupMember.
-                errorMessage = $"The GroupRoleId {this.GroupRoleId} for the group member {this.Person.FullName} in group {this.Group.Name} does not exist in the GroupType.Roles for GroupType {groupType.Name}.";
+                errorMessage = $"The GroupRoleId {this.GroupRoleId} for the group member {this.Person.FullName} in group {group.Name} does not exist in the GroupType.Roles for GroupType {groupType.Name}.";
                 return false;
             }
 
@@ -744,7 +773,7 @@ namespace Rock.Model
                     if ( requirementStatusesRequiredForAdd.Any() )
                     {
                         // deny if any of the non-manual MustMeetRequirementToAddMember requirements are not met
-                        errorMessage = "This person must meet the following requirements before they are added to this group: "
+                        errorMessage = "This person must meet the following requirements before they are added or made an active member in this group: "
                             + requirementStatusesRequiredForAdd
                             .Select( a => string.Format( "{0}", a.GroupRequirement.GroupRequirementType ) )
                             .ToList().AsDelimited( ", " );
@@ -821,7 +850,7 @@ namespace Rock.Model
         }
 
         /// <summary>
-        /// Determines whether this is a new group member (just added) or if either Person or Role is different than what is stored in the database
+        /// Determines whether this is a new group member (just added), if either Person or Role is different than what is stored in the database, if person is restored from archived, or their status is getting changed to Active
         /// </summary>
         /// <param name="rockContext">The rock context.</param>
         /// <returns></returns>
@@ -837,15 +866,26 @@ namespace Rock.Model
                 var groupMemberService = new GroupMemberService( rockContext );
                 var databaseGroupMemberRecord = groupMemberService.Get( this.Id );
 
-                // existing groupmember record, but person or role was changed
-                var hasChanged = this.PersonId != databaseGroupMemberRecord.PersonId || this.GroupRoleId != databaseGroupMemberRecord.GroupRoleId;
+                // existing group member record, but person or role or archive status was changed, or active status is getting changed to true
+                var hasChanged = this.PersonId != databaseGroupMemberRecord.PersonId
+                    || this.GroupRoleId != databaseGroupMemberRecord.GroupRoleId
+                    || ( databaseGroupMemberRecord.IsArchived && databaseGroupMemberRecord.IsArchived != this.IsArchived )
+                    || ( databaseGroupMemberRecord.GroupMemberStatus != GroupMemberStatus.Active && this.GroupMemberStatus == GroupMemberStatus.Active );
 
                 if ( !hasChanged )
                 {
+                    // no change detected by comparing to the database record, so check if the ChangeTracker detects that these fields were modified
                     var entry = rockContext.Entry( this );
                     if ( entry != null )
                     {
-                        hasChanged = rockContext.Entry( this ).Property( "PersonId" )?.IsModified == true || rockContext.Entry( this ).Property( "GroupRoleId" )?.IsModified == true;
+                        var originalActiveStatus = ( ( GroupMemberStatus? ) rockContext.Entry( this ).OriginalValues["GroupMemberStatus"] );
+                        var newActiveStatus = ( ( GroupMemberStatus? ) rockContext.Entry( this ).CurrentValues["GroupMemberStatus"] );
+
+                        hasChanged = rockContext.Entry( this ).Property( "PersonId" )?.IsModified == true
+                        || rockContext.Entry( this ).Property( "GroupRoleId" )?.IsModified == true
+                        || ( rockContext.Entry( this ).Property( "IsArchived" )?.IsModified == true && !rockContext.Entry( this ).Property( "IsArchived" ).ToStringSafe().AsBoolean() )
+                        || ( rockContext.Entry( this ).Property( "GroupMemberStatus" )?.IsModified == true && !rockContext.Entry( this ).Property( "GroupMemberStatus" ).ToStringSafe().AsBoolean() )
+                        || originalActiveStatus != GroupMemberStatus.Active && newActiveStatus == GroupMemberStatus.Active;
                     }
                 }
 

@@ -71,27 +71,6 @@ namespace Rock.Web.Cache
             }
         }
 
-        /// <summary>
-        /// Updates the cache hit miss.
-        /// </summary>
-        /// <param name="key">The key.</param>
-        /// <param name="hit">if set to <c>true</c> [hit].</param>
-        internal static void UpdateCacheHitMiss( string key, bool hit )
-        {
-#if !IS_NET_CORE
-            // TODO: Dependency on WebForms.
-
-            var httpContext = System.Web.HttpContext.Current;
-            if ( httpContext == null || !httpContext.Items.Contains( "Cache_Hits" ) )
-            {
-                return;
-            }
-
-            var cacheHits = httpContext.Items["Cache_Hits"] as Dictionary<string, bool>;
-            cacheHits?.AddOrIgnore( key, hit );
-#endif
-        }
-
         #endregion
 
         #region Public Instance Methods
@@ -204,8 +183,6 @@ namespace Rock.Web.Cache
             var value = region.IsNotNullOrWhiteSpace() ?
                 RockCacheManager<object>.Instance.Cache.Get( key, region ) :
                 RockCacheManager<object>.Instance.Cache.Get( key );
-
-            UpdateCacheHitMiss( key, value != null );
 
             if ( value != null )
             {

@@ -493,6 +493,16 @@ namespace Rock.Model
         public int? PrimaryFamilyId { get; set; }
 
         /// <summary>
+        /// Gets or sets the campus id for the primary family.
+        /// Note: This is computed on save, so any manual changes to this will be ignored.
+        /// </summary>
+        /// <value>
+        /// The campus id of the primary family.
+        /// </value>
+        [DataMember]
+        public int? PrimaryCampusId { get; set; }
+
+        /// <summary>
         /// Gets or sets a flag indicating if the Person is locked as child.
         /// </summary>
         /// <value>
@@ -604,7 +614,7 @@ namespace Rock.Model
             get {
                 // Use the SuffixValueId and DefinedValue cache instead of referencing SuffixValue property so
                 // that if FullName is used in datagrid, the SuffixValue is not lazy-loaded for each row
-                return FormatFullName( NickName, LastName, SuffixValueId );
+                return FormatFullName( NickName, LastName, SuffixValueId, this.RecordTypeValueId );
             }
 
             private set {
@@ -624,7 +634,7 @@ namespace Rock.Model
         }
 
         /// <summary>
-        /// Gets a value indicating whether this instance is business.
+        /// Gets a value indicating the specified recordTypeValueId is the record type of a <see cref="SystemGuid.DefinedValue.PERSON_RECORD_TYPE_BUSINESS" /> record type
         /// </summary>
         /// <value>
         /// <c>true</c> if this instance is business; otherwise, <c>false</c>.
@@ -634,6 +644,38 @@ namespace Rock.Model
             if ( recordTypeValueId.HasValue )
             {
                 int recordTypeValueIdBusiness = DefinedValueCache.Get( SystemGuid.DefinedValue.PERSON_RECORD_TYPE_BUSINESS.AsGuid() ).Id;
+                return recordTypeValueId.Value == recordTypeValueIdBusiness;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the <see cref="RecordTypeValue"/> of this Person is Nameless
+        /// </summary>
+        /// <returns>
+        ///   <c>true</c> if this instance is nameless; otherwise, <c>false</c>.
+        /// </returns>
+        public bool IsNameless()
+        {
+            int recordTypeValueIdNameless = DefinedValueCache.Get( SystemGuid.DefinedValue.PERSON_RECORD_TYPE_NAMELESS.AsGuid() ).Id;
+            return  this.RecordTypeValueId.HasValue && this.RecordTypeValueId.Value == recordTypeValueIdNameless;
+        }
+
+        /// <summary>
+        /// Gets a value indicating the specified recordTypeValueId is the record type of a <see cref="SystemGuid.DefinedValue.PERSON_RECORD_TYPE_NAMELESS"/> record type
+        /// </summary>
+        /// <param name="recordTypeValueId">The record type value identifier.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified record type value identifier is nameless; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool IsNameless( int? recordTypeValueId )
+        {
+            if ( recordTypeValueId.HasValue )
+            {
+                int recordTypeValueIdBusiness = DefinedValueCache.Get( SystemGuid.DefinedValue.PERSON_RECORD_TYPE_NAMELESS.AsGuid() ).Id;
                 return recordTypeValueId.Value == recordTypeValueIdBusiness;
             }
             else
@@ -1023,6 +1065,15 @@ namespace Rock.Model
         public virtual Group PrimaryFamily { get; set; }
 
         /// <summary>
+        /// Gets or sets the person's primary campus.
+        /// </summary>
+        /// <value>
+        /// The primary campus.
+        /// </value>
+        [LavaInclude]
+        public virtual Campus PrimaryCampus { get; set; }
+
+        /// <summary>
         /// Gets or sets the person's default financial account gift designation.
         /// </summary>
         /// <value>
@@ -1032,16 +1083,17 @@ namespace Rock.Model
         public virtual FinancialAccount ContributionFinancialAccount { get; set; }
 
         /// <summary>
-        /// Gets the Person's birth date. Note: Use SetBirthDate to set the Birthdate
+        /// Gets the Person's birth date. Note: Use <see cref="SetBirthDate(DateTime?)"/> set the Birthdate
         /// </summary>
         /// <value>
         /// A <see cref="System.DateTime"/> representing the Person's birthdate.  If no birthdate is available, null is returned. If the year is not available then the birthdate is returned with the DateTime.MinValue.Year.
         /// </value>
         [DataMember]
         [Column( TypeName = "Date" )]
-        public DateTime? BirthDate
+        public DateTime? BirthDate 
         {
-            get {
+            get
+            {
                 _birthDate = CalculateBirthDate();
                 return _birthDate;
             }
@@ -2159,8 +2211,17 @@ namespace Rock.Model
         /// <returns></returns>
         public Campus GetCampus()
         {
-            var firstFamily = this.GetFamily();
-            return firstFamily != null ? firstFamily.Campus : null;
+            // If PrimaryCampus has been calculated, use that. Otherwise, retrieve the campus of the primary family.
+            if ( this.PrimaryCampus != null )
+            {
+                return this.PrimaryCampus;
+            }
+            else
+            {
+                var primaryFamily = this.GetFamily();
+
+                return primaryFamily != null ? primaryFamily.Campus : null;
+            }
         }
 
         /// <summary>
@@ -2716,6 +2777,11 @@ namespace Rock.Model
         /// <returns></returns>
         public static string FormatFullName( string nickName, string lastName, int? suffixValueId, int? recordTypeValueId = null )
         {
+            if ( IsNameless( recordTypeValueId ) )
+            {
+                return "Nameless Person";
+            }
+
             if ( IsBusiness( recordTypeValueId ) )
             {
                 return lastName;
@@ -3035,6 +3101,7 @@ namespace Rock.Model
             this.HasOptional( p => p.Photo ).WithMany().HasForeignKey( p => p.PhotoId ).WillCascadeOnDelete( false );
             this.HasOptional( p => p.GivingGroup ).WithMany().HasForeignKey( p => p.GivingGroupId ).WillCascadeOnDelete( false );
             this.HasOptional( p => p.PrimaryFamily ).WithMany().HasForeignKey( p => p.PrimaryFamilyId ).WillCascadeOnDelete( false );
+            this.HasOptional( p => p.PrimaryCampus ).WithMany().HasForeignKey( p => p.PrimaryCampusId ).WillCascadeOnDelete( false );
             this.HasOptional( p => p.ContributionFinancialAccount ).WithMany().HasForeignKey( p => p.ContributionFinancialAccountId ).WillCascadeOnDelete( false );
         }
     }

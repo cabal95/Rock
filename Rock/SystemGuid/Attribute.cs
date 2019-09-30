@@ -88,6 +88,11 @@ namespace Rock.SystemGuid
         /// </summary>
         public const string PERSON_GIVING_ENVELOPE_NUMBER = "76C33FBC-8799-4DF1-B2FE-A6C41AC3DD49";
 
+        /// <summary>
+        /// The same site cookie setting
+        /// </summary>
+        public const string SAME_SITE_COOKIE_SETTING = "03F55022-C1E0-45F3-84E1-C2BE8C38E22B";
+
         #region Assessment Test Related
 
         /// <summary>
@@ -311,22 +316,22 @@ namespace Rock.SystemGuid
         public const string PERSON_MOTIVATOR_GROWTHPROPENSITY = "3BDBF9D3-F4DF-4E4C-A81D-64730217B6EA";
 
         /// <summary>
-        /// The person attribute for the Motivator Cluster Influential
+        /// The person attribute for the Motivator Relational Theme
         /// </summary>
         public const string PERSON_MOTIVATORS_RELATIONAL_THEME = "CDCBA1D3-4129-43DB-9607-74F57BEBF807";
 
         /// <summary>
-        /// The person attribute for the Motivator Cluster Organizational
+        /// The person attribute for the Motivator Directional Theme
         /// </summary>
         public const string PERSON_MOTIVATOR_DIRECTIONAL_THEME = "0815E9BE-BC24-4568-AC1A-3ECCDFF44D9F";
 
         /// <summary>
-        /// The person attribute for the Motivator Cluster Intellectual
+        /// The person attribute for the Motivator Intellectual Theme
         /// </summary>
         public const string PERSON_MOTIVATORS_INTELLECTUAL_THEME = "592A5F89-5E8A-43D8-8843-760207D71699";
 
         /// <summary>
-        /// The person attribute for the Motivator Cluster Operational
+        /// The person attribute for the Motivator Positional Theme
         /// </summary>
         public const string PERSON_MOTIVATOR_POSITIONAL_THEME = "075FDF4D-DDEC-4106-B996-F48CD1EFC978";
 
@@ -466,5 +471,24 @@ namespace Rock.SystemGuid
         public const string CONTENT_FILETYPE_WHITELIST = "B895B6D7-BA21-45C0-8913-EF47FAAD69B1";
 
         #endregion File Type Lists
+
+        #region JWT Config Attributes
+
+        /// <summary>
+        /// The defined value attribute for JWT issuer
+        /// </summary>
+        public const string DEFINED_VALUE_JWT_ISSUER = "4B89D006-0523-4C77-A46B-7ECD042FDE99";
+
+        /// <summary>
+        /// The defined value attribute for JWT audience
+        /// </summary>
+        public const string DEFINED_VALUE_JWT_AUDIENCE = "6F9D9BFB-433F-4D77-8758-FBDB2011FB27";
+
+        /// <summary>
+        /// The defined value attribute for JWT person search key
+        /// </summary>
+        public const string DEFINED_VALUE_JWT_SEARCH_KEY = "DEECB6D1-E596-4A15-B0DB-B2947B5DB784";
+
+        #endregion JWT Config Attributes
     }
 }

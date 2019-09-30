@@ -132,27 +132,23 @@ namespace RockWeb.Blocks.Crm
             ddlTagList.DataValueField = "Id";
             var currentPersonAliasIds = CurrentPerson.Aliases.Select( a => a.Id ).ToList();
 
-            var tagList = new TagService( new RockContext() ).Queryable()
+            new TagService( new RockContext() ).Queryable()
                                             .Where( t =>
                                                         t.EntityTypeId == personEntityTypeId
                                                         && ( t.OwnerPersonAliasId == null || currentPersonAliasIds.Contains( t.OwnerPersonAliasId.Value ) ) )
-                                            .Select( t => new
-                                            {
-                                                Id = t.Id,
-                                                Type = t.OwnerPersonAliasId == null ? "Organization Tags" : "Personal Tags",
-                                                Name = t.Name
-                                            } )
-                                            .OrderByDescending( t => t.Type )
+                                            .OrderByDescending( t => t.OwnerPersonAliasId.HasValue )
                                             .ThenBy( t => t.Name )
-                                            .ToList();
-            foreach ( var tag in tagList )
-            {
-                ListItem item = new ListItem( tag.Name, tag.Id.ToString() );
-                item.Attributes["OptionGroup"] = tag.Type;
-                ddlTagList.Items.Add( item );
-            }
+                                            .ToList()
+                                            .ForEach( t =>
+                                            {
+                                                if ( t.IsAuthorized( Authorization.TAG, CurrentPerson ) )
+                                                {
+                                                    ListItem item = new ListItem( t.Name, t.Id.ToString() );
+                                                    item.Attributes["OptionGroup"] = t.OwnerPersonAliasId == null ? "Organization Tags" : "Personal Tags";
+                                                    ddlTagList.Items.Add( item );
+                                                }
+                                            } );
             ddlTagList.Items.Insert( 0, "" );
-
             ScriptManager.RegisterStartupScript( ddlGradePicker, ddlGradePicker.GetType(), "grade-selection-" + BlockId.ToString(), ddlGradePicker.GetJavascriptForYearPicker( ypGraduation ), true );
 
             ddlNoteType.Items.Clear();
@@ -882,23 +878,26 @@ namespace RockWeb.Blocks.Crm
                     {
                         string status = string.Join( "<br>", workers.Where( w => w.IsFaulted ).Select( w => w.Exception.InnerException.Message.EncodeHtml() ) );
 
-                        HubContext.Clients.Client( hfConnectionId.Value ).bulkUpdateStatus( status, false );
+                        HubContext.Clients.Client( hfConnectionId.Value ).bulkUpdateStatus( status, "alert-danger" );
                     }
                     else
                     {
                         string status;
+                        string alertStatus;
                         if ( _errorCount == 0 )
                         {
                             status = string.Format( "{0} {1} successfully updated.",
                                 Individuals.Count().ToString( "N0" ), ( Individuals.Count() > 1 ? "people were" : "person was" ) );
+                            alertStatus = "alert-success";
                         }
                         else
                         {
                             status = string.Format( "{0} {1} updated with {2} error(s). Please look in the exception log for more details.",
                                 Individuals.Count().ToString( "N0" ), ( Individuals.Count() > 1 ? "people were" : "person was" ), _errorCount );
+                            alertStatus = "alert-warning";
                         }
 
-                        HubContext.Clients.Client( hfConnectionId.Value ).bulkUpdateStatus( status.EncodeHtml(), true );
+                        HubContext.Clients.Client( hfConnectionId.Value ).bulkUpdateStatus( status.EncodeHtml(), alertStatus );
                     }
                 } );
 
@@ -1456,9 +1455,23 @@ namespace RockWeb.Blocks.Crm
                                         groupMember.GroupRoleId = roleId.Value;
                                         groupMember.GroupMemberStatus = status;
                                         groupMember.PersonId = id;
-                                        groupMemberService.Add( groupMember );
 
-                                        newGroupMembers.Add( groupMember );
+                                        if ( groupMember.IsValidGroupMember( context ) )
+                                        {
+
+                                            groupMemberService.Add( groupMember );
+
+                                            newGroupMembers.Add( groupMember );
+                                        }
+                                        else
+                                        {
+                                            // Validation errors will get added to the ValidationResults collection. Add those results to the log and then move on to the next person.
+                                            var validationMessage = string.Join( ",", groupMember.ValidationResults.Select( r => r.ErrorMessage ).ToArray() );
+                                            var person = new PersonService( rockContext ).GetNoTracking( groupMember.PersonId );
+                                            var ex = new GroupMemberValidationException( string.Format("Unable to add {0} to group: {1}", person, validationMessage ));
+                                            Interlocked.Increment( ref _errorCount );
+                                            ExceptionLogService.LogException( ex );
+                                        }
                                     }
 
                                     context.SaveChanges();

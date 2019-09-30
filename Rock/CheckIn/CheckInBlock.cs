@@ -60,6 +60,7 @@ namespace Rock.CheckIn
                 _currentCheckinType = null;
             }
         }
+
         private int? _currentCheckinTypeId;
 
         /// <summary>
@@ -141,7 +142,7 @@ namespace Rock.CheckIn
 
         /// <summary>
         /// Gets a value indicating whether the kiosk has active group types and locations that 
-        /// are open for check-in.
+        /// are open for check-in or check-out.
         /// </summary>
         /// <value>
         /// <c>true</c> if kiosk is active; otherwise, <c>false</c>.
@@ -150,12 +151,17 @@ namespace Rock.CheckIn
         {
             get
             {
-                if ( CurrentCheckInState == null ||
-                    CurrentCheckInState.Kiosk == null ||
-                    CurrentCheckInState.Kiosk.FilteredGroupTypes( CurrentGroupTypeIds ).Count == 0 ||
-                    !CurrentCheckInState.Kiosk.HasActiveLocations( CurrentGroupTypeIds ) )
+                if ( CurrentCheckInState == null || CurrentCheckInState.Kiosk == null || CurrentCheckInState.Kiosk.FilteredGroupTypes( CurrentGroupTypeIds ).Count == 0 )
                 {
                     return false;
+                }
+                else if ( ! CurrentCheckInType.AllowCheckout && !CurrentCheckInState.Kiosk.HasActiveLocations( CurrentGroupTypeIds ) )
+                {
+                    return false;
+                }
+                else if ( CurrentCheckInType.AllowCheckout && CurrentCheckInState.Kiosk.HasActiveCheckOutLocations( CurrentGroupTypeIds ) )
+                {
+                    return true;
                 }
                 else
                 {
@@ -251,6 +257,12 @@ namespace Rock.CheckIn
         protected override void OnInit( EventArgs e )
         {
             base.OnInit( e );
+
+            // Tell the browsers to not cache any pages that have a block that inherits from CheckinBlock. This will help prevent browser using stale copy of checkin pages which could cause labels to get reprinted, and other expected things.
+            Page.Response.Cache.SetCacheability( System.Web.HttpCacheability.NoCache );
+            Page.Response.Cache.SetExpires( DateTime.UtcNow.AddHours( -1 ) );
+            Page.Response.Cache.SetNoStore();
+
             GetState();
         }
 

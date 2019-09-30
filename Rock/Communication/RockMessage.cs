@@ -38,7 +38,7 @@ namespace Rock.Communication
         /// <summary>
         /// The recipients
         /// </summary>
-        private List<RecipientData> _recipients = new List<RecipientData>();
+        protected List<RockMessageRecipient> Recipients { get; set; } = new List<RockMessageRecipient>();
 
         /// <summary>
         /// Gets the medium entity type identifier.
@@ -65,7 +65,7 @@ namespace Rock.Communication
         public string ThemeRoot { get; set; }
 
         /// <summary>
-        /// Gets or sets the current person.
+        /// Gets or sets the person that was logged in when this message was created
         /// </summary>
         /// <value>
         /// The current person.
@@ -120,15 +120,19 @@ namespace Rock.Communication
         /// </value>
         public bool CreateCommunicationRecord { get; set; }
 
+        #region Obsolete
+
         /// <summary>
         /// Adds the recipient.
         /// </summary>
         /// <param name="to">To.</param>
+        [RockObsolete( "1.10" )]
+        [Obsolete( "This has a issue where the wrong person(s) might be logged as the recipient. Use the AddRecipient that takes RockMessageRecipient as a parameter" )]
         public void AddRecipient( string to )
         {
             if ( to.IsNotNullOrWhiteSpace() )
             {
-                _recipients.Add( new RecipientData( to ) );
+                Recipients.Add( RockEmailMessageRecipient.CreateAnonymous( to, null ) );
             }
         }
 
@@ -136,27 +140,71 @@ namespace Rock.Communication
         /// Adds the recipient.
         /// </summary>
         /// <param name="recipient">The recipient.</param>
+        [RockObsolete( "1.10" )]
+        [Obsolete( "This has a issue where the wrong person(s) might be logged as the recipient. Use the AddRecipient that takes RockMessageRecipient as a parameter" )]
         public void AddRecipient( RecipientData recipient )
         {
-            _recipients.Add( recipient );
+            Recipients.Add( RockEmailMessageRecipient.CreateAnonymous( recipient.To, recipient.MergeFields ) );
         }
 
         /// <summary>
         /// Sets the recipients.
         /// </summary>
         /// <param name="toEmails">To emails.</param>
+        [RockObsolete( "1.10" )]
+        [Obsolete( "This has a issue where the wrong person(s) might be logged as the recipient. Use the SetRecipients that uses List<RockMessageRecipient> as a parameter" )]
         public void SetRecipients( string toEmails )
         {
-            SetRecipients( toEmails.SplitDelimitedValues().ToList() );
+            Recipients.AddRange( toEmails.SplitDelimitedValues().ToList().Select( a => RockEmailMessageRecipient.CreateAnonymous( a, null ) ) );
+        }
+
+        /// <summary>
+        /// Sets the recipients.
+        /// </summary>
+        /// <param name="recipientData">The recipient data.</param>
+        [RockObsolete( "1.10" )]
+        [Obsolete( "This has a issue where the wrong person(s) might be logged as the recipient. Use the SetRecipients that uses List<RockMessageRecipient> as a parameter" )]
+        public void SetRecipients( List<RecipientData> recipientData )
+        {
+            this.Recipients = new List<RockMessageRecipient>();
+            foreach ( var recipient in recipientData )
+            {
+                // assume it is an email recipient
+                this.AddRecipient( RockEmailMessageRecipient.CreateAnonymous( recipient.To, recipient.MergeFields ) );
+            }
         }
 
         /// <summary>
         /// Sets the recipients.
         /// </summary>
         /// <param name="toEmails">To emails.</param>
+        [RockObsolete( "1.10" )]
+        [Obsolete( "This has a issue where the wrong person(s) might be logged as the recipient. Use the SetRecipients that uses List<RockMessageRecipient> as a parameter" )]
         public void SetRecipients( List<string> toEmails )
         {
-            toEmails.ForEach( to => AddRecipient( to ) );
+            Recipients.AddRange( toEmails.Select( a => RockEmailMessageRecipient.CreateAnonymous( a, null ) ) );
+        }
+
+        /// <summary>
+        /// Gets the recipient data.
+        /// </summary>
+        /// <returns></returns>
+        [RockObsolete( "1.10" )]
+        [Obsolete( "Use List<RockMessageRecipient> GetRecipients() instead" )]
+        public List<RecipientData> GetRecipientData()
+        {
+            return Recipients.Select( a => new RecipientData( a.To, a.MergeFields ) ).ToList();
+        }
+
+        #endregion Obsolete
+
+        /// <summary>
+        /// Adds the recipient.
+        /// </summary>
+        /// <param name="messageRecipient">The message recipient.</param>
+        public void AddRecipient( RockMessageRecipient messageRecipient )
+        {
+            this.Recipients.Add( messageRecipient );
         }
 
         /// <summary>
@@ -165,11 +213,10 @@ namespace Rock.Communication
         /// <param name="people">The people.</param>
         public void SetRecipients( IQueryable<Person> people )
         {
-            _recipients = new List<RecipientData>();
-
+            Recipients = new List<RockMessageRecipient>();
             if ( people != null )
             {
-                people.ToList().ForEach( p => _recipients.Add( new RecipientData( p.Email ) ) );
+                Recipients.AddRange( people.AsNoTracking().ToList().Select( p => new RockEmailMessageRecipient( p, null ) ).ToList() );
             }
         }
 
@@ -179,7 +226,6 @@ namespace Rock.Communication
         /// <param name="personIds">The person ids.</param>
         public void SetRecipients( List<int> personIds )
         {
-            _recipients = new List<RecipientData>();
             if ( personIds != null )
             {
                 using ( var rockContext = new RockContext() )
@@ -192,13 +238,11 @@ namespace Rock.Communication
         }
 
         /// <summary>
-        /// Sets the recipients.
+        /// Sets the recipients from the active members of the Group
         /// </summary>
         /// <param name="groupId">The group identifier.</param>
         public void SetRecipients( int groupId )
         {
-            _recipients = new List<RecipientData>();
-
             using ( var rockContext = new RockContext() )
             {
                 SetRecipients( new GroupMemberService( rockContext )
@@ -211,7 +255,7 @@ namespace Rock.Communication
         }
 
         /// <summary>
-        /// Sets the recipients.
+        /// Sets the recipients from the active members of the Group
         /// </summary>
         /// <param name="group">The group.</param>
         public void SetRecipients( Group group )
@@ -222,23 +266,24 @@ namespace Rock.Communication
         /// <summary>
         /// Sets the recipients.
         /// </summary>
-        /// <param name="recipientData">The recipient data.</param>
-        public void SetRecipients( List<RecipientData> recipientData )
+        /// <param name="recipients">The recipients.</param>
+        public void SetRecipients( List<RockMessageRecipient> recipients )
         {
-            _recipients = recipientData;
+            this.Recipients = recipients.ToList();
         }
 
         /// <summary>
-        /// Gets the recipient data.
+        /// Gets the recipients.
         /// </summary>
         /// <returns></returns>
-        public List<RecipientData> GetRecipientData()
+        public List<RockMessageRecipient> GetRecipients()
         {
-            return _recipients;
+            return Recipients;
         }
 
         /// <summary>
-        /// Sends this instance.
+        /// Sends this message(Email, SMS, or PushDevice, depending which RockMessage class you are using).
+        /// NOTE: Email exceptions will be logged to exception log, but won't throw an exception. To get the list of errorMessages, use Send( out List&lt;string&gt; errorMessages )
         /// </summary>
         /// <returns></returns>
         public virtual bool Send()
@@ -248,7 +293,8 @@ namespace Rock.Communication
         }
 
         /// <summary>
-        /// Sends the specified error message. Ensure you check for error messages and the boolean value to handle error causes where a communication may not be sent.
+        /// Sends this message(Email, SMS, or PushDevice, depending which RockMessage class you are using).
+        /// NOTE: Email exceptions will be logged to exception log, but won't throw an exception. Ensure you check for error messages and the boolean value to handle error causes where a communication may not be sent.
         /// </summary>
         /// <param name="errorMessages">The error messages.</param>
         /// <returns></returns>
@@ -258,7 +304,7 @@ namespace Rock.Communication
 
             try
             {
-                if ( this._recipients.Any() )
+                if ( this.Recipients.Any() )
                 {
                     var mediumEntity = EntityTypeCache.Get( MediumEntityTypeId );
                     if ( mediumEntity != null )
@@ -284,6 +330,5 @@ namespace Rock.Communication
                 return false;
             }
         }
-
     }
 }

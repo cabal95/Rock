@@ -139,6 +139,10 @@
                                             Help="Determines if groups of this type should be allowed to manage tags." />
 
                                     </div>
+                                    <div class="col-md-12">
+                                        <Rock:RockCheckBox ID="cbGroupRSVPEnabled" runat="server" Label="Group RSVP Enabled" Text="Yes"
+                                            Help="This option will allow group RSVP." />
+                                    </div>
                         </div>
                             </div>
                         </div>
@@ -216,7 +220,7 @@
                                 <Rock:NumberBox ID="nbScheduleConfirmationEmailOffsetDays" runat="server" NumberType="Integer" Label="Schedule Confirmation Email Offset Days" Help="The number of days prior to the schedule to send a confirmation email." />
                             </div>
                             <div class="col-md-6">
-                                <Rock:WorkflowTypePicker ID="wtpScheduleCancellationWorkflowType" runat="server" Label="Schedule Cancellation Workflow Type" Help="The workflow type to execute when a person indicates they won't be able to attend at their scheduled time." />
+                                <Rock:WorkflowTypePicker ID="wtpScheduleCancellationWorkflowType" runat="server" Label="Schedule Cancellation Workflow" Help="The workflow type to execute when a person indicates they won't be able to attend at their scheduled time." />
 
                                 <Rock:RockDropDownList ID="ddlScheduleReminderSystemEmail" runat="server" Label="Schedule Reminder Email" Help="The system email to use when sending a schedule reminder." />
                                 <Rock:NumberBox ID="nbScheduleReminderEmailOffsetDays" runat="server" NumberType="Integer" Label="Schedule Reminder Email Offset Days" Help="The default number of days prior to the schedule to send a reminder email." />
@@ -390,7 +394,7 @@
                                     Help="The term to use for members in groups of this group type." />
                                 <Rock:DataTextBox ID="tbAdministratorTerm" runat="server" SourceTypeName="Rock.Model.GroupType, Rock" PropertyName="AdministratorTerm" Required="true"
                                     Help="This setting allows you to customize the term used for the administrator of the group." />
-                                <Rock:DataTextBox ID="tbIconCssClass" runat="server" SourceTypeName="Rock.Model.GroupType, Rock" PropertyName="IconCssClass"
+                                <Rock:DataTextBox ID="tbIconCssClass" runat="server" SourceTypeName="Rock.Model.GroupType, Rock" PropertyName="IconCssClass" Label="Icon CSS Class"
                                     Help="The Font Awesome icon class to use when displaying groups of this group type." />
                                 <Rock:ColorPicker ID="cpGroupTypeColor" runat="server" Label="Group Type Color"
                                     Help="The color used to visually distinguish groups on lists." />

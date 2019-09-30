@@ -14,12 +14,16 @@
 // limitations under the License.
 // </copyright>
 //
+using System;
+using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 
 #if IS_NET_CORE
 using Microsoft.EntityFrameworkCore;
 #endif
+
+using Rock.Model;
 using Rock.Web.Cache;
 
 namespace Rock.Communication
@@ -94,5 +98,14 @@ namespace Rock.Communication
             return person;
         }
 
+        /// <summary>
+        /// Sets the recipients.
+        /// </summary>
+        /// <param name="recipients">The recipients.</param>
+        public void SetRecipients( List<RockSMSMessageRecipient> recipients )
+        {
+            this.Recipients = new List<RockMessageRecipient>();
+            this.Recipients.AddRange( recipients );
+        }
     }
 }

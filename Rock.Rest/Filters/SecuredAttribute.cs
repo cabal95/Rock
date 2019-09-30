@@ -65,7 +65,7 @@ namespace Rock.Rest.Filters
             //// for example: ~/person/search?name={name}&includeHtml={includeHtml}&includeDetails={includeDetails}&includeBusinesses={includeBusinesses}
             //// is a different action method than ~/person/search?name={name}.
             //// Also exclude any ODataQueryOptions parameters (those don't end up as put of the apiId)
-            var routeQueryParams = actionContext.ActionArguments.Where( a => !actionPath.Contains( "{" + a.Key + "}" ) && !( a.Value is Microsoft.AspNet.OData.Query.ODataQueryOptions ) );
+            var routeQueryParams = actionContext.ActionArguments.Where( a => actionPath.IndexOf( "{" + a.Key + "}", StringComparison.OrdinalIgnoreCase ) < 0 && !( a.Value is Microsoft.AspNet.OData.Query.ODataQueryOptions ) );
 #else
     /// <summary>
     /// Checks to see if the Logged-In person has authorization View (HttpMethod: GET) or Edit (all other HttpMethods) for the RestController and Controller's associated EntityType
@@ -87,7 +87,7 @@ namespace Rock.Rest.Filters
             //// for example: ~/person/search?name={name}&includeHtml={includeHtml}&includeDetails={includeDetails}&includeBusinesses={includeBusinesses}
             //// is a different action method than ~/person/search?name={name}.
             //// Also exclude any ODataQueryOptions parameters (those don't end up as put of the apiId)
-            var routeQueryParams = actionContext.ActionArguments.Where(a => !actionPath.Contains("{" + a.Key + "}") && !(a.Value is System.Web.Http.OData.Query.ODataQueryOptions) );
+            var routeQueryParams = actionContext.ActionArguments.Where( a => actionPath.IndexOf( "{" + a.Key + "}", StringComparison.OrdinalIgnoreCase ) < 0 && !( a.Value is System.Web.Http.OData.Query.ODataQueryOptions ) );
 #endif
             if ( routeQueryParams.Any())
             {

@@ -14,12 +14,17 @@
 // limitations under the License.
 // </copyright>
 //
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Net.Http;
+using System.Security.Claims;
 using System.Web.Http;
 
 #if IS_NET_CORE
 using Microsoft.AspNetCore.Authentication;
 #endif
+using Microsoft.IdentityModel.Tokens;
+using Rock.Data;
 using Rock.Model;
 using Rock.Security;
 
@@ -43,40 +48,56 @@ namespace Rock.Rest.Controllers
         [System.Web.Http.Route( "api/Auth/Login" )]
         public void Login( [FromBody]LoginParameters loginParameters )
         {
-            bool valid = false;
-
-            var userLoginService = new UserLoginService( new Rock.Data.RockContext() );
-            var userLogin = userLoginService.GetByUserName( loginParameters.Username );
-            if ( userLogin != null && userLogin.EntityType != null )
-            {
-                var component = AuthenticationContainer.GetComponent( userLogin.EntityType.Name );
-                if ( component != null && component.IsActive )
-                {
-                    if ( component.Authenticate( userLogin, loginParameters.Password ) )
-                    {
-#if IS_NET_CORE
-                        // EFTODO: Move this into the SetAuthCookie method.
-
-                        valid = true;
-                        var claims = new System.Collections.Generic.List<System.Security.Claims.Claim>
-                        {
-                            new System.Security.Claims.Claim( System.Security.Claims.ClaimTypes.Name, userLogin.UserName )
-                        };
-                        var userIdentity = new System.Security.Claims.ClaimsIdentity( claims, "login" );
-                        var principal = new System.Security.Claims.ClaimsPrincipal( userIdentity );
-
-                        HttpContext.SignInAsync( principal );
-#else
-                        Rock.Security.Authorization.SetAuthCookie( loginParameters.Username, loginParameters.Persisted, false );
-#endif
-                    }
-                }
-            }
-
-            if ( !valid )
+            if ( !IsLoginValid( loginParameters ) )
             {
                 throw new HttpResponseException( HttpStatusCode.Unauthorized );
             }
+
+#if IS_NET_CORE
+            // EFTODO: Move this into the SetAuthCookie method.
+
+            var claims = new System.Collections.Generic.List<System.Security.Claims.Claim>
+            {
+                new System.Security.Claims.Claim( System.Security.Claims.ClaimTypes.Name, loginParameters.Username )
+            };
+            var userIdentity = new System.Security.Claims.ClaimsIdentity( claims, "login" );
+            var principal = new System.Security.Claims.ClaimsPrincipal( userIdentity );
+
+            HttpContext.SignInAsync( principal );
+#else
+            Rock.Security.Authorization.SetAuthCookie( loginParameters.Username, loginParameters.Persisted, false );
+#endif
+        }
+
+        /// <summary>
+        /// Check if the login parameters are valid
+        /// </summary>
+        /// <param name="loginParameters"></param>
+        /// <returns></returns>
+        private bool IsLoginValid( LoginParameters loginParameters )
+        {
+            if ( loginParameters == null || loginParameters.Username.IsNullOrWhiteSpace() )
+            {
+                return false;
+            }
+
+            var rockContext = new RockContext();
+            var userLoginService = new UserLoginService( rockContext );
+            var userLogin = userLoginService.GetByUserName( loginParameters.Username );
+
+            if ( userLogin == null || userLogin.EntityType == null )
+            {
+                return false;
+            }
+
+            var component = AuthenticationContainer.GetComponent( userLogin.EntityType.Name );
+
+            if ( component == null || !component.IsActive )
+            {
+                return false;
+            }
+
+            return component.Authenticate( userLogin, loginParameters.Password );
         }
     }
 }

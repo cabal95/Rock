@@ -69,7 +69,7 @@ namespace Rockweb.Blocks.Crm
         Key = AttributeKeys.SetPageIcon,
         Description = "The css class name to use for the heading icon.",
         IsRequired = false,
-        DefaultValue = "fa-key",
+        DefaultValue = "fa fa-key",
         Order = 3 )]
 
     [IntegerField( "Number of Questions",
@@ -88,7 +88,7 @@ namespace Rockweb.Blocks.Crm
     public partial class Motivators : Rock.Web.UI.RockBlock
     {
         #region Attribute Keys
-        protected static class AttributeKeys
+        private static class AttributeKeys
         {
             public const string Instructions = "Instructions";
             public const string SetPageTitle = "SetPageTitle";
@@ -104,13 +104,8 @@ namespace Rockweb.Blocks.Crm
         /// <summary>
         /// A defined list of page parameter keys used by this block.
         /// </summary>
-        protected static class PageParameterKey
+        private static class PageParameterKey
         {
-            /// <summary>
-            /// The person identifier. Use this to get a person's Motivator Assessment results.
-            /// </summary>
-            public const string PersonId = "PersonId";
-
             /// <summary>
             /// The assessment identifier
             /// </summary>
@@ -166,22 +161,20 @@ namespace Rockweb.Blocks.Crm
    growth propensity score, along with a complete listing of all 22 motivators and your results
    for each.
 </p>
-
 <h2>Growth Propensity</h2>
 <p>
     Growth Propensity measures your perceived mindset on a continuum between a growth mindset and
     fixed mindset. These are two ends of a spectrum about how we view our own capacity and potential.
 </p>
-
-{[ chart type:'gauge' backgroundcolor:'#f13c1f,#f0e3ba,#0e9445,#3f56a1' gaugelimits:'0,2,17,85,100']}
+<div style=""margin: 0;max-width:280px"">
+{[ chart type:'gauge' backgroundcolor:'#f13c1f,#f0e3ba,#0e9445,#3f56a1' gaugelimits:'0,2,17,85,100' chartheight:'150px']}
     [[ dataitem value:'{{ GrowthScore }}' fillcolor:'#484848' ]] [[ enddataitem ]]
 {[ endchart ]}
-
+</div>
 <h2>Individual Motivators</h2>
 <p>
     There are 22 possible motivators in this assessment. While your Top 5 Motivators may be most helpful in understanding your results in a snapshot, you may also find it helpful to see your scores on each for a complete picture.
 </p>
-
 <!--  Theme Chart -->
 <div class=""panel panel-default"">
     <div class=""panel-heading"">
@@ -196,11 +189,9 @@ namespace Rockweb.Blocks.Crm
     {[endchart]}
     </div>
 </div>
-
 <p>
-    This graph is based on the average composite score for each cluster of Motivators.
+    This graph is based on the average composite score for each Motivator Theme.
 </p>
-
 {% for motivatorThemeScore in MotivatorThemeScores %}
     <p>
         <b>{{ motivatorThemeScore.DefinedValue.Value }}</b>
@@ -210,17 +201,14 @@ namespace Rockweb.Blocks.Crm
         {{ motivatorThemeScore.DefinedValue | Attribute:'Summary' }}
     </p>
 {% endfor %}
-
 <p>
    The following graph shows your motivators ranked from top to bottom.
 </p>
-
   <div class=""panel panel-default"">
     <div class=""panel-heading"">
       <h2 class=""panel-title""><b>Ranked Motivators</b></h2>
     </div>
     <div class=""panel-body"">
-
       {[ chart type:'horizontalBar' ]}
         {% for motivatorScore in MotivatorScores %}
         {% assign theme = motivatorScore.DefinedValue | Attribute:'Theme' %}
@@ -303,15 +291,9 @@ namespace Rockweb.Blocks.Crm
 
             _assessmentId = PageParameter( PageParameterKey.AssessmentId ).AsIntegerOrNull();
             string personKey = PageParameter( PageParameterKey.Person );
-            int? personId = PageParameter( PageParameterKey.PersonId ).AsIntegerOrNull();
 
             // set the target person according to the parameter or use Current user if not provided.
-            if ( personId.HasValue )
-            {
-                // Try the person ID first.
-                _targetPerson = new PersonService( new RockContext() ).Get( personId.Value );
-            }
-            else if ( personKey.IsNotNullOrWhiteSpace() )
+            if ( personKey.IsNotNullOrWhiteSpace() )
             {
                 try
                 {
@@ -330,7 +312,7 @@ namespace Rockweb.Blocks.Crm
 
             if ( _targetPerson == null )
             {
-                if ( _isQuerystringPersonKey || personId.HasValue )
+                if ( _isQuerystringPersonKey )
                 {
                     HidePanelsAndShowError( "There is an issue locating the person associated with the request." );
                 }

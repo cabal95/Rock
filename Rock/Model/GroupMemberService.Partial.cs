@@ -513,7 +513,7 @@ namespace Rock.Model
         }
 
         /// <summary>
-        /// Restores the archived GroupMember record
+        /// Set the IsArchived fields to false
         /// HINT: Use <see cref="GroupService.ExistsAsArchived"></see> to get the matching archived group member
         /// </summary>
         /// <param name="archivedGroupMember">The archived group member.</param>

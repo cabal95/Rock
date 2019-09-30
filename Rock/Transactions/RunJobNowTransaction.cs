@@ -15,6 +15,7 @@
 // </copyright>
 //
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using Quartz;
@@ -42,12 +43,27 @@ namespace Rock.Transactions
         public int JobId { get; set; }
 
         /// <summary>
+        /// Dictionary to add data to the job data map
+        /// </summary>
+        private Dictionary<string, string> _jobDataMapDictionary = null;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="RunJobNowTransaction"/> class.
         /// </summary>
         /// <param name="jobId">The job identifier.</param>
-        public RunJobNowTransaction(int jobId)
+        public RunJobNowTransaction( int jobId )
         {
             JobId = jobId;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RunJobNowTransaction"/> class.
+        /// </summary>
+        /// <param name="jobId">The job identifier.</param>
+        /// <param name="jobDataMapDictionary">Data for the job.</param>
+        public RunJobNowTransaction( int jobId, Dictionary<string, string> jobDataMapDictionary ) : this( jobId )
+        {
+            _jobDataMapDictionary = jobDataMapDictionary;
         }
 
         /// <summary>
@@ -74,7 +90,7 @@ namespace Rock.Transactions
 #else
                         var sched = new StdSchedulerFactory( scheduleConfig ).GetScheduler();
 #endif
-                        if ( sched.IsStarted)
+                        if ( sched.IsStarted )
                         {
                             // the job is currently running as a RunNow job
                             return;
@@ -83,15 +99,25 @@ namespace Rock.Transactions
                         // Check if another scheduler is running this job
                         try
                         {
+#if IS_NET_CORE
+                            var otherSchedulers = new Quartz.Impl.StdSchedulerFactory().GetAllSchedulers().Result
+#else
                             var otherSchedulers = new Quartz.Impl.StdSchedulerFactory().AllSchedulers
+#endif
                                 .Where( s => s.SchedulerName != runNowSchedulerName );
 
                             foreach ( var scheduler in otherSchedulers )
                             {
+#if IS_NET_CORE
+                                if ( scheduler.GetCurrentlyExecutingJobs().Result.Where( j => j.JobDetail.Description == JobId.ToString() &&
+                                    j.JobDetail.ConcurrentExecutionDisallowed ).Any() )
+#else
                                 if ( scheduler.GetCurrentlyExecutingJobs().Where( j => j.JobDetail.Description == JobId.ToString() &&
                                     j.JobDetail.ConcurrentExectionDisallowed ).Any() )
+#endif
                                 {
-                                    // A job with that Id is already running and ConcurrentExectionDisallowed is true 
+                                    // A job with that Id is already running and ConcurrentExectionDisallowed is true
+                                    System.Diagnostics.Debug.WriteLine( RockDateTime.Now.ToString() + $" Scheduler '{scheduler.SchedulerName}' is already executing job Id '{JobId}' (name: {job.Name})" );
                                     return;
                                 }
                             }
@@ -100,6 +126,15 @@ namespace Rock.Transactions
 
                         // create the quartz job and trigger
                         IJobDetail jobDetail = jobService.BuildQuartzJob( job );
+
+                        if ( _jobDataMapDictionary != null )
+                        {
+                            // Force the <string, string> dictionary so that within Jobs, it is always okay to use
+                            // JobDataMap.GetString(). This mimics Rock attributes always being stored as strings.
+                            // If we allow non-strings, like integers, then JobDataMap.GetString() throws an exception.
+                            jobDetail.JobDataMap.PutAll( _jobDataMapDictionary.ToDictionary( kvp => kvp.Key, kvp => ( object ) kvp.Value ) );
+                        }
+
                         var jobTrigger = TriggerBuilder.Create()
                             .WithIdentity( job.Guid.ToString(), job.Name )
                             .StartNow()

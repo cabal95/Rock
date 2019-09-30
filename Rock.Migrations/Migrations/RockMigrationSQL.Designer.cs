@@ -1423,31 +1423,6 @@ namespace Rock.Migrations.Migrations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to -- Scheduled Transactions didn&apos;t write to history until v7.4, so convert those into History notes
-        ///
-        ///DECLARE @historyCategoryId INT = (
-        ///		SELECT TOP 1 Id
-        ///		FROM Category
-        ///		WHERE Guid = &apos;477EE3BE-C68F-48BD-B218-FAFC99AF56B3&apos;
-        ///		)
-        ///	,@entityTypeIdScheduledTransaction INT = (
-        ///		SELECT TOP 1 Id
-        ///		FROM EntityType
-        ///		WHERE [Guid] = &apos;76824E8A-CCC4-4085-84D9-8AF8C0807E20&apos;
-        ///		)
-        ///	,@noteTypeIdScheduledTransaction INT = (
-        ///		SELECT TOP 1 Id
-        ///		FROM NoteType
-        ///		WHERE [Guid] = &apos;360CFFE2-7FE3-4B0B-85A7-BFDACC9AF588&apos; [rest of string was truncated]&quot;;.
-        /// </summary>
-        public static string _201903202308416_ScheduledTransactionHistory_MigrateScheduledTransactionNotesToHistory {
-            get {
-                return ResourceManager.GetString("_201903202308416_ScheduledTransactionHistory_MigrateScheduledTransactionNotesToHi" +
-                        "story", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to IF NOT EXISTS (
         ///		SELECT [Id]
         ///		FROM [ServiceJob]
@@ -1509,6 +1484,38 @@ namespace Rock.Migrations.Migrations {
         public static string _201905082317243_Rollup_0508_FixLavaChartShortcode {
             get {
                 return ResourceManager.GetString("_201905082317243_Rollup_0508_FixLavaChartShortcode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to UPDATE [LavaShortCode]
+        ///	SET [Documentation] = 
+        ///  &apos;&lt;p&gt;
+        ///    Adding dynamic charts to a page can be difficult, even for an experienced Javascript developer. The 
+        ///    chart shortcode allows anyone to create charts with just a few lines of Lava. There are two modes for 
+        ///    creating a chart. The first ‘simple’ mode creates a chart with a single series. This option will suffice 
+        ///    for most of your charting needs. The second ‘series’ option allows you to create charts with multiple 
+        ///    series. Let’s look [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string _201907082136571_Rollup0708_SegmentedChartUpdate {
+            get {
+                return ResourceManager.GetString("_201907082136571_Rollup0708_SegmentedChartUpdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DECLARE @BadgeGuid UNIQUEIDENTIFIER = &apos;132F9C2A-0AF4-4AD9-87EF-7730B284E10E&apos;;
+        ///DECLARE @Lava NVARCHAR(MAX) = 
+        ///N&apos;{% assign groupHasRequirements = Entity.GroupType.GroupRequirements | Size | AsBoolean %}
+        ///{% assign typeHasRequirements = Entity.GroupRequirements | Size | AsBoolean %}
+        ///
+        ///{% if groupHasRequirements or typeHasRequirements -%}
+        ///    &lt;div class=&quot;badge&quot; data-toggle=&quot;tooltip&quot; data-original-title=&quot;Group has requirements.&quot; style=&quot;color:var(--brand-success);&quot;&gt;
+        ///        &lt;i class=&quot;badge-icon fa fa-tasks&quot;&gt; [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string _201908202115162_Rollup_0820_GroupRequirementsBadge {
+            get {
+                return ResourceManager.GetString("_201908202115162_Rollup_0820_GroupRequirementsBadge", resourceCulture);
             }
         }
     }
