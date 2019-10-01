@@ -41,6 +41,7 @@ namespace Rock.Web
 
         #region Base Method Overrides
 
+#if !IS_NET_CORE
         /// <summary>
         /// Gets the custom settings control. The returned control will be added to the parent automatically.
         /// </summary>
@@ -94,6 +95,7 @@ namespace Rock.Web
 
             customSettingsControl.WriteSettingsToEntity( attributeEntity, rockContext );
         }
+#endif
 
         #endregion
     }

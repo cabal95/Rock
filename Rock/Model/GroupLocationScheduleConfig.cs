@@ -39,8 +39,10 @@ namespace Rock.Model
         /// <value>
         /// The group location identifier.
         /// </value>
+#if !IS_NET_CORE
         [Key]
         [Column( Order = 1 )]
+#endif
         [DataMember]
         public int GroupLocationId { get; set; }
 
@@ -50,8 +52,10 @@ namespace Rock.Model
         /// <value>
         /// The schedule identifier.
         /// </value>
+#if !IS_NET_CORE
         [Key]
         [Column( Order = 2 )]
+#endif
         [DataMember]
         public int ScheduleId { get; set; }
 
@@ -117,6 +121,9 @@ namespace Rock.Model
         /// </summary>
         public GroupLocationScheduleConfiguration()
         {
+#if IS_NET_CORE
+            Builder.HasKey( t => new { t.GroupLocationId, t.ScheduleId } );
+#endif
             this.HasRequired( a => a.GroupLocation ).WithMany( a => a.GroupLocationScheduleConfigs ).HasForeignKey( a => a.GroupLocationId ).WillCascadeOnDelete( false );
             this.HasRequired( a => a.Schedule ).WithMany().HasForeignKey( a => a.ScheduleId ).WillCascadeOnDelete( false );
         }

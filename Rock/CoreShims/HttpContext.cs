@@ -13,7 +13,7 @@
         {
             get
             {
-                return _httpContextAccessor.HttpContext;
+                return _httpContextAccessor?.HttpContext;
             }
         }
     }

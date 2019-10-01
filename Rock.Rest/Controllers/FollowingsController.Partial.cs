@@ -19,6 +19,10 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 
+#if IS_NET_CORE
+using IActionResult = Microsoft.AspNetCore.Mvc.IActionResult;
+#endif
+
 using Rock.Model;
 using Rock.Rest.Filters;
 
@@ -94,7 +98,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [System.Web.Http.Route( "api/Followings/{entityTypeId}/{entityId}" )]
         [System.Web.Http.HttpPost]
+#if IS_NET_CORE
+        public virtual IActionResult Follow( int entityTypeId, int entityId )
+#else
         public virtual HttpResponseMessage Follow( int entityTypeId, int entityId )
+#endif
         {
             var person = GetPerson();
 
@@ -116,21 +124,33 @@ namespace Rock.Rest.Controllers
 
             if ( !following.IsValid )
             {
+#if IS_NET_CORE
+                return BadRequest( string.Join( ",", following.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
+#else
                 return ControllerContext.Request.CreateErrorResponse(
                     HttpStatusCode.BadRequest,
                     string.Join( ",", following.ValidationResults.Select( r => r.ErrorMessage ).ToArray() ) );
+#endif
             }
 
+#if IS_NET_CORE
+            if ( !System.Web.HttpContext.Current.Items.ContainsKey( "CurrentPerson" ) )
+#else
             if ( !System.Web.HttpContext.Current.Items.Contains( "CurrentPerson" ) )
+#endif
             {
                 System.Web.HttpContext.Current.Items.Add( "CurrentPerson", GetPerson() );
             }
 
             Service.Context.SaveChanges();
 
+#if IS_NET_CORE
+            return StatusCode( ( int ) HttpStatusCode.Created, following.Id );
+#else
             var response = ControllerContext.Request.CreateResponse( HttpStatusCode.Created, following.Id );
 
             return response;
+#endif
         }
     }
 }

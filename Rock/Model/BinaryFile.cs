@@ -650,8 +650,7 @@ namespace Rock.Model
         {
             this.HasRequired( f => f.BinaryFileType ).WithMany().HasForeignKey( f => f.BinaryFileTypeId ).WillCascadeOnDelete( false );
 #if !IS_NET_CORE
-            // EFTODO: I don't know how to do this in EF Core. Maybe it's just a relationship setup from the BinaryFileData side?
-
+            // Moved to BinaryFileData
             this.HasOptional( f => f.DatabaseData ).WithRequired().WillCascadeOnDelete();
 #endif
         }

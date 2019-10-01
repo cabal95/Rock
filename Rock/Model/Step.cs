@@ -24,6 +24,11 @@ using System.Data.Entity.ModelConfiguration;
 using System.Data.Entity.Infrastructure;
 
 using System.Runtime.Serialization;
+
+#if IS_NET_CORE
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
+#endif
+
 using Rock.Data;
 
 namespace Rock.Model

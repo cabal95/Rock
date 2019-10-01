@@ -21,6 +21,10 @@ using System.Linq;
 using System.ServiceModel.Channels;
 using System.Web.Http;
 
+#if IS_NET_CORE
+using IHttpActionResult = Microsoft.AspNetCore.Mvc.IActionResult;
+#endif
+
 using Rock.Mobile;
 using Rock.Mobile.Common;
 using Rock.Mobile.Common.Enums;
@@ -78,7 +82,11 @@ namespace Rock.Rest.Controllers
 
             if ( person != null )
             {
+#if IS_NET_CORE
+                var principal = Request.HttpContext.User;
+#else
                 var principal = ControllerContext.Request.GetUserPrincipal();
+#endif
 
                 launchPacket.CurrentPerson = MobileHelper.GetMobilePerson( person, site );
                 launchPacket.CurrentPerson.AuthToken = MobileHelper.GetAuthenticationToken( principal.Identity.Name );
@@ -98,7 +106,11 @@ namespace Rock.Rest.Controllers
         public IHttpActionResult PostInteractions( [FromBody] List<MobileInteractionSession> sessions )
         {
             var person = GetPerson();
+#if IS_NET_CORE
+            var ipAddress = Request.GetUserHostAddress();
+#else
             var ipAddress = System.Web.HttpContext.Current?.Request?.UserHostAddress;
+#endif
 
             using ( var rockContext = new Data.RockContext() )
             {
@@ -115,7 +127,11 @@ namespace Rock.Rest.Controllers
                 //
                 if ( MobileHelper.GetCurrentApplicationSite() == null )
                 {
+#if IS_NET_CORE
+                    return Forbid();
+#else
                     return StatusCode( System.Net.HttpStatusCode.Forbidden );
+#endif
                 }
 
                 rockContext.WrapTransaction( () =>
@@ -258,7 +274,11 @@ namespace Rock.Rest.Controllers
 
             if ( site == null )
             {
+#if IS_NET_CORE
+                return Unauthorized();
+#else
                 return StatusCode( System.Net.HttpStatusCode.Unauthorized );
+#endif
             }
 
             //

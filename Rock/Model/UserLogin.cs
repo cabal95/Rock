@@ -27,6 +27,11 @@ using System.Threading;
 using System.Web;
 using System.Web.Hosting;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+using DbEntityEntry = Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry;
+#endif
+
 using Rock.Data;
 using Rock.Web.Cache;
 

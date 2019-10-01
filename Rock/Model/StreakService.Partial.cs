@@ -17,6 +17,11 @@
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
+
 using Rock.Data;
 
 namespace Rock.Model

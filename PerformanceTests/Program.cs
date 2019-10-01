@@ -69,6 +69,8 @@ namespace PerformanceTests
         {
             int runCount = 10000;
 
+            new Rock.Data.RockContext().Database.Migrate();
+
             var sw = System.Diagnostics.Stopwatch.StartNew();
             Warmup();
             sw.Stop();

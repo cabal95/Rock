@@ -30,6 +30,7 @@ using System.Web.Http.OData;
 #if IS_NET_CORE
 using Microsoft.AspNet.OData;
 using Microsoft.EntityFrameworkCore;
+using IHttpActionResult = Microsoft.AspNetCore.Mvc.IActionResult;
 #endif
 
 using Rock.BulkExport;
@@ -483,23 +484,39 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpPost]
         [System.Web.Http.Route( "api/People/ConfigureTextToGive/{personId}" )]
+#if IS_NET_CORE
+        public IHttpActionResult ConfigureTextToGive( int personId, [FromBody]ConfigureTextToGiveArgs args )
+#else
         public HttpResponseMessage ConfigureTextToGive( int personId, [FromBody]ConfigureTextToGiveArgs args )
+#endif
         {
             var personService = Service as PersonService;
             var success = personService.ConfigureTextToGive( personId, args.ContributionFinancialAccountId, args.FinancialPersonSavedAccountId, out var errorMessage );
 
             if ( !errorMessage.IsNullOrWhiteSpace() )
             {
+#if IS_NET_CORE
+                return BadRequest( errorMessage );
+#else
                 return ControllerContext.Request.CreateResponse( HttpStatusCode.BadRequest, errorMessage );
+#endif
             }
 
             if ( !success )
             {
+#if IS_NET_CORE
+                return StatusCode( 500, "The action was not successful but not error was specified" );
+#else
                 return ControllerContext.Request.CreateResponse( HttpStatusCode.InternalServerError, "The action was not successful but not error was specified" );
+#endif
             }
 
             Service.Context.SaveChanges();
+#if IS_NET_CORE
+            return Ok();
+#else
             return ControllerContext.Request.CreateResponse( HttpStatusCode.OK );
+#endif
         }
 
         /// <summary>
@@ -511,8 +528,15 @@ namespace Rock.Rest.Controllers
         [Authenticate]
         [System.Web.Http.Route( "api/People/UpdateProfilePhoto" )]
         [HttpPost]
+#if IS_NET_CORE
+        public IHttpActionResult UpdateProfilePhoto( string filename )
+#else
         public IHttpActionResult UpdateProfilePhoto( [NakedBody] byte[] photoBytes, string filename )
+#endif
         {
+#if IS_NET_CORE
+            byte[] photoBytes = Request.Body.ReadBytesToEnd();
+#endif
             var personId = GetPerson()?.Id;
 
             if ( !personId.HasValue )

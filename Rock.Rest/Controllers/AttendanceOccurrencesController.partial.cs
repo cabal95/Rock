@@ -41,7 +41,11 @@ namespace Rock.Rest.Controllers
         {
             using ( var rockContext = new RockContext() )
             {
+#if !IS_NET_CORE
+                EFTODO: Not supported in EF Core or EF7 as far as I can tell.
+
                 rockContext.Configuration.ProxyCreationEnabled = false;
+#endif
                 var group = new GroupService( rockContext ).Get( groupId );
 
                 var occurrences = new AttendanceOccurrenceService( rockContext )
@@ -88,7 +92,11 @@ namespace Rock.Rest.Controllers
             private void GetOccurrenceTitle()
             {
                 bool hasSchedule = ( Occurrence.Schedule != null );
+#if IS_NET_CORE
+                Ical.Net.CalendarComponents.CalendarEvent calendarEvent = null;
+#else
                 DDay.iCal.Event calendarEvent = null;
+#endif
                 if ( hasSchedule )
                 {
                     calendarEvent = Occurrence.Schedule.GetCalendarEvent();
@@ -105,7 +113,11 @@ namespace Rock.Rest.Controllers
                         "{0} - {1}, {2}",
                         Occurrence.Group.Name,
                         Occurrence.OccurrenceDate.ToString( "dddd, MMMM d, yyyy" ),
+#if IS_NET_CORE
+                        Occurrence.Schedule.GetCalendarEvent().DtStart.Value.TimeOfDay.ToTimeString() );
+#else
                         Occurrence.Schedule.GetCalendarEvent().DTStart.Value.TimeOfDay.ToTimeString() );
+#endif
                 }
                 else
                 {

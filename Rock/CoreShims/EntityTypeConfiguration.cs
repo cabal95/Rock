@@ -30,6 +30,11 @@ namespace System.Data.Entity.ModelConfiguration
             return Builder.HasKey( keyExpression );
         }
 
+        protected void Ignore( Expression<Func<TEntity, object>> propertyExpression )
+        {
+            Builder.Ignore( propertyExpression );
+        }
+
         protected RequiredReferenceNavigationBuilder<TEntity, TRelatedEntity> HasRequired<TRelatedEntity>( Expression<Func<TEntity, TRelatedEntity>> navigationExpression )
             where TRelatedEntity : class
         {

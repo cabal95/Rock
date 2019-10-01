@@ -21,6 +21,11 @@ using System.Data;
 using System.Data.Entity;
 using System.Data.Entity.SqlServer;
 using System.Linq;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
+
 using Rock.Chart;
 using Rock.Communication;
 using Rock.Data;

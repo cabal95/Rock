@@ -24,7 +24,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Web;
+#if !IS_NET_CORE
 using System.Web.Configuration;
+#endif
 using System.Web.Security;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;

@@ -132,6 +132,7 @@ namespace Rock.Utility
         }
         #endregion
 
+#if !IS_NET_CORE
         /// <summary>
         /// Handles printing labels for the given parameters using the
         /// label data stored on the AttendanceData model.
@@ -283,6 +284,7 @@ namespace Rock.Utility
 ", jsonObject );
             ScriptManager.RegisterClientScriptBlock( control, control.GetType(), "addLabelScript", script, true );
         }
+#endif
 
         #region Private Methods
         /// <summary>

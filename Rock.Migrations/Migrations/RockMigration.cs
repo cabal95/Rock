@@ -326,6 +326,20 @@ namespace Rock.Migrations
             MigrationBuilder.RenameTable( qName.Table, qName.Schema, qNewName.Table, qNewName.Schema );
         }
 
+        public void RenameColumn( string name, string table, string newName )
+        {
+            var qTable = new QualifiedTableName( table );
+
+            MigrationBuilder.RenameColumn( name, qTable.Table, newName, qTable.Schema );
+        }
+
+        public void RenameIndex( string name, string newName, string table = null )
+        {
+            var qTable = new QualifiedTableName( table );
+
+            MigrationBuilder.RenameIndex( name, newName, qTable.Table, qTable.Schema );
+        }
+
         public T ExtractOperation<T>( OperationBuilder<T> builder )
             where T : MigrationOperation
         {

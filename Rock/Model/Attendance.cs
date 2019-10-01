@@ -905,7 +905,10 @@ namespace Rock.Model
             this.HasOptional( a => a.AttendanceCode ).WithMany( c => c.Attendances ).HasForeignKey( a => a.AttendanceCodeId ).WillCascadeOnDelete( false );
             this.HasOptional( a => a.DeclineReasonValue ).WithMany().HasForeignKey( a => a.DeclineReasonValueId ).WillCascadeOnDelete( false );
             this.HasOptional( a => a.ScheduledByPersonAlias ).WithMany().HasForeignKey( p => p.ScheduledByPersonAliasId ).WillCascadeOnDelete( false );
+#if !IS_NET_CORE
+            // Moved to AttendanceData
             this.HasOptional( a => a.AttendanceData ).WithRequired().WillCascadeOnDelete();
+#endif
         }
     }
 

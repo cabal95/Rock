@@ -776,10 +776,12 @@ So, what about markers, yep you can do that too. Notice when you use makers you 
         /// </summary>
         private void ClearMigrationModelsForPreviousVersion()
         {
+#if !IS_NET_CORE
             Sql( @"
                 UPDATE [__MigrationHistory]
                 SET [Model] = 0x
                 WHERE MigrationId < '201907112025023_CampusStatus'" );
+#endif
         }
 
         /// <summary>

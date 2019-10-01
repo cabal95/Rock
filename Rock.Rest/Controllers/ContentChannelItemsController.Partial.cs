@@ -17,12 +17,18 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+#if !IS_NET_CORE
 using System.Data.Entity.Spatial;
+#endif
 using System.Dynamic;
 using System.Linq;
 using System.Net;
 using System.Web.Http;
 using System.Web.Http.OData;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
 
 using Rock.Data;
 using Rock.Model;

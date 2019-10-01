@@ -24,6 +24,11 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
+
 using Rock.Data;
 using Rock.UniversalSearch;
 using Rock.UniversalSearch.IndexModels;
@@ -90,6 +95,10 @@ namespace Rock.Model
         [DataMember]
         public string Description { get; set; }
 
+#if IS_NET_CORE
+        [DataMember]
+        public int BinaryFileId { get; set; }
+#endif
         #endregion
 
         #region Virtual Properties
@@ -245,7 +254,11 @@ namespace Rock.Model
         public DocumentConfiguration()
         {
             this.HasRequired( f => f.DocumentType ).WithMany().HasForeignKey( f => f.DocumentTypeId ).WillCascadeOnDelete( false );
+#if IS_NET_CORE
+            this.HasRequired( f => f.BinaryFile ).WithMany().HasForeignKey( f => f.BinaryFileId ).WillCascadeOnDelete( false );
+#else
             this.HasRequired( f => f.BinaryFile ).WithOptional( a => a.Document ).Map( x => x.MapKey( "BinaryFileId" ) ).WillCascadeOnDelete();
+#endif
         }
     }
 

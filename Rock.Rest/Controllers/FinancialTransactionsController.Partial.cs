@@ -26,6 +26,8 @@ using System.Web.Http.OData;
 
 #if IS_NET_CORE
 using Microsoft.AspNet.OData;
+using Microsoft.EntityFrameworkCore;
+using IActionResult = Microsoft.AspNetCore.Mvc.IActionResult;
 #endif
 
 using Rock;
@@ -105,8 +107,12 @@ namespace Rock.Rest.Controllers
             if ( automatedPaymentProcessor.IsRepeatCharge( out errorMessage ) ||
                 !automatedPaymentProcessor.IsAccordingToSchedule( out errorMessage ) )
             {
+#if IS_NET_CORE
+                return Conflict( errorMessage );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.Conflict, errorMessage );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
             var transaction = automatedPaymentProcessor.ProcessCharge( out errorMessage );
@@ -548,7 +554,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpGet]
         [System.Web.Http.Route( "api/FinancialTransactions/GivingHistory/{personAliasId}" )]
+#if IS_NET_CORE
+        public virtual IActionResult GetGivingHistory( int personAliasId,
+#else
         public virtual List<Gift> GetGivingHistory( int personAliasId,
+#endif
             [FromUri]int? year = null, [FromUri]bool includeGivingGroup = true, [FromUri]Guid? transactionTypeGuid = null, [FromUri]string excludedStatus = null )
         {
             // Get all of the query filters ready
@@ -559,8 +569,12 @@ namespace Rock.Rest.Controllers
             if ( transactionTypeGuid.HasValue && transactionTypeValue == null )
             {
                 var errorMessage = $"A transaction type defined value was expected for guid '{transactionTypeGuid.Value}', but was not found";
+#if IS_NET_CORE
+                return BadRequest( errorMessage );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.BadRequest, errorMessage );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
             // Query for the transactions
@@ -634,7 +648,11 @@ namespace Rock.Rest.Controllers
                 } ).ToList()
             } ).ToList();
 
+#if IS_NET_CORE
+            return Ok( gifts );
+#else
             return gifts;
+#endif
         }
 
         #region helper classes

@@ -29,6 +29,9 @@ using System.Web.Http.OData;
 #if IS_NET_CORE
 using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using FromUriAttribute = Microsoft.AspNetCore.Mvc.FromQueryAttribute;
+using FromBodyAttribute = Microsoft.AspNetCore.Mvc.FromBodyAttribute;
 #endif
 
 using Rock.Attribute;
@@ -141,13 +144,21 @@ namespace Rock.Rest
         [Authenticate, Secured]
         [ActionName( "GetByAttributeValue" )]
         [EnableQuery]
+#if IS_NET_CORE
+        public virtual IActionResult GetByAttributeValue( [FromUri]int? attributeId = null, [FromUri]string attributeKey = null, [FromUri]string value = null, [FromUri]bool caseSensitive = false )
+#else
         public virtual IQueryable<T> GetByAttributeValue( [FromUri]int? attributeId = null, [FromUri]string attributeKey = null, [FromUri]string value = null, [FromUri]bool caseSensitive = false )
+#endif
         {
             // Value is always required
             if ( value.IsNullOrWhiteSpace() )
             {
+#if IS_NET_CORE
+                return BadRequest( "The value param is required" );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.BadRequest, "The value param is required" );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
             // Either key or id is required, but not both
@@ -156,8 +167,12 @@ namespace Rock.Rest
 
             if ( queryByKey == queryById )
             {
+#if IS_NET_CORE
+                return BadRequest( "Either attributeKey or attributeId must be specified, but not both" );
+#else
                 var errorResponse = ControllerContext.Request.CreateErrorResponse( HttpStatusCode.BadRequest, "Either attributeKey or attributeId must be specified, but not both" );
                 throw new HttpResponseException( errorResponse );
+#endif
             }
 
             // Query for the models that have the value for the attribute
@@ -176,7 +191,11 @@ namespace Rock.Rest
                     a => a.Attribute.Key.Equals( attributeKey, StringComparison.OrdinalIgnoreCase ) && a.Value.Equals( value, valueComparison ) );
             }
 
+#if IS_NET_CORE
+            return Ok( query );
+#else
             return query;
+#endif
         }
 
         /// <summary>

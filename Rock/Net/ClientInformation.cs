@@ -18,6 +18,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Web;
 
+#if IS_NET_CORE
+using Microsoft.AspNetCore.Http;
+#endif
+
 using UAParser;
 
 namespace Rock.Net
@@ -49,6 +53,47 @@ namespace Rock.Net
 
         #region Constructors
 
+#if IS_NET_CORE
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ClientInformation"/> class.
+        /// </summary>
+        /// <param name="request">The request to initalize from.</param>
+        internal ClientInformation( HttpRequest request )
+        {
+            //
+            // Set IP Address.
+            //
+            IpAddress = string.Empty;
+
+            string ipAddress = null;
+            if ( request.Headers.ContainsKey( "X-Forwarded-For" ) )
+            {
+                ipAddress = request.Headers["X-Forwarded-For"].First();
+            }
+
+            if ( !string.IsNullOrEmpty( ipAddress ) )
+            {
+                string[] addresses = ipAddress.Split( ',' );
+                if ( addresses.Length != 0 )
+                {
+                    IpAddress = addresses[0];
+                }
+            }
+            else
+            {
+                IpAddress = request.HttpContext.Connection.RemoteIpAddress.ToString();
+            }
+
+            // nicely format localhost
+            if ( IpAddress == "::1" )
+            {
+                IpAddress = "localhost";
+            }
+
+            Parser uaParser = Parser.GetDefault();
+            Browser = uaParser.Parse( request.Headers.ContainsKey( "User-Agent" ) ? request.Headers["User-Agent"].First() : string.Empty );
+        }
+#else
         /// <summary>
         /// Initializes a new instance of the <see cref="ClientInformation"/> class.
         /// </summary>
@@ -85,6 +130,7 @@ namespace Rock.Net
             Parser uaParser = Parser.GetDefault();
             Browser = uaParser.Parse( request.UserAgent );
         }
+#endif
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ClientInformation"/> class.
@@ -102,10 +148,12 @@ namespace Rock.Net
             {
                 IpAddress = request.Headers.GetValues( "X-FORWARDED-FOR" ).First();
             }
+#if !IS_NET_CORE
             else if ( request.Properties.ContainsKey( "MS_HttpContext" ) )
             {
                 IpAddress = ( ( HttpContextWrapper ) request.Properties["MS_HttpContext"] )?.Request?.UserHostAddress ?? string.Empty;
             }
+#endif
 
             // nicely format localhost
             if ( IpAddress == "::1" )

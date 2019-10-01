@@ -21,6 +21,11 @@ using System.Data.Entity;
 using System.Data.Entity.SqlServer;
 using System.Linq;
 using System.Linq.Dynamic;
+
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
+
 using Rock.Chart;
 using Rock.Data;
 
@@ -46,7 +51,11 @@ namespace Rock.Model
             .AsNoTracking()
             .Where ( e => e.PersonAlias.PersonId == personId )
             .Where ( e => e.GroupId == groupId || e.GroupId == null )
+#if IS_NET_CORE
+            .Where( e => e.StartDate >= date.Date && e.EndDate <= date.Date )
+#else
             .Where( e => e.StartDate >= DbFunctions.TruncateTime( date ) && e.EndDate <= DbFunctions.TruncateTime( date )  )
+#endif
             .Select( e => e.Id )
             .ToList();
 

@@ -292,7 +292,9 @@ namespace Rock.Web.Cache
         {
             if ( !string.IsNullOrWhiteSpace( this.Path ) )
             {
+#if !IS_NET_CORE
                 return System.Web.Compilation.BuildManager.GetCompiledType( Path );
+#endif
             }
             else if ( EntityTypeId.HasValue )
             {

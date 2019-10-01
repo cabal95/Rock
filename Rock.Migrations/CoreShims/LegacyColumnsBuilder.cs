@@ -35,6 +35,20 @@ namespace Rock.Migrations.CoreShims
             _isAlter = isAlter;
         }
 
+        public OperationBuilder<AddColumnOperation> Binary( bool? nullable = null, int? maxLength = null, bool? fixedLength = null, byte[] defaultValue = null, string defaultValueSql = null, bool timestamp = false, string name = null )
+        {
+            nullable = nullable ?? _nullableDefault;
+
+            if ( _isAlter && !nullable.Value && defaultValue == null )
+            {
+                defaultValue = new byte[0];
+            }
+
+            var column = _builder.Column<byte[]>( null, null, null, false, name, nullable.Value, defaultValue, defaultValueSql, null, null );
+
+            return column;
+        }
+
         public OperationBuilder<AddColumnOperation> Boolean( bool? nullable = null, bool? defaultValue = null, string defaultValueSql = null, string name = null )
         {
             nullable = nullable ?? _nullableDefault;
@@ -83,6 +97,20 @@ namespace Rock.Migrations.CoreShims
             }
 
             var column = _builder.Column<decimal>( storeType, null, null, false, name, nullable.Value, defaultValue, defaultValueSql, null, null );
+
+            return column;
+        }
+
+        public OperationBuilder<AddColumnOperation> Double( bool? nullable = null, double? defaultValue = null, string defaultValueSql = null, string name = null, string storeType = null )
+        {
+            nullable = nullable ?? _nullableDefault;
+
+            if ( _isAlter && !nullable.Value && !defaultValue.HasValue )
+            {
+                defaultValue = 0;
+            }
+
+            var column = _builder.Column<double>( null, null, null, false, name, nullable.Value, defaultValue, defaultValueSql, null, null );
 
             return column;
         }

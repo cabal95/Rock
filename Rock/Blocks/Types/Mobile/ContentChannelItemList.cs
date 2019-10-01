@@ -24,6 +24,10 @@ using System.Net.Http;
 using System.Text;
 using System.Web.UI.WebControls;
 
+#if IS_NET_CORE
+using Microsoft.EntityFrameworkCore;
+#endif
+
 using Newtonsoft.Json;
 
 using Rock.Attribute;
@@ -391,6 +395,7 @@ namespace Rock.Blocks.Types.Mobile
             var pageParameters = RequestContext.GetPageParameters();
             if ( GetAttributeValue( AttributeKeys.QueryParameterFiltering ).AsBoolean() && pageParameters.Count > 0 )
             {
+#if !IS_NET_CORE
                 var propertyFilter = new Rock.Reporting.DataFilter.PropertyFilter();
 
                 foreach ( var kvp in pageParameters )
@@ -445,6 +450,7 @@ namespace Rock.Blocks.Types.Mobile
                         itemQry = itemQry.Where( paramExpression, propertyFilter.GetExpression( itemType, service, paramExpression, selection.ToJson() ) );
                     }
                 }
+#endif
             }
 
             return itemQry;

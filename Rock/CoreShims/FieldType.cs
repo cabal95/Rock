@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 
 using Rock.Model;
 using Rock.Reporting;
+using Rock.Web.UI.Controls;
 
 namespace Rock.Field
 {
@@ -86,21 +87,6 @@ namespace Rock.Field
 
 namespace Rock.Field.Types
 {
-    public partial class MatrixFieldType
-    {
-        public const string ATTRIBUTE_MATRIX_TEMPLATE = "attributematrixtemplate";
-    }
-
-    public partial class GroupTypeGroupFieldType
-    {
-        public static readonly string CONFIG_GROUP_PICKER_LABEL = "groupPickerLabel";
-    }
-
-    public partial class GroupAndRoleFieldType
-    {
-        public static readonly string CONFIG_GROUP_AND_ROLE_PICKER_LABEL = "groupAndRolePickerLabel";
-    }
-
     public partial class KeyValueListFieldType
     {
         public List<KeyValuePair<string, object>> GetValuesFromString( object ignored, string value, Dictionary<string, ConfigurationValue> configurationValues, bool condensed )
@@ -128,6 +114,70 @@ namespace Rock.Field.Types
             }
 
             return string.Empty;
+        }
+    }
+
+    public partial class StepProgramStepTypeFieldType
+    {
+        /// <summary>
+        /// Gets the models from the delimited values.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <param name="stepProgramGuid">The step program unique identifier.</param>
+        /// <param name="stepTypeGuid">The step type unique identifier.</param>
+        public static void ParseDelimitedGuids( string value, out Guid? stepProgramGuid, out Guid? stepTypeGuid )
+        {
+            var parts = ( value ?? string.Empty ).Split( '|' );
+
+            if ( parts.Length == 1 )
+            {
+                // If there is only one guid, assume it is the type
+                stepProgramGuid = null;
+                stepTypeGuid = parts[0].AsGuidOrNull();
+                return;
+            }
+
+            stepProgramGuid = parts.Length > 0 ? parts[0].AsGuidOrNull() : null;
+            stepTypeGuid = parts.Length > 1 ? parts[1].AsGuidOrNull() : null;
+        }
+    }
+
+    public partial class StepProgramStepStatusFieldType
+    {
+        /// <summary>
+        /// Gets the models from the delimited values.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <param name="stepProgramGuid">The step program unique identifier.</param>
+        /// <param name="stepStatusGuid">The step status unique identifier.</param>
+        public static void ParseDelimitedGuids( string value, out Guid? stepProgramGuid, out Guid? stepStatusGuid )
+        {
+            var parts = ( value ?? string.Empty ).Split( '|' );
+
+            if ( parts.Length == 1 )
+            {
+                // If there is only one guid, assume it is the status
+                stepProgramGuid = null;
+                stepStatusGuid = parts[0].AsGuidOrNull();
+                return;
+            }
+
+            stepProgramGuid = parts.Length > 0 ? parts[0].AsGuidOrNull() : null;
+            stepStatusGuid = parts.Length > 1 ? parts[1].AsGuidOrNull() : null;
+        }
+    }
+
+    public partial class ValueFilterFieldType
+    {
+        /// <summary>
+        /// Gets the filter object that can be used to evaluate an object against the filter.
+        /// </summary>
+        /// <param name="configurationValues">The configuration values.</param>
+        /// <param name="value">The attribute value.</param>
+        /// <returns>A CompoundFilter object that can be used to evaluate the truth of the filter.</returns>
+        public static FilterExpression GetFilterExpression( Dictionary<string, ConfigurationValue> configurationValues, string value )
+        {
+            return FilterExpression.FromJsonOrNull( value );
         }
     }
 }

@@ -778,8 +778,12 @@ namespace Rock.Reporting
             {
                 get
                 {
+#if IS_NET_CORE
+                    return null;
+#else
                     var selectionDataView = ( this.Component as OtherDataViewFilter )?.GetSelectedDataView( this.Selection );
                     return selectionDataView;
+#endif
                 }
             }
 
@@ -801,7 +805,11 @@ namespace Rock.Reporting
             {
                 get
                 {
+#if IS_NET_CORE
+                    if ( FromDataView == null )
+#else
                     if ( FromDataView == null && !( this.Component is OtherDataViewFilter ) )
+#endif
                     {
                         return new List<DataView>();
                     }

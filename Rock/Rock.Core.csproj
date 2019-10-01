@@ -8,6 +8,7 @@
     <RootNamespace>Rock</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyName>Rock</AssemblyName>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
 
   <Target Name="AddNetCoreDefine" BeforeTargets="CoreCompile" Condition="'$(TargetFramework)' == 'netcoreapp2.2'">
@@ -17,6 +18,7 @@
   </Target>
 
   <ItemGroup>
+    <Compile Remove="Badge\Component\**" />
     <Compile Remove="Data\Interception\**" />
     <Compile Remove="Data\Udf\**" />
     <Compile Remove="Field\Types\**" />
@@ -32,6 +34,7 @@
     <Compile Remove="Web\HttpModules\**" />
     <Compile Remove="Web\UI\**" />
     <Compile Remove="Web\Utilities\**" />
+    <EmbeddedResource Remove="Badge\Component\**" />
     <EmbeddedResource Remove="Data\Interception\**" />
     <EmbeddedResource Remove="Data\Udf\**" />
     <EmbeddedResource Remove="Field\Types\**" />
@@ -47,6 +50,7 @@
     <EmbeddedResource Remove="Web\HttpModules\**" />
     <EmbeddedResource Remove="Web\UI\**" />
     <EmbeddedResource Remove="Web\Utilities\**" />
+    <None Remove="Badge\Component\**" />
     <None Remove="Data\Interception\**" />
     <None Remove="Data\Udf\**" />
     <None Remove="Field\Types\**" />
@@ -67,6 +71,9 @@
   <ItemGroup>
     <Compile Remove="Address\MelissaData.cs" />
     <Compile Remove="Address\ServiceObjects.cs" />
+    <Compile Remove="Badge\HighlightLabelBadge.cs" />
+    <Compile Remove="Badge\IconBadge.cs" />
+    <Compile Remove="Chart\ChartJsTimeSeriesDataPoint.cs" />
     <Compile Remove="CheckIn\CheckInBlock.cs" />
     <Compile Remove="CheckIn\CheckInBlockMultiPerson.cs" />
     <Compile Remove="CheckIn\CheckInEditFamilyBlock.cs" />
@@ -75,6 +82,7 @@
     <Compile Remove="Data\IRockStoreModelConvention.cs" />
     <Compile Remove="Data\RockContextConfig.cs" />
     <Compile Remove="Data\RockPluginDBInitializer.cs" />
+    <Compile Remove="Field\EntitySingleSelectionListFieldTypeBase.cs" />
     <Compile Remove="Field\FieldType.cs" />
     <Compile Remove="Field\SelectFromListFieldType.cs" />
     <Compile Remove="Financial\IHostedGatewayComponent.cs" />
@@ -87,6 +95,7 @@
     <Compile Remove="Plugin\HotFixes\HotFixMigrationResource.Designer.cs" />
     <Compile Remove="Reporting\DataTransform\Person\SpouseTransform.cs" />
     <Compile Remove="Reporting\PowerBiUtilities.cs" />
+    <Compile Remove="Reporting\ReportOutputBuilder.cs" />
     <Compile Remove="Scripting.evaluator.cs" />
     <Compile Remove="Scripting.Extensions.cs" />
     <Compile Remove="Scripting.native.cs" />
@@ -173,6 +182,7 @@
     <Compile Include="Jobs\RockJobListener.cs" />
     <Compile Include="Web\UI\BreadCrumb.cs" />
     <Compile Include="Web\UI\Controls\Pickers\TreeViewItem.cs" />
+    <Compile Include="Web\UI\Controls\ValueFilter.cs" />
     <Compile Include="Web\UI\RockPage.cs" />
     <Compile Include="Web\Utilities\HtmlSanitizer.cs" />
   </ItemGroup>
@@ -274,6 +284,8 @@
     <PackageReference Include="Ical.Net" Version="4.1.10" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.2.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Routing.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="2.2.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.2" />
@@ -284,6 +296,7 @@
     <PackageReference Include="PreMailer.Net" Version="2.0.1" />
     <PackageReference Include="Quartz" Version="3.0.7" />
     <PackageReference Include="RestSharp" Version="106.6.7" />
+    <PackageReference Include="Rock.Mobile.Common" Version="0.2.6" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0006" />
     <PackageReference Include="System.ComponentModel.Composition" Version="4.5.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
@@ -298,6 +311,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DotLiquid\DotLiquid.Core.csproj" />
+    <ProjectReference Include="..\Rock.DownhillCss\Rock.DownhillCss.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

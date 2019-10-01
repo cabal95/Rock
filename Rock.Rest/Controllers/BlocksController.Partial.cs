@@ -23,6 +23,10 @@ using System.Reflection;
 using System.Web;
 using System.Web.Http;
 
+#if IS_NET_CORE
+using IHttpActionResult = Microsoft.AspNetCore.Mvc.IActionResult;
+#endif
+
 using Newtonsoft.Json.Linq;
 
 using Rock.Model;
@@ -187,17 +191,28 @@ namespace Rock.Rest.Controllers
                 // Get the authenticated person and make sure it's cached.
                 //
                 var person = GetPerson();
+#if IS_NET_CORE
+                if ( !HttpContext.Items.ContainsKey( "CurrentPerson" ) )
+                {
+                    HttpContext.Items.Add( "CurrentPerson", person );
+                }
+#else
                 if ( !HttpContext.Current.Items.Contains( "CurrentPerson" ) )
                 {
                     HttpContext.Current.Items.Add( "CurrentPerson", person );
                 }
+#endif
 
                 //
                 // Ensure the user has access to both the page and block.
                 //
                 if ( !pageCache.IsAuthorized( Security.Authorization.VIEW, person ) || !blockCache.IsAuthorized( Security.Authorization.VIEW, person ) )
                 {
+#if IS_NET_CORE
+                    return Unauthorized();
+#else
                     return StatusCode( HttpStatusCode.Unauthorized );
+#endif
                 }
 
                 //
@@ -241,10 +256,17 @@ namespace Rock.Rest.Controllers
                 //
                 // Parse any query string parameter data.
                 //
+#if IS_NET_CORE
+                foreach ( var q in Request.Query )
+                {
+                    actionParameters.AddOrReplace( q.Key, JToken.FromObject( q.Value.First().ToString() ) );
+                }
+#else
                 foreach ( var q in Request.GetQueryNameValuePairs() )
                 {
                     actionParameters.AddOrReplace( q.Key, JToken.FromObject( q.Value.ToString() ) );
                 }
+#endif
 
                 return InvokeAction( rockBlock, verb, actionName, actionParameters );
             }
@@ -333,6 +355,24 @@ namespace Rock.Rest.Controllers
             }
             else if ( result is Rock.Blocks.BlockActionResult actionResult )
             {
+#if IS_NET_CORE
+                if ( actionResult.Error != null )
+                {
+                    return StatusCode( ( int ) actionResult.StatusCode, actionResult.Error );
+                }
+                else if ( actionResult.Content is HttpContent httpContent )
+                {
+                    throw new NotSupportedException();
+                }
+                else if ( actionResult.ContentClrType != null )
+                {
+                    return StatusCode( ( int ) actionResult.StatusCode, actionResult.Content );
+                }
+                else
+                {
+                    return StatusCode( ( int ) actionResult.StatusCode );
+                }
+#else
                 if ( actionResult.Error != null )
                 {
                     return Content( actionResult.StatusCode, new HttpError( actionResult.Error ) );
@@ -352,6 +392,7 @@ namespace Rock.Rest.Controllers
                 {
                     return StatusCode( actionResult.StatusCode );
                 }
+#endif
             }
             else if ( action.ReturnType == typeof(void))
             {

@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <ApplicationIcon />
+    <OutputType>Library</OutputType>
+    <StartupObject />
+    <RootNamespace>Rock.DownhillCss</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyName>Rock.DownhillCss</AssemblyName>
+    <LangVersion>7.3</LangVersion>
+  </PropertyGroup>
+
+  <Target Name="AddNetCoreDefine" BeforeTargets="CoreCompile" Condition="'$(TargetFramework)' == 'netcoreapp2.2'">
+    <PropertyGroup>
+      <DefineConstants>$(DefineConstants);IS_NET_CORE</DefineConstants>
+    </PropertyGroup>
+  </Target>
+
+</Project>

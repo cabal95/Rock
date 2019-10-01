@@ -20,6 +20,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Web;
 
+#if IS_NET_CORE
+using Microsoft.AspNetCore.Routing;
+#endif
+
 using Rock.Attribute;
 using Rock.Data;
 using Rock.Lava;
@@ -111,6 +115,46 @@ namespace Rock.Net
             RootUrlPath = string.Empty;
         }
 
+#if IS_NET_CORE
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RockRequestContext"/> class.
+        /// </summary>
+        /// <param name="request">The request from an HttpContext load that we will initialize from.</param>
+        internal RockRequestContext( Microsoft.AspNetCore.Http.HttpRequest request )
+        {
+            CurrentUser = UserLoginService.GetCurrentUser( false );
+
+            RootUrlPath = request.Scheme + "://" + request.Host + request.PathBase;
+
+            ClientInformation = new ClientInformation( request );
+
+            //
+            // Setup the page parameters.
+            //
+            PageParameters = new Dictionary<string, string>();
+            foreach ( var kvp in request.Query )
+            {
+                PageParameters.AddOrReplace( kvp.Key, kvp.Value.First() );
+            }
+            foreach ( var kvp in request.HttpContext.GetRouteData().Values )
+            {
+                PageParameters.AddOrReplace( kvp.Key, kvp.Value.ToStringSafe() );
+            }
+
+            //
+            // Setup the headers
+            //
+            Headers = request.Headers
+                .Select( k => new KeyValuePair<string, IEnumerable<string>>( k.Key, k.Value ) )
+                .ToDictionary( kvp => kvp.Key, kvp => kvp.Value, StringComparer.InvariantCultureIgnoreCase );
+
+            //
+            // Todo: Setup the ContextEntities somehow. Probably from an additional paramter of the page cache object.
+            //
+            ContextEntities = new Dictionary<Type, Lazy<IEntity>>();
+            AddContextEntitiesFromHeaders();
+        }
+#else
         /// <summary>
         /// Initializes a new instance of the <see cref="RockRequestContext"/> class.
         /// </summary>
@@ -150,6 +194,7 @@ namespace Rock.Net
             ContextEntities = new Dictionary<Type, Lazy<IEntity>>();
             AddContextEntitiesFromHeaders();
         }
+#endif
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RockRequestContext"/> class.
@@ -169,10 +214,18 @@ namespace Rock.Net
             // parameters don't make a lot of sense with an API call.
             //
             PageParameters = new Dictionary<string, string>();
+#if IS_NET_CORE
+            var qs = HttpUtility.ParseQueryString( request.RequestUri.Query );
+            foreach ( var key in qs.AllKeys )
+            {
+                PageParameters.AddOrReplace( key, qs[key] );
+            }
+#else
             foreach ( var kvp in request.GetQueryNameValuePairs() )
             {
                 PageParameters.AddOrReplace( kvp.Key, kvp.Value );
             }
+#endif
 
             //
             // Setup the headers

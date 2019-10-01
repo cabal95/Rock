@@ -17,6 +17,8 @@
   <ItemGroup>
     <Compile Remove="Binders\NakedBodyAttribute.cs" />
     <Compile Remove="Binders\NakedBodyParameterBinding.cs" />
+    <Compile Remove="Controllers\CodeGenerated\IncomingSMSRoutesController.cs" />
+    <Compile Remove="Controllers\StreakTypesController.Partial.cs" />
     <Compile Remove="Filters\RequireHttpsAttribute.cs" />
     <Compile Remove="Filters\ValidateAttribute.cs" />
     <Compile Remove="Handler\RockApiExceptionHandler.cs" />
@@ -44,6 +46,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.OData" Version="7.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.2.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Routing.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="5.5.0" />
   </ItemGroup>
 
   <ItemGroup>

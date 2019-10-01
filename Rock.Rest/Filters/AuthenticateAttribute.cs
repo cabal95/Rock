@@ -24,9 +24,8 @@ using System.ServiceModel.Channels;
 using System.Threading.Tasks;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
-#if IS_NET_CORE
-using System.Threading.Tasks;
 
+#if IS_NET_CORE
 using Microsoft.AspNetCore.Http;
 #endif
 

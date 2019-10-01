@@ -31,6 +31,9 @@ using System.Web.Http.OData;
 #else
 using Microsoft.AspNet.OData;
 using Microsoft.EntityFrameworkCore;
+using IActionResult = Microsoft.AspNetCore.Mvc.IActionResult;
+
+using DbGeography = NetTopologySuite.Geometries.Geometry;
 #endif
 using Rock.Data;
 using Rock.Model;
@@ -219,7 +222,11 @@ namespace Rock.Rest.Controllers
         [Authenticate, Secured]
         [HttpGet]
         [System.Web.Http.Route( "api/Groups/GroupTypeCheckinConfiguration/{groupTypeGuid}" )]
+#if IS_NET_CORE
+        public IActionResult GroupTypeCheckinConfiguration( Guid groupTypeGuid )
+#else
         public HttpResponseMessage GroupTypeCheckinConfiguration( Guid groupTypeGuid )
+#endif
         {
             var groups = new GroupService( new RockContext() ).Queryable().AsNoTracking()
                             .Where( g => g.GroupType.Guid == groupTypeGuid )
@@ -234,8 +241,13 @@ namespace Rock.Rest.Controllers
                                     Name = l.Location.Name,
                                     Guid = l.Location.Guid,
                                     GeoFence = l.Location.GeoFence,
+#if IS_NET_CORE
+                                    Latitude = l.Location.Latitude,
+                                    Longitude = l.Location.Longitude,
+#else
                                     Latitude = l.Location.GeoPoint.Latitude,
                                     Longitude = l.Location.GeoPoint.Longitude,
+#endif
                                     Street1 = l.Location.Street1,
                                     City = l.Location.City,
                                     State = l.Location.State,
@@ -263,7 +275,11 @@ namespace Rock.Rest.Controllers
             {
                 if ( groupCheckinInfo.Locations.IsNull() )
                 {
+#if IS_NET_CORE
+                    return Ok( groupCheckinInfo );
+#else
                     return this.Request.CreateResponse( groupCheckinInfo );
+#endif
                 }
 
                 foreach ( var location in groupCheckinInfo.Locations )
@@ -284,7 +300,11 @@ namespace Rock.Rest.Controllers
 
                         schedule.DayOfWeek = scheduleDetails.RecurrenceRules[0].ByDay.FirstOrDefault()?.DayOfWeek;
 
+#if IS_NET_CORE
+                        schedule.StartTime = scheduleDetails.DtStart.Value.TimeOfDay;
+#else
                         schedule.StartTime = scheduleDetails.DTStart.Value.TimeOfDay;
+#endif
 
                         var duration = scheduleDetails.Duration;
 
@@ -298,7 +318,11 @@ namespace Rock.Rest.Controllers
                 }
             }
 
-            return this.Request.CreateResponse( groups ); 
+#if IS_NET_CORE
+            return Ok( groups );
+#else
+            return this.Request.CreateResponse( groups );
+#endif
         }
 
         /// <summary>

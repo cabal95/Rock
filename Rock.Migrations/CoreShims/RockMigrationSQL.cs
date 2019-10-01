@@ -4,29 +4,18 @@ namespace Rock.Migrations.Migrations
 {
     public partial class RockMigrationSQL
     {
-        private static string GetRealPath( string path )
-        {
-            string basePath = Path.GetDirectoryName( typeof( RockMigrationSQL ).Assembly.Location );
-
-            var segments = path.Split( '\\' );
-            var realPath = basePath;
-
-            foreach ( var segment in segments )
-            {
-                realPath = Path.Combine( realPath, segment );
-            }
-
-            return realPath;
-        }
-
         private static string GetSqlResource( string path )
         {
-            return File.ReadAllText( GetRealPath( path ) );
+            var resources = typeof( RockMigrationSQL ).Assembly.GetManifestResourceNames();
+            using ( var sr = new StreamReader( typeof( RockMigrationSQL ).Assembly.GetManifestResourceStream( path ) ) )
+            {
+                return sr.ReadToEnd();
+            }
         }
 
         private static byte[] GetBinaryResource( string path )
         {
-            return File.ReadAllBytes( GetRealPath( path ) );
+            return typeof( RockMigrationSQL ).Assembly.GetManifestResourceStream( path ).ReadBytesToEnd();
         }
     }
 }

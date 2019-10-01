@@ -85,6 +85,9 @@ namespace Rock.Badge
         }
 
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebForms.
+
         /// <summary>
         /// Gets or sets the parent context block.
         /// </summary>
@@ -99,6 +102,7 @@ namespace Rock.Badge
         {
             get => ParentContextEntityBlock as PersonBlock;
         }
+#endif
 
         /// <summary>
         /// Gets or sets the entity.
@@ -175,6 +179,9 @@ namespace Rock.Badge
             return GetAttributeValue( badgeCache, key );
         }
 
+#if !IS_NET_CORE
+        // EFTODO: Dependency on WebForms.
+
         /// <summary>
         /// Renders the specified writer.
         /// </summary>
@@ -190,5 +197,6 @@ namespace Rock.Badge
         [RockObsolete( "1.10" )]
         [Obsolete( "Use the BadgeCache param instead.", false )]
         public virtual void Render( PersonBadgeCache personBadgeCache, HtmlTextWriter writer ) { }
+#endif
     }
 }

@@ -74,6 +74,9 @@ namespace Rock.Model
         /// </summary>
         public AttendanceDataConfiguration()
         {
+#if IS_NET_CORE
+            Builder.HasOne( typeof( Attendance ) ).WithOne().HasForeignKey( typeof( AttendanceData ), "Id" ).IsRequired().OnDelete( Microsoft.EntityFrameworkCore.DeleteBehavior.Cascade );
+#endif
         }
     }
 

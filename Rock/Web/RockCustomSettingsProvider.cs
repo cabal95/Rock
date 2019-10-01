@@ -54,6 +54,7 @@ namespace Rock.Web
 
         #region Abstract Methods
 
+#if !IS_NET_CORE
         /// <summary>
         /// Gets the custom settings control. The returned control will be added to the parent automatically.
         /// </summary>
@@ -81,6 +82,7 @@ namespace Rock.Web
         /// do so on this context so they can be rolled back if something fails during the final save.
         /// </remarks>
         public abstract void WriteSettingsToEntity( IHasAttributes attributeEntity, Control control, RockContext rockContext );
+#endif
 
         #endregion
 
